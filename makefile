@@ -1,13 +1,14 @@
-.PHONY: dist
-dist:
-	@rm -rf dist/*.gem
-	@gem build pdfcrowd.gemspec
-	@mkdir -p dist/
-	@mv *.gem dist/
+VERSION = 4.3.5
+DIR_NAME := pdfcrowd-4.3.5
+
+dist: dist/pdfcrowd-$(VERSION)-go.zip
+
+dist/pdfcrowd-$(VERSION)-go.zip:
+	@mkdir -p dist
+	@cd dist && mkdir -p $(DIR_NAME) && cp ../pdfcrowd.go $(DIR_NAME) && zip pdfcrowd-$(VERSION)-go.zip $(DIR_NAME)/*
 
 publish: clean dist
-	@gem push dist/pdfcrowd-*.gem
 
 .PHONY: clean
 clean:
-	@rm -rf dist/*.gem
+	rm -rf dist/* ./test_files/out/go_*.pdf
