@@ -17,3 +17,7 @@ To install via Go language:
 
 * API Home:  <https://pdfcrowd.com/doc/api/>
 * API Reference:  <https://pdfcrowd.com/doc/api/html-to-pdf/go/>
+
+## License
+
+This project is licensed under the MIT License.
