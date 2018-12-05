@@ -38,7 +38,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "4.3.5"
+const CLIENT_VERSION = "4.4.1"
 
 type Error struct {
     message string
@@ -88,7 +88,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/4.3.5 (http://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/4.4.1 (http://pdfcrowd.com)")
     helper.retryCount = 1
     return helper
 }
@@ -652,6 +652,14 @@ func (client *HtmlToPdfClient) SetPrintPageRange(pages string) *HtmlToPdfClient 
     return client
 }
 
+// The page background color in RGB or RGBA hexadecimal format. The color fills the entire page regardless of the margins.
+//
+// pageBackgroundColor - The value must be in RRGGBB or RRGGBBAA hexadecimal format.
+func (client *HtmlToPdfClient) SetPageBackgroundColor(pageBackgroundColor string) *HtmlToPdfClient {
+    client.fields["page_background_color"] = pageBackgroundColor
+    return client
+}
+
 // Apply the first page of the watermark PDF to every page of the output PDF.
 //
 // pageWatermark - The file path to a local watermark PDF file. The file must exist and not be empty.
@@ -1168,6 +1176,38 @@ func (client *HtmlToPdfClient) SetTag(tag string) *HtmlToPdfClient {
     return client
 }
 
+// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+//
+// httpProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *HtmlToPdfClient) SetHttpProxy(httpProxy string) *HtmlToPdfClient {
+    client.fields["http_proxy"] = httpProxy
+    return client
+}
+
+// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+//
+// httpsProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *HtmlToPdfClient) SetHttpsProxy(httpsProxy string) *HtmlToPdfClient {
+    client.fields["https_proxy"] = httpsProxy
+    return client
+}
+
+// A client certificate to authenticate Pdfcrowd converter on your web server. The certificate is used for two-way SSL/TLS authentication and adds extra security.
+//
+// clientCertificate - The file must be in PKCS12 format. The file must exist and not be empty.
+func (client *HtmlToPdfClient) SetClientCertificate(clientCertificate string) *HtmlToPdfClient {
+    client.files["client_certificate"] = clientCertificate
+    return client
+}
+
+// A password for PKCS12 file with a client certificate if it's needed.
+//
+// clientCertificatePassword -
+func (client *HtmlToPdfClient) SetClientCertificatePassword(clientCertificatePassword string) *HtmlToPdfClient {
+    client.fields["client_certificate_password"] = clientCertificatePassword
+    return client
+}
+
 // Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
 //
 // useHttp - Set to true to use HTTP.
@@ -1616,6 +1656,38 @@ func (client *HtmlToImageClient) SetTag(tag string) *HtmlToImageClient {
     return client
 }
 
+// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+//
+// httpProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *HtmlToImageClient) SetHttpProxy(httpProxy string) *HtmlToImageClient {
+    client.fields["http_proxy"] = httpProxy
+    return client
+}
+
+// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+//
+// httpsProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *HtmlToImageClient) SetHttpsProxy(httpsProxy string) *HtmlToImageClient {
+    client.fields["https_proxy"] = httpsProxy
+    return client
+}
+
+// A client certificate to authenticate Pdfcrowd converter on your web server. The certificate is used for two-way SSL/TLS authentication and adds extra security.
+//
+// clientCertificate - The file must be in PKCS12 format. The file must exist and not be empty.
+func (client *HtmlToImageClient) SetClientCertificate(clientCertificate string) *HtmlToImageClient {
+    client.files["client_certificate"] = clientCertificate
+    return client
+}
+
+// A password for PKCS12 file with a client certificate if it's needed.
+//
+// clientCertificatePassword -
+func (client *HtmlToImageClient) SetClientCertificatePassword(clientCertificatePassword string) *HtmlToImageClient {
+    client.fields["client_certificate_password"] = clientCertificatePassword
+    return client
+}
+
 // Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
 //
 // useHttp - Set to true to use HTTP.
@@ -1875,6 +1947,22 @@ func (client *ImageToImageClient) GetOutputSize() int {
 // tag - A string with the custom tag.
 func (client *ImageToImageClient) SetTag(tag string) *ImageToImageClient {
     client.fields["tag"] = tag
+    return client
+}
+
+// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+//
+// httpProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *ImageToImageClient) SetHttpProxy(httpProxy string) *ImageToImageClient {
+    client.fields["http_proxy"] = httpProxy
+    return client
+}
+
+// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+//
+// httpsProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *ImageToImageClient) SetHttpsProxy(httpsProxy string) *ImageToImageClient {
+    client.fields["https_proxy"] = httpsProxy
     return client
 }
 
@@ -2290,6 +2378,22 @@ func (client *ImageToPdfClient) GetOutputSize() int {
 // tag - A string with the custom tag.
 func (client *ImageToPdfClient) SetTag(tag string) *ImageToPdfClient {
     client.fields["tag"] = tag
+    return client
+}
+
+// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+//
+// httpProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *ImageToPdfClient) SetHttpProxy(httpProxy string) *ImageToPdfClient {
+    client.fields["http_proxy"] = httpProxy
+    return client
+}
+
+// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+//
+// httpsProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *ImageToPdfClient) SetHttpsProxy(httpsProxy string) *ImageToPdfClient {
+    client.fields["https_proxy"] = httpsProxy
     return client
 }
 
