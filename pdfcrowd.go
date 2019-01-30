@@ -38,7 +38,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "4.4.1"
+const CLIENT_VERSION = "4.4.2"
 
 type Error struct {
     message string
@@ -88,7 +88,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/4.4.1 (http://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/4.4.2 (http://pdfcrowd.com)")
     helper.retryCount = 1
     return helper
 }
@@ -888,7 +888,7 @@ func (client *HtmlToPdfClient) SetWaitForElement(selectors string) *HtmlToPdfCli
 
 // Set the viewport width in pixels. The viewport is the user's visible area of the page.
 //
-// viewportWidth - The value must be in a range 96-7680.
+// viewportWidth - The value must be in the range 96-7680.
 func (client *HtmlToPdfClient) SetViewportWidth(viewportWidth int) *HtmlToPdfClient {
     client.fields["viewport_width"] = strconv.Itoa(viewportWidth)
     return client
@@ -904,7 +904,7 @@ func (client *HtmlToPdfClient) SetViewportHeight(viewportHeight int) *HtmlToPdfC
 
 // Set the viewport size. The viewport is the user's visible area of the page.
 //
-// width - Set the viewport width in pixels. The viewport is the user's visible area of the page. The value must be in a range 96-7680.
+// width - Set the viewport width in pixels. The viewport is the user's visible area of the page. The value must be in the range 96-7680.
 // height - Set the viewport height in pixels. The viewport is the user's visible area of the page. Must be a positive integer number.
 func (client *HtmlToPdfClient) SetViewport(width int, height int) *HtmlToPdfClient {
     client.SetViewportWidth(width)
@@ -912,7 +912,7 @@ func (client *HtmlToPdfClient) SetViewport(width int, height int) *HtmlToPdfClie
     return client
 }
 
-// Sets the rendering mode.
+// Set the rendering mode.
 //
 // renderingMode - The rendering mode. Allowed values are default, viewport.
 func (client *HtmlToPdfClient) SetRenderingMode(renderingMode string) *HtmlToPdfClient {
@@ -922,7 +922,7 @@ func (client *HtmlToPdfClient) SetRenderingMode(renderingMode string) *HtmlToPdf
 
 // Set the scaling factor (zoom) for the main page area.
 //
-// scaleFactor - The scale factor. The value must be in a range 10-500.
+// scaleFactor - The percentage value. The value must be in the range 10-500.
 func (client *HtmlToPdfClient) SetScaleFactor(scaleFactor int) *HtmlToPdfClient {
     client.fields["scale_factor"] = strconv.Itoa(scaleFactor)
     return client
@@ -930,7 +930,7 @@ func (client *HtmlToPdfClient) SetScaleFactor(scaleFactor int) *HtmlToPdfClient 
 
 // Set the scaling factor (zoom) for the header and footer.
 //
-// headerFooterScaleFactor - The scale factor. The value must be in a range 10-500.
+// headerFooterScaleFactor - The percentage value. The value must be in the range 10-500.
 func (client *HtmlToPdfClient) SetHeaderFooterScaleFactor(headerFooterScaleFactor int) *HtmlToPdfClient {
     client.fields["header_footer_scale_factor"] = strconv.Itoa(headerFooterScaleFactor)
     return client
@@ -941,6 +941,30 @@ func (client *HtmlToPdfClient) SetHeaderFooterScaleFactor(headerFooterScaleFacto
 // disableSmartShrinking - Set to true to disable the intelligent shrinking strategy.
 func (client *HtmlToPdfClient) SetDisableSmartShrinking(disableSmartShrinking bool) *HtmlToPdfClient {
     client.fields["disable_smart_shrinking"] = strconv.FormatBool(disableSmartShrinking)
+    return client
+}
+
+// Set the quality of embedded JPEG images. Lower quality results in smaller PDF file. Lower quality affects printing or zooming in a PDF viewer.
+//
+// jpegQuality - The percentage value. The value must be in the range 1-100.
+func (client *HtmlToPdfClient) SetJpegQuality(jpegQuality int) *HtmlToPdfClient {
+    client.fields["jpeg_quality"] = strconv.Itoa(jpegQuality)
+    return client
+}
+
+// Set image categories to be converted into embedded JPEG images. The conversion into JPEG may result in smaller PDF file.
+//
+// convertImagesToJpeg - The image category. Allowed values are none, opaque, all.
+func (client *HtmlToPdfClient) SetConvertImagesToJpeg(convertImagesToJpeg string) *HtmlToPdfClient {
+    client.fields["convert_images_to_jpeg"] = convertImagesToJpeg
+    return client
+}
+
+// Set the DPI when embedded image is scaled down. Lower DPI may result in smaller PDF file. Lower DPI affects printing or zooming in a PDF viewer. Use 0 for no scaling down.
+//
+// imageDpi - The DPI value. Must be a positive integer number or 0.
+func (client *HtmlToPdfClient) SetImageDpi(imageDpi int) *HtmlToPdfClient {
+    client.fields["image_dpi"] = strconv.Itoa(imageDpi)
     return client
 }
 
@@ -1142,6 +1166,7 @@ func (client *HtmlToPdfClient) GetDebugLogUrl() string {
 }
 
 // Get the number of conversion credits available in your account.
+// The number is available after calling the conversion. So use the method after convertXYZ method.
 // The returned value can differ from the actual count if you run parallel conversions.
 // The special value 999999 is returned if the information is not available.
 func (client *HtmlToPdfClient) GetRemainingCreditCount() int {
@@ -1599,7 +1624,7 @@ func (client *HtmlToImageClient) SetWaitForElement(selectors string) *HtmlToImag
 
 // Set the output image width in pixels.
 //
-// screenshotWidth - The value must be in a range 96-7680.
+// screenshotWidth - The value must be in the range 96-7680.
 func (client *HtmlToImageClient) SetScreenshotWidth(screenshotWidth int) *HtmlToImageClient {
     client.fields["screenshot_width"] = strconv.Itoa(screenshotWidth)
     return client
@@ -1627,6 +1652,7 @@ func (client *HtmlToImageClient) GetDebugLogUrl() string {
 }
 
 // Get the number of conversion credits available in your account.
+// The number is available after calling the conversion. So use the method after convertXYZ method.
 // The returned value can differ from the actual count if you run parallel conversions.
 // The special value 999999 is returned if the information is not available.
 func (client *HtmlToImageClient) GetRemainingCreditCount() int {
@@ -1921,6 +1947,7 @@ func (client *ImageToImageClient) GetDebugLogUrl() string {
 }
 
 // Get the number of conversion credits available in your account.
+// The number is available after calling the conversion. So use the method after convertXYZ method.
 // The returned value can differ from the actual count if you run parallel conversions.
 // The special value 999999 is returned if the information is not available.
 func (client *ImageToImageClient) GetRemainingCreditCount() int {
@@ -2093,6 +2120,7 @@ func (client *PdfToPdfClient) GetDebugLogUrl() string {
 }
 
 // Get the number of conversion credits available in your account.
+// The number is available after calling the conversion. So use the method after convertXYZ method.
 // The returned value can differ from the actual count if you run parallel conversions.
 // The special value 999999 is returned if the information is not available.
 func (client *PdfToPdfClient) GetRemainingCreditCount() int {
@@ -2352,6 +2380,7 @@ func (client *ImageToPdfClient) GetDebugLogUrl() string {
 }
 
 // Get the number of conversion credits available in your account.
+// The number is available after calling the conversion. So use the method after convertXYZ method.
 // The returned value can differ from the actual count if you run parallel conversions.
 // The special value 999999 is returned if the information is not available.
 func (client *ImageToPdfClient) GetRemainingCreditCount() int {
