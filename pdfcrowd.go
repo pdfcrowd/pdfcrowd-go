@@ -38,7 +38,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "4.4.2"
+const CLIENT_VERSION = "4.5.0"
 
 type Error struct {
     message string
@@ -88,7 +88,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/4.4.2 (http://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/4.5.0 (http://pdfcrowd.com)")
     helper.retryCount = 1
     return helper
 }
@@ -838,11 +838,19 @@ func (client *HtmlToPdfClient) SetFailOnAnyUrlError(failOnError bool) *HtmlToPdf
     return client
 }
 
-// Run a custom JavaScript after the document is loaded. The script is intended for post-load DOM manipulation (add/remove elements, update CSS, ...).
+// Run a custom JavaScript after the document is loaded and ready to print. The script is intended for post-load DOM manipulation (add/remove elements, update CSS, ...). The custom JavaScript can use helper functions from our JavaScript library.
 //
-// customJavascript - String containing a JavaScript code. The string must not be empty.
+// customJavascript - A string containing a JavaScript code. The string must not be empty.
 func (client *HtmlToPdfClient) SetCustomJavascript(customJavascript string) *HtmlToPdfClient {
     client.fields["custom_javascript"] = customJavascript
+    return client
+}
+
+// Run a custom JavaScript right after the document is loaded. The script is intended for early DOM manipulation. The custom JavaScript can use helper functions from our JavaScript library.
+//
+// onLoadJavascript - A string containing a JavaScript code. The string must not be empty.
+func (client *HtmlToPdfClient) SetOnLoadJavascript(onLoadJavascript string) *HtmlToPdfClient {
+    client.fields["on_load_javascript"] = onLoadJavascript
     return client
 }
 
@@ -944,7 +952,7 @@ func (client *HtmlToPdfClient) SetDisableSmartShrinking(disableSmartShrinking bo
     return client
 }
 
-// Set the quality of embedded JPEG images. Lower quality results in smaller PDF file. Lower quality affects printing or zooming in a PDF viewer.
+// Set the quality of embedded JPEG images. A lower quality results in a smaller PDF file but can lead to compression artifacts.
 //
 // jpegQuality - The percentage value. The value must be in the range 1-100.
 func (client *HtmlToPdfClient) SetJpegQuality(jpegQuality int) *HtmlToPdfClient {
@@ -952,7 +960,7 @@ func (client *HtmlToPdfClient) SetJpegQuality(jpegQuality int) *HtmlToPdfClient 
     return client
 }
 
-// Set image categories to be converted into embedded JPEG images. The conversion into JPEG may result in smaller PDF file.
+// Specify which image types will be converted to JPEG. Converting lossless compression image formats (PNG, GIF, ...) to JPEG may result in a smaller PDF file.
 //
 // convertImagesToJpeg - The image category. Allowed values are none, opaque, all.
 func (client *HtmlToPdfClient) SetConvertImagesToJpeg(convertImagesToJpeg string) *HtmlToPdfClient {
@@ -960,7 +968,7 @@ func (client *HtmlToPdfClient) SetConvertImagesToJpeg(convertImagesToJpeg string
     return client
 }
 
-// Set the DPI when embedded image is scaled down. Lower DPI may result in smaller PDF file. Lower DPI affects printing or zooming in a PDF viewer. Use 0 for no scaling down.
+// Set the DPI of images in PDF. A lower DPI may result in a smaller PDF file. If the specified DPI is higher than the actual image DPI, the original image DPI is retained (no upscaling is performed). Use 0 to leave the images unaltered.
 //
 // imageDpi - The DPI value. Must be a positive integer number or 0.
 func (client *HtmlToPdfClient) SetImageDpi(imageDpi int) *HtmlToPdfClient {
@@ -1166,7 +1174,7 @@ func (client *HtmlToPdfClient) GetDebugLogUrl() string {
 }
 
 // Get the number of conversion credits available in your account.
-// The number is available after calling the conversion. So use the method after convertXYZ method.
+// This method can only be called after a call to one of the convertXYZ methods.
 // The returned value can differ from the actual count if you run parallel conversions.
 // The special value 999999 is returned if the information is not available.
 func (client *HtmlToPdfClient) GetRemainingCreditCount() int {
@@ -1574,11 +1582,19 @@ func (client *HtmlToImageClient) SetFailOnAnyUrlError(failOnError bool) *HtmlToI
     return client
 }
 
-// Run a custom JavaScript after the document is loaded. The script is intended for post-load DOM manipulation (add/remove elements, update CSS, ...).
+// Run a custom JavaScript after the document is loaded and ready to print. The script is intended for post-load DOM manipulation (add/remove elements, update CSS, ...). The custom JavaScript can use helper functions from our JavaScript library.
 //
-// customJavascript - String containing a JavaScript code. The string must not be empty.
+// customJavascript - A string containing a JavaScript code. The string must not be empty.
 func (client *HtmlToImageClient) SetCustomJavascript(customJavascript string) *HtmlToImageClient {
     client.fields["custom_javascript"] = customJavascript
+    return client
+}
+
+// Run a custom JavaScript right after the document is loaded. The script is intended for early DOM manipulation. The custom JavaScript can use helper functions from our JavaScript library.
+//
+// onLoadJavascript - A string containing a JavaScript code. The string must not be empty.
+func (client *HtmlToImageClient) SetOnLoadJavascript(onLoadJavascript string) *HtmlToImageClient {
+    client.fields["on_load_javascript"] = onLoadJavascript
     return client
 }
 
@@ -1652,7 +1668,7 @@ func (client *HtmlToImageClient) GetDebugLogUrl() string {
 }
 
 // Get the number of conversion credits available in your account.
-// The number is available after calling the conversion. So use the method after convertXYZ method.
+// This method can only be called after a call to one of the convertXYZ methods.
 // The returned value can differ from the actual count if you run parallel conversions.
 // The special value 999999 is returned if the information is not available.
 func (client *HtmlToImageClient) GetRemainingCreditCount() int {
@@ -1947,7 +1963,7 @@ func (client *ImageToImageClient) GetDebugLogUrl() string {
 }
 
 // Get the number of conversion credits available in your account.
-// The number is available after calling the conversion. So use the method after convertXYZ method.
+// This method can only be called after a call to one of the convertXYZ methods.
 // The returned value can differ from the actual count if you run parallel conversions.
 // The special value 999999 is returned if the information is not available.
 func (client *ImageToImageClient) GetRemainingCreditCount() int {
@@ -2120,7 +2136,7 @@ func (client *PdfToPdfClient) GetDebugLogUrl() string {
 }
 
 // Get the number of conversion credits available in your account.
-// The number is available after calling the conversion. So use the method after convertXYZ method.
+// This method can only be called after a call to one of the convertXYZ methods.
 // The returned value can differ from the actual count if you run parallel conversions.
 // The special value 999999 is returned if the information is not available.
 func (client *PdfToPdfClient) GetRemainingCreditCount() int {
@@ -2380,7 +2396,7 @@ func (client *ImageToPdfClient) GetDebugLogUrl() string {
 }
 
 // Get the number of conversion credits available in your account.
-// The number is available after calling the conversion. So use the method after convertXYZ method.
+// This method can only be called after a call to one of the convertXYZ methods.
 // The returned value can differ from the actual count if you run parallel conversions.
 // The special value 999999 is returned if the information is not available.
 func (client *ImageToPdfClient) GetRemainingCreditCount() int {
