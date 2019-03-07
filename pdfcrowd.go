@@ -38,7 +38,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "4.5.0"
+const CLIENT_VERSION = "4.6.0"
 
 type Error struct {
     message string
@@ -88,7 +88,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/4.5.0 (http://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/4.6.0 (http://pdfcrowd.com)")
     helper.retryCount = 1
     return helper
 }
@@ -1651,6 +1651,14 @@ func (client *HtmlToImageClient) SetScreenshotWidth(screenshotWidth int) *HtmlTo
 // screenshotHeight - Must be a positive integer number.
 func (client *HtmlToImageClient) SetScreenshotHeight(screenshotHeight int) *HtmlToImageClient {
     client.fields["screenshot_height"] = strconv.Itoa(screenshotHeight)
+    return client
+}
+
+// Set the scaling factor (zoom) for the output image.
+//
+// scaleFactor - The percentage value. Must be a positive integer number.
+func (client *HtmlToImageClient) SetScaleFactor(scaleFactor int) *HtmlToImageClient {
+    client.fields["scale_factor"] = strconv.Itoa(scaleFactor)
     return client
 }
 
