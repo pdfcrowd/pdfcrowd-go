@@ -38,7 +38,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "4.6.0"
+const CLIENT_VERSION = "4.7.0"
 
 type Error struct {
     message string
@@ -88,7 +88,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/4.6.0 (http://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/4.7.0 (http://pdfcrowd.com)")
     helper.retryCount = 1
     return helper
 }
@@ -925,6 +925,14 @@ func (client *HtmlToPdfClient) SetViewport(width int, height int) *HtmlToPdfClie
 // renderingMode - The rendering mode. Allowed values are default, viewport.
 func (client *HtmlToPdfClient) SetRenderingMode(renderingMode string) *HtmlToPdfClient {
     client.fields["rendering_mode"] = renderingMode
+    return client
+}
+
+// Specifies the scaling mode used for fitting the HTML contents to the print area.
+//
+// smartScalingMode - The smart scaling mode. Allowed values are default, disabled, viewport-fit, content-fit, single-page-fit.
+func (client *HtmlToPdfClient) SetSmartScalingMode(smartScalingMode string) *HtmlToPdfClient {
+    client.fields["smart_scaling_mode"] = smartScalingMode
     return client
 }
 
