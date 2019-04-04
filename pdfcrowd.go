@@ -38,7 +38,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "4.7.0"
+const CLIENT_VERSION = "4.8.0"
 
 type Error struct {
     message string
@@ -88,7 +88,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/4.7.0 (http://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/4.8.0 (http://pdfcrowd.com)")
     helper.retryCount = 1
     return helper
 }
@@ -716,6 +716,52 @@ func (client *HtmlToPdfClient) SetPageNumberingOffset(offset int) *HtmlToPdfClie
     return client
 }
 
+// Set the top left X coordinate of the content area.
+//
+// contentAreaX - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
+func (client *HtmlToPdfClient) SetContentAreaX(contentAreaX string) *HtmlToPdfClient {
+    client.fields["content_area_x"] = contentAreaX
+    return client
+}
+
+// Set the top left Y coordinate of the content area.
+//
+// contentAreaY - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
+func (client *HtmlToPdfClient) SetContentAreaY(contentAreaY string) *HtmlToPdfClient {
+    client.fields["content_area_y"] = contentAreaY
+    return client
+}
+
+// Set the width of the content area. It should be at least 1 inch.
+//
+// contentAreaWidth - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+func (client *HtmlToPdfClient) SetContentAreaWidth(contentAreaWidth string) *HtmlToPdfClient {
+    client.fields["content_area_width"] = contentAreaWidth
+    return client
+}
+
+// Set the height of the content area. It should be at least 1 inch.
+//
+// contentAreaHeight - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+func (client *HtmlToPdfClient) SetContentAreaHeight(contentAreaHeight string) *HtmlToPdfClient {
+    client.fields["content_area_height"] = contentAreaHeight
+    return client
+}
+
+// Set the content area position and size. The content area enables to specify a web page area to be converted.
+//
+// x - Set the top left X coordinate of the content area. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
+// y - Set the top left Y coordinate of the content area. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
+// width - Set the width of the content area. It should be at least 1 inch. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+// height - Set the height of the content area. It should be at least 1 inch. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+func (client *HtmlToPdfClient) SetContentArea(x string, y string, width string, height string) *HtmlToPdfClient {
+    client.SetContentAreaX(x)
+    client.SetContentAreaY(y)
+    client.SetContentAreaWidth(width)
+    client.SetContentAreaHeight(height)
+    return client
+}
+
 // Do not print the background graphics.
 //
 // noBackground - Set to true to disable the background graphics.
@@ -838,7 +884,7 @@ func (client *HtmlToPdfClient) SetFailOnAnyUrlError(failOnError bool) *HtmlToPdf
     return client
 }
 
-// Run a custom JavaScript after the document is loaded and ready to print. The script is intended for post-load DOM manipulation (add/remove elements, update CSS, ...). The custom JavaScript can use helper functions from our JavaScript library.
+// Run a custom JavaScript after the document is loaded and ready to print. The script is intended for post-load DOM manipulation (add/remove elements, update CSS, ...). In addition to the standard browser APIs, the custom JavaScript code can use helper functions from our JavaScript library.
 //
 // customJavascript - A string containing a JavaScript code. The string must not be empty.
 func (client *HtmlToPdfClient) SetCustomJavascript(customJavascript string) *HtmlToPdfClient {
@@ -846,7 +892,7 @@ func (client *HtmlToPdfClient) SetCustomJavascript(customJavascript string) *Htm
     return client
 }
 
-// Run a custom JavaScript right after the document is loaded. The script is intended for early DOM manipulation. The custom JavaScript can use helper functions from our JavaScript library.
+// Run a custom JavaScript right after the document is loaded. The script is intended for early DOM manipulation. In addition to the standard browser APIs, the custom JavaScript code can use helper functions from our JavaScript library.
 //
 // onLoadJavascript - A string containing a JavaScript code. The string must not be empty.
 func (client *HtmlToPdfClient) SetOnLoadJavascript(onLoadJavascript string) *HtmlToPdfClient {
@@ -1590,7 +1636,7 @@ func (client *HtmlToImageClient) SetFailOnAnyUrlError(failOnError bool) *HtmlToI
     return client
 }
 
-// Run a custom JavaScript after the document is loaded and ready to print. The script is intended for post-load DOM manipulation (add/remove elements, update CSS, ...). The custom JavaScript can use helper functions from our JavaScript library.
+// Run a custom JavaScript after the document is loaded and ready to print. The script is intended for post-load DOM manipulation (add/remove elements, update CSS, ...). In addition to the standard browser APIs, the custom JavaScript code can use helper functions from our JavaScript library.
 //
 // customJavascript - A string containing a JavaScript code. The string must not be empty.
 func (client *HtmlToImageClient) SetCustomJavascript(customJavascript string) *HtmlToImageClient {
@@ -1598,7 +1644,7 @@ func (client *HtmlToImageClient) SetCustomJavascript(customJavascript string) *H
     return client
 }
 
-// Run a custom JavaScript right after the document is loaded. The script is intended for early DOM manipulation. The custom JavaScript can use helper functions from our JavaScript library.
+// Run a custom JavaScript right after the document is loaded. The script is intended for early DOM manipulation. In addition to the standard browser APIs, the custom JavaScript code can use helper functions from our JavaScript library.
 //
 // onLoadJavascript - A string containing a JavaScript code. The string must not be empty.
 func (client *HtmlToImageClient) SetOnLoadJavascript(onLoadJavascript string) *HtmlToImageClient {
