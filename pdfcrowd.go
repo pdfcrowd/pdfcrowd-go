@@ -716,7 +716,7 @@ func (client *HtmlToPdfClient) SetPageNumberingOffset(offset int) *HtmlToPdfClie
     return client
 }
 
-// Set the top left X coordinate of the content area.
+// Set the top left X coordinate of the content area. It's relative to the top left X coordinate of the print area.
 //
 // contentAreaX - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
 func (client *HtmlToPdfClient) SetContentAreaX(contentAreaX string) *HtmlToPdfClient {
@@ -724,7 +724,7 @@ func (client *HtmlToPdfClient) SetContentAreaX(contentAreaX string) *HtmlToPdfCl
     return client
 }
 
-// Set the top left Y coordinate of the content area.
+// Set the top left Y coordinate of the content area. It's relative to the top left Y coordinate of the print area.
 //
 // contentAreaY - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
 func (client *HtmlToPdfClient) SetContentAreaY(contentAreaY string) *HtmlToPdfClient {
@@ -750,8 +750,8 @@ func (client *HtmlToPdfClient) SetContentAreaHeight(contentAreaHeight string) *H
 
 // Set the content area position and size. The content area enables to specify a web page area to be converted.
 //
-// x - Set the top left X coordinate of the content area. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
-// y - Set the top left Y coordinate of the content area. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
+// x - Set the top left X coordinate of the content area. It's relative to the top left X coordinate of the print area. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
+// y - Set the top left Y coordinate of the content area. It's relative to the top left Y coordinate of the print area. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
 // width - Set the width of the content area. It should be at least 1 inch. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
 // height - Set the height of the content area. It should be at least 1 inch. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
 func (client *HtmlToPdfClient) SetContentArea(x string, y string, width string, height string) *HtmlToPdfClient {
