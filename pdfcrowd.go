@@ -38,7 +38,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "4.8.0"
+const CLIENT_VERSION = "4.9.0"
 
 type Error struct {
     message string
@@ -88,7 +88,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/4.8.0 (http://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/4.9.0 (http://pdfcrowd.com)")
     helper.retryCount = 1
     return helper
 }
@@ -652,46 +652,6 @@ func (client *HtmlToPdfClient) SetPrintPageRange(pages string) *HtmlToPdfClient 
     return client
 }
 
-// The page background color in RGB or RGBA hexadecimal format. The color fills the entire page regardless of the margins.
-//
-// pageBackgroundColor - The value must be in RRGGBB or RRGGBBAA hexadecimal format.
-func (client *HtmlToPdfClient) SetPageBackgroundColor(pageBackgroundColor string) *HtmlToPdfClient {
-    client.fields["page_background_color"] = pageBackgroundColor
-    return client
-}
-
-// Apply the first page of the watermark PDF to every page of the output PDF.
-//
-// pageWatermark - The file path to a local watermark PDF file. The file must exist and not be empty.
-func (client *HtmlToPdfClient) SetPageWatermark(pageWatermark string) *HtmlToPdfClient {
-    client.files["page_watermark"] = pageWatermark
-    return client
-}
-
-// Apply each page of the specified watermark PDF to the corresponding page of the output PDF.
-//
-// multipageWatermark - The file path to a local watermark PDF file. The file must exist and not be empty.
-func (client *HtmlToPdfClient) SetMultipageWatermark(multipageWatermark string) *HtmlToPdfClient {
-    client.files["multipage_watermark"] = multipageWatermark
-    return client
-}
-
-// Apply the first page of the specified PDF to the background of every page of the output PDF.
-//
-// pageBackground - The file path to a local background PDF file. The file must exist and not be empty.
-func (client *HtmlToPdfClient) SetPageBackground(pageBackground string) *HtmlToPdfClient {
-    client.files["page_background"] = pageBackground
-    return client
-}
-
-// Apply each page of the specified PDF to the background of the corresponding page of the output PDF.
-//
-// multipageBackground - The file path to a local background PDF file. The file must exist and not be empty.
-func (client *HtmlToPdfClient) SetMultipageBackground(multipageBackground string) *HtmlToPdfClient {
-    client.files["multipage_background"] = multipageBackground
-    return client
-}
-
 // The page header is not printed on the specified pages.
 //
 // pages - List of physical page numbers. Negative numbers count backwards from the last page: -1 is the last page, -2 is the last but one page, and so on. A comma seperated list of page numbers.
@@ -759,6 +719,46 @@ func (client *HtmlToPdfClient) SetContentArea(x string, y string, width string, 
     client.SetContentAreaY(y)
     client.SetContentAreaWidth(width)
     client.SetContentAreaHeight(height)
+    return client
+}
+
+// Apply the first page of the watermark PDF to every page of the output PDF.
+//
+// pageWatermark - The file path to a local watermark PDF file. The file must exist and not be empty.
+func (client *HtmlToPdfClient) SetPageWatermark(pageWatermark string) *HtmlToPdfClient {
+    client.files["page_watermark"] = pageWatermark
+    return client
+}
+
+// Apply each page of the specified watermark PDF to the corresponding page of the output PDF.
+//
+// multipageWatermark - The file path to a local watermark PDF file. The file must exist and not be empty.
+func (client *HtmlToPdfClient) SetMultipageWatermark(multipageWatermark string) *HtmlToPdfClient {
+    client.files["multipage_watermark"] = multipageWatermark
+    return client
+}
+
+// Apply the first page of the specified PDF to the background of every page of the output PDF.
+//
+// pageBackground - The file path to a local background PDF file. The file must exist and not be empty.
+func (client *HtmlToPdfClient) SetPageBackground(pageBackground string) *HtmlToPdfClient {
+    client.files["page_background"] = pageBackground
+    return client
+}
+
+// Apply each page of the specified PDF to the background of the corresponding page of the output PDF.
+//
+// multipageBackground - The file path to a local background PDF file. The file must exist and not be empty.
+func (client *HtmlToPdfClient) SetMultipageBackground(multipageBackground string) *HtmlToPdfClient {
+    client.files["multipage_background"] = multipageBackground
+    return client
+}
+
+// The page background color in RGB or RGBA hexadecimal format. The color fills the entire page regardless of the margins.
+//
+// pageBackgroundColor - The value must be in RRGGBB or RRGGBBAA hexadecimal format.
+func (client *HtmlToPdfClient) SetPageBackgroundColor(pageBackgroundColor string) *HtmlToPdfClient {
+    client.fields["page_background_color"] = pageBackgroundColor
     return client
 }
 
@@ -892,7 +892,7 @@ func (client *HtmlToPdfClient) SetCustomJavascript(customJavascript string) *Htm
     return client
 }
 
-// Run a custom JavaScript right after the document is loaded. The script is intended for early DOM manipulation. In addition to the standard browser APIs, the custom JavaScript code can use helper functions from our JavaScript library.
+// Run a custom JavaScript right after the document is loaded. The script is intended for early DOM manipulation (add/remove elements, update CSS, ...). In addition to the standard browser APIs, the custom JavaScript code can use helper functions from our JavaScript library.
 //
 // onLoadJavascript - A string containing a JavaScript code. The string must not be empty.
 func (client *HtmlToPdfClient) SetOnLoadJavascript(onLoadJavascript string) *HtmlToPdfClient {
@@ -1644,7 +1644,7 @@ func (client *HtmlToImageClient) SetCustomJavascript(customJavascript string) *H
     return client
 }
 
-// Run a custom JavaScript right after the document is loaded. The script is intended for early DOM manipulation. In addition to the standard browser APIs, the custom JavaScript code can use helper functions from our JavaScript library.
+// Run a custom JavaScript right after the document is loaded. The script is intended for early DOM manipulation (add/remove elements, update CSS, ...). In addition to the standard browser APIs, the custom JavaScript code can use helper functions from our JavaScript library.
 //
 // onLoadJavascript - A string containing a JavaScript code. The string must not be empty.
 func (client *HtmlToImageClient) SetOnLoadJavascript(onLoadJavascript string) *HtmlToImageClient {
@@ -2181,6 +2181,190 @@ func (client *PdfToPdfClient) AddPdfFile(filePath string) *PdfToPdfClient {
 func (client *PdfToPdfClient) AddPdfRawData(pdfRawData []byte) *PdfToPdfClient {
     client.rawData["f_" + strconv.Itoa(client.fileId)] = pdfRawData
     client.fileId++
+    return client
+}
+
+// Apply the first page of the watermark PDF to every page of the output PDF.
+//
+// pageWatermark - The file path to a local watermark PDF file. The file must exist and not be empty.
+func (client *PdfToPdfClient) SetPageWatermark(pageWatermark string) *PdfToPdfClient {
+    client.files["page_watermark"] = pageWatermark
+    return client
+}
+
+// Apply each page of the specified watermark PDF to the corresponding page of the output PDF.
+//
+// multipageWatermark - The file path to a local watermark PDF file. The file must exist and not be empty.
+func (client *PdfToPdfClient) SetMultipageWatermark(multipageWatermark string) *PdfToPdfClient {
+    client.files["multipage_watermark"] = multipageWatermark
+    return client
+}
+
+// Apply the first page of the specified PDF to the background of every page of the output PDF.
+//
+// pageBackground - The file path to a local background PDF file. The file must exist and not be empty.
+func (client *PdfToPdfClient) SetPageBackground(pageBackground string) *PdfToPdfClient {
+    client.files["page_background"] = pageBackground
+    return client
+}
+
+// Apply each page of the specified PDF to the background of the corresponding page of the output PDF.
+//
+// multipageBackground - The file path to a local background PDF file. The file must exist and not be empty.
+func (client *PdfToPdfClient) SetMultipageBackground(multipageBackground string) *PdfToPdfClient {
+    client.files["multipage_background"] = multipageBackground
+    return client
+}
+
+// Create linearized PDF. This is also known as Fast Web View.
+//
+// linearize - Set to true to create linearized PDF.
+func (client *PdfToPdfClient) SetLinearize(linearize bool) *PdfToPdfClient {
+    client.fields["linearize"] = strconv.FormatBool(linearize)
+    return client
+}
+
+// Encrypt the PDF. This prevents search engines from indexing the contents.
+//
+// encrypt - Set to true to enable PDF encryption.
+func (client *PdfToPdfClient) SetEncrypt(encrypt bool) *PdfToPdfClient {
+    client.fields["encrypt"] = strconv.FormatBool(encrypt)
+    return client
+}
+
+// Protect the PDF with a user password. When a PDF has a user password, it must be supplied in order to view the document and to perform operations allowed by the access permissions.
+//
+// userPassword - The user password.
+func (client *PdfToPdfClient) SetUserPassword(userPassword string) *PdfToPdfClient {
+    client.fields["user_password"] = userPassword
+    return client
+}
+
+// Protect the PDF with an owner password. Supplying an owner password grants unlimited access to the PDF including changing the passwords and access permissions.
+//
+// ownerPassword - The owner password.
+func (client *PdfToPdfClient) SetOwnerPassword(ownerPassword string) *PdfToPdfClient {
+    client.fields["owner_password"] = ownerPassword
+    return client
+}
+
+// Disallow printing of the output PDF.
+//
+// noPrint - Set to true to set the no-print flag in the output PDF.
+func (client *PdfToPdfClient) SetNoPrint(noPrint bool) *PdfToPdfClient {
+    client.fields["no_print"] = strconv.FormatBool(noPrint)
+    return client
+}
+
+// Disallow modification of the ouput PDF.
+//
+// noModify - Set to true to set the read-only only flag in the output PDF.
+func (client *PdfToPdfClient) SetNoModify(noModify bool) *PdfToPdfClient {
+    client.fields["no_modify"] = strconv.FormatBool(noModify)
+    return client
+}
+
+// Disallow text and graphics extraction from the output PDF.
+//
+// noCopy - Set to true to set the no-copy flag in the output PDF.
+func (client *PdfToPdfClient) SetNoCopy(noCopy bool) *PdfToPdfClient {
+    client.fields["no_copy"] = strconv.FormatBool(noCopy)
+    return client
+}
+
+// Specify the page layout to be used when the document is opened.
+//
+// pageLayout - Allowed values are single-page, one-column, two-column-left, two-column-right.
+func (client *PdfToPdfClient) SetPageLayout(pageLayout string) *PdfToPdfClient {
+    client.fields["page_layout"] = pageLayout
+    return client
+}
+
+// Specify how the document should be displayed when opened.
+//
+// pageMode - Allowed values are full-screen, thumbnails, outlines.
+func (client *PdfToPdfClient) SetPageMode(pageMode string) *PdfToPdfClient {
+    client.fields["page_mode"] = pageMode
+    return client
+}
+
+// Specify how the page should be displayed when opened.
+//
+// initialZoomType - Allowed values are fit-width, fit-height, fit-page.
+func (client *PdfToPdfClient) SetInitialZoomType(initialZoomType string) *PdfToPdfClient {
+    client.fields["initial_zoom_type"] = initialZoomType
+    return client
+}
+
+// Display the specified page when the document is opened.
+//
+// initialPage - Must be a positive integer number.
+func (client *PdfToPdfClient) SetInitialPage(initialPage int) *PdfToPdfClient {
+    client.fields["initial_page"] = strconv.Itoa(initialPage)
+    return client
+}
+
+// Specify the initial page zoom in percents when the document is opened.
+//
+// initialZoom - Must be a positive integer number.
+func (client *PdfToPdfClient) SetInitialZoom(initialZoom int) *PdfToPdfClient {
+    client.fields["initial_zoom"] = strconv.Itoa(initialZoom)
+    return client
+}
+
+// Specify whether to hide the viewer application's tool bars when the document is active.
+//
+// hideToolbar - Set to true to hide tool bars.
+func (client *PdfToPdfClient) SetHideToolbar(hideToolbar bool) *PdfToPdfClient {
+    client.fields["hide_toolbar"] = strconv.FormatBool(hideToolbar)
+    return client
+}
+
+// Specify whether to hide the viewer application's menu bar when the document is active.
+//
+// hideMenubar - Set to true to hide the menu bar.
+func (client *PdfToPdfClient) SetHideMenubar(hideMenubar bool) *PdfToPdfClient {
+    client.fields["hide_menubar"] = strconv.FormatBool(hideMenubar)
+    return client
+}
+
+// Specify whether to hide user interface elements in the document's window (such as scroll bars and navigation controls), leaving only the document's contents displayed.
+//
+// hideWindowUi - Set to true to hide ui elements.
+func (client *PdfToPdfClient) SetHideWindowUi(hideWindowUi bool) *PdfToPdfClient {
+    client.fields["hide_window_ui"] = strconv.FormatBool(hideWindowUi)
+    return client
+}
+
+// Specify whether to resize the document's window to fit the size of the first displayed page.
+//
+// fitWindow - Set to true to resize the window.
+func (client *PdfToPdfClient) SetFitWindow(fitWindow bool) *PdfToPdfClient {
+    client.fields["fit_window"] = strconv.FormatBool(fitWindow)
+    return client
+}
+
+// Specify whether to position the document's window in the center of the screen.
+//
+// centerWindow - Set to true to center the window.
+func (client *PdfToPdfClient) SetCenterWindow(centerWindow bool) *PdfToPdfClient {
+    client.fields["center_window"] = strconv.FormatBool(centerWindow)
+    return client
+}
+
+// Specify whether the window's title bar should display the document title. If false , the title bar should instead display the name of the PDF file containing the document.
+//
+// displayTitle - Set to true to display the title.
+func (client *PdfToPdfClient) SetDisplayTitle(displayTitle bool) *PdfToPdfClient {
+    client.fields["display_title"] = strconv.FormatBool(displayTitle)
+    return client
+}
+
+// Set the predominant reading order for text to right-to-left. This option has no direct effect on the document's contents or page numbering but can be used to determine the relative positioning of pages when displayed side by side or printed n-up
+//
+// rightToLeft - Set to true to set right-to-left reading order.
+func (client *PdfToPdfClient) SetRightToLeft(rightToLeft bool) *PdfToPdfClient {
+    client.fields["right_to_left"] = strconv.FormatBool(rightToLeft)
     return client
 }
 
