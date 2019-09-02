@@ -38,7 +38,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "4.9.0"
+const CLIENT_VERSION = "4.10.0"
 
 type Error struct {
     message string
@@ -88,7 +88,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/4.9.0 (http://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/4.10.0 (http://pdfcrowd.com)")
     helper.retryCount = 1
     return helper
 }
@@ -404,10 +404,6 @@ func (client *HtmlToPdfClient) ConvertFile(file string) ([]byte, error) {
         return nil, Error{createInvalidValueMessage(file, "file", "html-to-pdf", "The file must exist and not be empty.", "convert_file"), 470}
     }
     
-    if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return nil, Error{createInvalidValueMessage(file, "file", "html-to-pdf", "The file name must have a valid extension.", "convert_file"), 470}
-    }
-    
     client.files["file"] = file
     return client.helper.post(client.fields, client.files, client.rawData, nil)
 }
@@ -419,10 +415,6 @@ func (client *HtmlToPdfClient) ConvertFile(file string) ([]byte, error) {
 func (client *HtmlToPdfClient) ConvertFileToStream(file string, outStream io.Writer) error {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
         return Error{createInvalidValueMessage(file, "file", "html-to-pdf", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
-    }
-    
-    if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return Error{createInvalidValueMessage(file, "file", "html-to-pdf", "The file name must have a valid extension.", "convert_file_to_stream"), 470}
     }
     
     client.files["file"] = file
@@ -574,7 +566,7 @@ func (client *HtmlToPdfClient) SetMarginLeft(marginLeft string) *HtmlToPdfClient
     return client
 }
 
-// Disable margins.
+// Disable page margins.
 //
 // noMargins - Set to true to disable margins.
 func (client *HtmlToPdfClient) SetNoMargins(noMargins bool) *HtmlToPdfClient {
@@ -676,7 +668,7 @@ func (client *HtmlToPdfClient) SetPageNumberingOffset(offset int) *HtmlToPdfClie
     return client
 }
 
-// Set the top left X coordinate of the content area. It's relative to the top left X coordinate of the print area.
+// Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area.
 //
 // contentAreaX - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
 func (client *HtmlToPdfClient) SetContentAreaX(contentAreaX string) *HtmlToPdfClient {
@@ -684,7 +676,7 @@ func (client *HtmlToPdfClient) SetContentAreaX(contentAreaX string) *HtmlToPdfCl
     return client
 }
 
-// Set the top left Y coordinate of the content area. It's relative to the top left Y coordinate of the print area.
+// Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area.
 //
 // contentAreaY - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
 func (client *HtmlToPdfClient) SetContentAreaY(contentAreaY string) *HtmlToPdfClient {
@@ -710,8 +702,8 @@ func (client *HtmlToPdfClient) SetContentAreaHeight(contentAreaHeight string) *H
 
 // Set the content area position and size. The content area enables to specify a web page area to be converted.
 //
-// x - Set the top left X coordinate of the content area. It's relative to the top left X coordinate of the print area. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
-// y - Set the top left Y coordinate of the content area. It's relative to the top left Y coordinate of the print area. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
+// x - Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
+// y - Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
 // width - Set the width of the content area. It should be at least 1 inch. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
 // height - Set the height of the content area. It should be at least 1 inch. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
 func (client *HtmlToPdfClient) SetContentArea(x string, y string, width string, height string) *HtmlToPdfClient {
@@ -942,7 +934,7 @@ func (client *HtmlToPdfClient) SetWaitForElement(selectors string) *HtmlToPdfCli
 
 // Set the viewport width in pixels. The viewport is the user's visible area of the page.
 //
-// viewportWidth - The value must be in the range 96-7680.
+// viewportWidth - The value must be in the range 96-65000.
 func (client *HtmlToPdfClient) SetViewportWidth(viewportWidth int) *HtmlToPdfClient {
     client.fields["viewport_width"] = strconv.Itoa(viewportWidth)
     return client
@@ -958,7 +950,7 @@ func (client *HtmlToPdfClient) SetViewportHeight(viewportHeight int) *HtmlToPdfC
 
 // Set the viewport size. The viewport is the user's visible area of the page.
 //
-// width - Set the viewport width in pixels. The viewport is the user's visible area of the page. The value must be in the range 96-7680.
+// width - Set the viewport width in pixels. The viewport is the user's visible area of the page. The value must be in the range 96-65000.
 // height - Set the viewport height in pixels. The viewport is the user's visible area of the page. Must be a positive integer number.
 func (client *HtmlToPdfClient) SetViewport(width int, height int) *HtmlToPdfClient {
     client.SetViewportWidth(width)
@@ -1287,7 +1279,7 @@ func (client *HtmlToPdfClient) SetClientCertificate(clientCertificate string) *H
     return client
 }
 
-// A password for PKCS12 file with a client certificate if it's needed.
+// A password for PKCS12 file with a client certificate if it is needed.
 //
 // clientCertificatePassword -
 func (client *HtmlToPdfClient) SetClientCertificatePassword(clientCertificatePassword string) *HtmlToPdfClient {
@@ -1418,10 +1410,6 @@ func (client *HtmlToImageClient) ConvertFile(file string) ([]byte, error) {
         return nil, Error{createInvalidValueMessage(file, "file", "html-to-image", "The file must exist and not be empty.", "convert_file"), 470}
     }
     
-    if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return nil, Error{createInvalidValueMessage(file, "file", "html-to-image", "The file name must have a valid extension.", "convert_file"), 470}
-    }
-    
     client.files["file"] = file
     return client.helper.post(client.fields, client.files, client.rawData, nil)
 }
@@ -1433,10 +1421,6 @@ func (client *HtmlToImageClient) ConvertFile(file string) ([]byte, error) {
 func (client *HtmlToImageClient) ConvertFileToStream(file string, outStream io.Writer) error {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
         return Error{createInvalidValueMessage(file, "file", "html-to-image", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
-    }
-    
-    if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return Error{createInvalidValueMessage(file, "file", "html-to-image", "The file name must have a valid extension.", "convert_file_to_stream"), 470}
     }
     
     client.files["file"] = file
@@ -1694,13 +1678,13 @@ func (client *HtmlToImageClient) SetWaitForElement(selectors string) *HtmlToImag
 
 // Set the output image width in pixels.
 //
-// screenshotWidth - The value must be in the range 96-7680.
+// screenshotWidth - The value must be in the range 96-65000.
 func (client *HtmlToImageClient) SetScreenshotWidth(screenshotWidth int) *HtmlToImageClient {
     client.fields["screenshot_width"] = strconv.Itoa(screenshotWidth)
     return client
 }
 
-// Set the output image height in pixels. If it's not specified, actual document height is used.
+// Set the output image height in pixels. If it is not specified, actual document height is used.
 //
 // screenshotHeight - Must be a positive integer number.
 func (client *HtmlToImageClient) SetScreenshotHeight(screenshotHeight int) *HtmlToImageClient {
@@ -1784,7 +1768,7 @@ func (client *HtmlToImageClient) SetClientCertificate(clientCertificate string) 
     return client
 }
 
-// A password for PKCS12 file with a client certificate if it's needed.
+// A password for PKCS12 file with a client certificate if it is needed.
 //
 // clientCertificatePassword -
 func (client *HtmlToImageClient) SetClientCertificatePassword(clientCertificatePassword string) *HtmlToImageClient {
