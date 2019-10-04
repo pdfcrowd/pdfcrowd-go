@@ -38,7 +38,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "4.10.0"
+const CLIENT_VERSION = "4.11.0"
 
 type Error struct {
     message string
@@ -88,7 +88,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/4.10.0 (http://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/4.11.0 (http://pdfcrowd.com)")
     helper.retryCount = 1
     return helper
 }
@@ -722,11 +722,27 @@ func (client *HtmlToPdfClient) SetPageWatermark(pageWatermark string) *HtmlToPdf
     return client
 }
 
+// Load a watermark PDF from the specified URL and apply the first page of the watermark PDF to every page of the output PDF.
+//
+// pageWatermarkUrl - The supported protocols are http:// and https://.
+func (client *HtmlToPdfClient) SetPageWatermarkUrl(pageWatermarkUrl string) *HtmlToPdfClient {
+    client.fields["page_watermark_url"] = pageWatermarkUrl
+    return client
+}
+
 // Apply each page of the specified watermark PDF to the corresponding page of the output PDF.
 //
 // multipageWatermark - The file path to a local watermark PDF file. The file must exist and not be empty.
 func (client *HtmlToPdfClient) SetMultipageWatermark(multipageWatermark string) *HtmlToPdfClient {
     client.files["multipage_watermark"] = multipageWatermark
+    return client
+}
+
+// Load a watermark PDF from the specified URL and apply each page of the specified watermark PDF to the corresponding page of the output PDF.
+//
+// multipageWatermarkUrl - The supported protocols are http:// and https://.
+func (client *HtmlToPdfClient) SetMultipageWatermarkUrl(multipageWatermarkUrl string) *HtmlToPdfClient {
+    client.fields["multipage_watermark_url"] = multipageWatermarkUrl
     return client
 }
 
@@ -738,11 +754,27 @@ func (client *HtmlToPdfClient) SetPageBackground(pageBackground string) *HtmlToP
     return client
 }
 
+// Load a background PDF from the specified URL and apply the first page of the background PDF to every page of the output PDF.
+//
+// pageBackgroundUrl - The supported protocols are http:// and https://.
+func (client *HtmlToPdfClient) SetPageBackgroundUrl(pageBackgroundUrl string) *HtmlToPdfClient {
+    client.fields["page_background_url"] = pageBackgroundUrl
+    return client
+}
+
 // Apply each page of the specified PDF to the background of the corresponding page of the output PDF.
 //
 // multipageBackground - The file path to a local background PDF file. The file must exist and not be empty.
 func (client *HtmlToPdfClient) SetMultipageBackground(multipageBackground string) *HtmlToPdfClient {
     client.files["multipage_background"] = multipageBackground
+    return client
+}
+
+// Load a background PDF from the specified URL and apply each page of the specified background PDF to the corresponding page of the output PDF.
+//
+// multipageBackgroundUrl - The supported protocols are http:// and https://.
+func (client *HtmlToPdfClient) SetMultipageBackgroundUrl(multipageBackgroundUrl string) *HtmlToPdfClient {
+    client.fields["multipage_background_url"] = multipageBackgroundUrl
     return client
 }
 
@@ -2176,11 +2208,27 @@ func (client *PdfToPdfClient) SetPageWatermark(pageWatermark string) *PdfToPdfCl
     return client
 }
 
+// Load a watermark PDF from the specified URL and apply the first page of the watermark PDF to every page of the output PDF.
+//
+// pageWatermarkUrl - The supported protocols are http:// and https://.
+func (client *PdfToPdfClient) SetPageWatermarkUrl(pageWatermarkUrl string) *PdfToPdfClient {
+    client.fields["page_watermark_url"] = pageWatermarkUrl
+    return client
+}
+
 // Apply each page of the specified watermark PDF to the corresponding page of the output PDF.
 //
 // multipageWatermark - The file path to a local watermark PDF file. The file must exist and not be empty.
 func (client *PdfToPdfClient) SetMultipageWatermark(multipageWatermark string) *PdfToPdfClient {
     client.files["multipage_watermark"] = multipageWatermark
+    return client
+}
+
+// Load a watermark PDF from the specified URL and apply each page of the specified watermark PDF to the corresponding page of the output PDF.
+//
+// multipageWatermarkUrl - The supported protocols are http:// and https://.
+func (client *PdfToPdfClient) SetMultipageWatermarkUrl(multipageWatermarkUrl string) *PdfToPdfClient {
+    client.fields["multipage_watermark_url"] = multipageWatermarkUrl
     return client
 }
 
@@ -2192,11 +2240,27 @@ func (client *PdfToPdfClient) SetPageBackground(pageBackground string) *PdfToPdf
     return client
 }
 
+// Load a background PDF from the specified URL and apply the first page of the background PDF to every page of the output PDF.
+//
+// pageBackgroundUrl - The supported protocols are http:// and https://.
+func (client *PdfToPdfClient) SetPageBackgroundUrl(pageBackgroundUrl string) *PdfToPdfClient {
+    client.fields["page_background_url"] = pageBackgroundUrl
+    return client
+}
+
 // Apply each page of the specified PDF to the background of the corresponding page of the output PDF.
 //
 // multipageBackground - The file path to a local background PDF file. The file must exist and not be empty.
 func (client *PdfToPdfClient) SetMultipageBackground(multipageBackground string) *PdfToPdfClient {
     client.files["multipage_background"] = multipageBackground
+    return client
+}
+
+// Load a background PDF from the specified URL and apply each page of the specified background PDF to the corresponding page of the output PDF.
+//
+// multipageBackgroundUrl - The supported protocols are http:// and https://.
+func (client *PdfToPdfClient) SetMultipageBackgroundUrl(multipageBackgroundUrl string) *PdfToPdfClient {
+    client.fields["multipage_background_url"] = multipageBackgroundUrl
     return client
 }
 
