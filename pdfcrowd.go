@@ -638,7 +638,7 @@ func (client *HtmlToPdfClient) SetFooterHeight(footerHeight string) *HtmlToPdfCl
 
 // Set the page range to print.
 //
-// pages - A comma seperated list of page numbers or ranges.
+// pages - A comma separated list of page numbers or ranges.
 func (client *HtmlToPdfClient) SetPrintPageRange(pages string) *HtmlToPdfClient {
     client.fields["print_page_range"] = pages
     return client
@@ -646,7 +646,7 @@ func (client *HtmlToPdfClient) SetPrintPageRange(pages string) *HtmlToPdfClient 
 
 // The page header is not printed on the specified pages.
 //
-// pages - List of physical page numbers. Negative numbers count backwards from the last page: -1 is the last page, -2 is the last but one page, and so on. A comma seperated list of page numbers.
+// pages - List of physical page numbers. Negative numbers count backwards from the last page: -1 is the last page, -2 is the last but one page, and so on. A comma separated list of page numbers.
 func (client *HtmlToPdfClient) SetExcludeHeaderOnPages(pages string) *HtmlToPdfClient {
     client.fields["exclude_header_on_pages"] = pages
     return client
@@ -654,7 +654,7 @@ func (client *HtmlToPdfClient) SetExcludeHeaderOnPages(pages string) *HtmlToPdfC
 
 // The page footer is not printed on the specified pages.
 //
-// pages - List of physical page numbers. Negative numbers count backwards from the last page: -1 is the last page, -2 is the last but one page, and so on. A comma seperated list of page numbers.
+// pages - List of physical page numbers. Negative numbers count backwards from the last page: -1 is the last page, -2 is the last but one page, and so on. A comma separated list of page numbers.
 func (client *HtmlToPdfClient) SetExcludeFooterOnPages(pages string) *HtmlToPdfClient {
     client.fields["exclude_footer_on_pages"] = pages
     return client
@@ -1094,7 +1094,7 @@ func (client *HtmlToPdfClient) SetNoPrint(noPrint bool) *HtmlToPdfClient {
     return client
 }
 
-// Disallow modification of the ouput PDF.
+// Disallow modification of the output PDF.
 //
 // noModify - Set to true to set the read-only only flag in the output PDF.
 func (client *HtmlToPdfClient) SetNoModify(noModify bool) *HtmlToPdfClient {
@@ -2304,7 +2304,7 @@ func (client *PdfToPdfClient) SetNoPrint(noPrint bool) *PdfToPdfClient {
     return client
 }
 
-// Disallow modification of the ouput PDF.
+// Disallow modification of the output PDF.
 //
 // noModify - Set to true to set the read-only only flag in the output PDF.
 func (client *PdfToPdfClient) SetNoModify(noModify bool) *PdfToPdfClient {
