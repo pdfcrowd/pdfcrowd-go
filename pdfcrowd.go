@@ -932,7 +932,7 @@ func (client *HtmlToPdfClient) SetCustomHttpHeader(customHttpHeader string) *Htm
     return client
 }
 
-// Wait the specified number of milliseconds to finish all JavaScript after the document is loaded. The maximum value is determined by your API license.
+// Wait the specified number of milliseconds to finish all JavaScript after the document is loaded. Your API license defines the maximum wait time by "Max Delay" parameter.
 //
 // javascriptDelay - The number of milliseconds to wait. Must be a positive integer number or 0.
 func (client *HtmlToPdfClient) SetJavascriptDelay(javascriptDelay int) *HtmlToPdfClient {
@@ -1676,7 +1676,7 @@ func (client *HtmlToImageClient) SetCustomHttpHeader(customHttpHeader string) *H
     return client
 }
 
-// Wait the specified number of milliseconds to finish all JavaScript after the document is loaded. The maximum value is determined by your API license.
+// Wait the specified number of milliseconds to finish all JavaScript after the document is loaded. Your API license defines the maximum wait time by "Max Delay" parameter.
 //
 // javascriptDelay - The number of milliseconds to wait. Must be a positive integer number or 0.
 func (client *HtmlToImageClient) SetJavascriptDelay(javascriptDelay int) *HtmlToImageClient {
