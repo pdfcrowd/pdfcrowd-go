@@ -1319,7 +1319,7 @@ func (client *HtmlToPdfClient) SetClientCertificatePassword(clientCertificatePas
     return client
 }
 
-// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API. Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
 // useHttp - Set to true to use HTTP.
 func (client *HtmlToPdfClient) SetUseHttp(useHttp bool) *HtmlToPdfClient {
@@ -1808,7 +1808,7 @@ func (client *HtmlToImageClient) SetClientCertificatePassword(clientCertificateP
     return client
 }
 
-// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API. Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
 // useHttp - Set to true to use HTTP.
 func (client *HtmlToImageClient) SetUseHttp(useHttp bool) *HtmlToImageClient {
@@ -2087,7 +2087,7 @@ func (client *ImageToImageClient) SetHttpsProxy(httpsProxy string) *ImageToImage
     return client
 }
 
-// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API. Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
 // useHttp - Set to true to use HTTP.
 func (client *ImageToImageClient) SetUseHttp(useHttp bool) *ImageToImageClient {
@@ -2465,7 +2465,7 @@ func (client *PdfToPdfClient) SetTag(tag string) *PdfToPdfClient {
     return client
 }
 
-// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API. Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
 // useHttp - Set to true to use HTTP.
 func (client *PdfToPdfClient) SetUseHttp(useHttp bool) *PdfToPdfClient {
@@ -2736,7 +2736,7 @@ func (client *ImageToPdfClient) SetHttpsProxy(httpsProxy string) *ImageToPdfClie
     return client
 }
 
-// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API. Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
 // useHttp - Set to true to use HTTP.
 func (client *ImageToPdfClient) SetUseHttp(useHttp bool) *ImageToPdfClient {
