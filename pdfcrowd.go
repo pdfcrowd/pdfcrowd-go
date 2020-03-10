@@ -163,7 +163,7 @@ func (helper *connectionHelper) getOutputSize() int {
 }
 
 func createInvalidValueMessage(value interface{}, field string, converter string, hint string, id string) string {
-    message := fmt.Sprintf("Invalid value '%s' for a field '%s'.", value, field)
+    message := fmt.Sprintf("Invalid value '%s' for the field '%s'.", value, field)
     if len(hint) > 0 {
         message += " " + hint
     }
