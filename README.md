@@ -13,10 +13,12 @@ To install via Go language:
 
     $ go get github.com/pdfcrowd/pdfcrowd-go
 
-## Documentation
+## Learn more
 
 * API Home:  <https://pdfcrowd.com/doc/api/>
 * API Reference:  <https://pdfcrowd.com/doc/api/html-to-pdf/go/>
+* Interactive API Playground:
+  * Go lang: <https://pdfcrowd.com/playground/html-to-pdf/?lang=go>
 
 ## License
 
