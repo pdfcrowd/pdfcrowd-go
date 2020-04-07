@@ -38,7 +38,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "4.11.0"
+const CLIENT_VERSION = "4.12.0"
 
 type Error struct {
     message string
@@ -88,7 +88,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/4.11.0 (http://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/4.12.0 (http://pdfcrowd.com)")
     helper.retryCount = 1
     return helper
 }
@@ -711,6 +711,70 @@ func (client *HtmlToPdfClient) SetContentArea(x string, y string, width string, 
     client.SetContentAreaY(y)
     client.SetContentAreaWidth(width)
     client.SetContentAreaHeight(height)
+    return client
+}
+
+// Set the input data for template rendering. The data format can be JSON, XML, YAML or CSV.
+//
+// dataString - The input data string.
+func (client *HtmlToPdfClient) SetDataString(dataString string) *HtmlToPdfClient {
+    client.fields["data_string"] = dataString
+    return client
+}
+
+// Load the input data for template rendering from the specified file. The data format can be JSON, XML, YAML or CSV.
+//
+// dataFile - The file path to a local file containing the input data.
+func (client *HtmlToPdfClient) SetDataFile(dataFile string) *HtmlToPdfClient {
+    client.files["data_file"] = dataFile
+    return client
+}
+
+// Specify the input data format.
+//
+// dataFormat - The data format. Allowed values are auto, json, xml, yaml, csv.
+func (client *HtmlToPdfClient) SetDataFormat(dataFormat string) *HtmlToPdfClient {
+    client.fields["data_format"] = dataFormat
+    return client
+}
+
+// Set the encoding of the data file set by setDataFile.
+//
+// dataEncoding - The data file encoding.
+func (client *HtmlToPdfClient) SetDataEncoding(dataEncoding string) *HtmlToPdfClient {
+    client.fields["data_encoding"] = dataEncoding
+    return client
+}
+
+// Ignore undefined variables in the HTML template. The default mode is strict so any undefined variable causes the conversion to fail. You can use {% if variable is defined %} to check if the variable is defined.
+//
+// dataIgnoreUndefined - Set to true to ignore undefined variables.
+func (client *HtmlToPdfClient) SetDataIgnoreUndefined(dataIgnoreUndefined bool) *HtmlToPdfClient {
+    client.fields["data_ignore_undefined"] = strconv.FormatBool(dataIgnoreUndefined)
+    return client
+}
+
+// Auto escape HTML symbols in the input data before placing them into the output.
+//
+// dataAutoEscape - Set to true to turn auto escaping on.
+func (client *HtmlToPdfClient) SetDataAutoEscape(dataAutoEscape bool) *HtmlToPdfClient {
+    client.fields["data_auto_escape"] = strconv.FormatBool(dataAutoEscape)
+    return client
+}
+
+// Auto trim whitespace around each template command block.
+//
+// dataTrimBlocks - Set to true to turn auto trimming on.
+func (client *HtmlToPdfClient) SetDataTrimBlocks(dataTrimBlocks bool) *HtmlToPdfClient {
+    client.fields["data_trim_blocks"] = strconv.FormatBool(dataTrimBlocks)
+    return client
+}
+
+// Set the advanced data options:csv_delimiter - The CSV data delimiter, the default is ,.xml_remove_root - Remove the root XML element from the input data.data_root - The name of the root element inserted into the input data without a root node (e.g. CSV), the default is data.
+//
+// dataOptions - Comma separated list of options.
+func (client *HtmlToPdfClient) SetDataOptions(dataOptions string) *HtmlToPdfClient {
+    client.fields["data_options"] = dataOptions
     return client
 }
 
@@ -1529,6 +1593,70 @@ func (client *HtmlToImageClient) ConvertStringToFile(text string, filePath strin
         return err
     }
     return nil
+}
+
+// Set the input data for template rendering. The data format can be JSON, XML, YAML or CSV.
+//
+// dataString - The input data string.
+func (client *HtmlToImageClient) SetDataString(dataString string) *HtmlToImageClient {
+    client.fields["data_string"] = dataString
+    return client
+}
+
+// Load the input data for template rendering from the specified file. The data format can be JSON, XML, YAML or CSV.
+//
+// dataFile - The file path to a local file containing the input data.
+func (client *HtmlToImageClient) SetDataFile(dataFile string) *HtmlToImageClient {
+    client.files["data_file"] = dataFile
+    return client
+}
+
+// Specify the input data format.
+//
+// dataFormat - The data format. Allowed values are auto, json, xml, yaml, csv.
+func (client *HtmlToImageClient) SetDataFormat(dataFormat string) *HtmlToImageClient {
+    client.fields["data_format"] = dataFormat
+    return client
+}
+
+// Set the encoding of the data file set by setDataFile.
+//
+// dataEncoding - The data file encoding.
+func (client *HtmlToImageClient) SetDataEncoding(dataEncoding string) *HtmlToImageClient {
+    client.fields["data_encoding"] = dataEncoding
+    return client
+}
+
+// Ignore undefined variables in the HTML template. The default mode is strict so any undefined variable causes the conversion to fail. You can use {% if variable is defined %} to check if the variable is defined.
+//
+// dataIgnoreUndefined - Set to true to ignore undefined variables.
+func (client *HtmlToImageClient) SetDataIgnoreUndefined(dataIgnoreUndefined bool) *HtmlToImageClient {
+    client.fields["data_ignore_undefined"] = strconv.FormatBool(dataIgnoreUndefined)
+    return client
+}
+
+// Auto escape HTML symbols in the input data before placing them into the output.
+//
+// dataAutoEscape - Set to true to turn auto escaping on.
+func (client *HtmlToImageClient) SetDataAutoEscape(dataAutoEscape bool) *HtmlToImageClient {
+    client.fields["data_auto_escape"] = strconv.FormatBool(dataAutoEscape)
+    return client
+}
+
+// Auto trim whitespace around each template command block.
+//
+// dataTrimBlocks - Set to true to turn auto trimming on.
+func (client *HtmlToImageClient) SetDataTrimBlocks(dataTrimBlocks bool) *HtmlToImageClient {
+    client.fields["data_trim_blocks"] = strconv.FormatBool(dataTrimBlocks)
+    return client
+}
+
+// Set the advanced data options:csv_delimiter - The CSV data delimiter, the default is ,.xml_remove_root - Remove the root XML element from the input data.data_root - The name of the root element inserted into the input data without a root node (e.g. CSV), the default is data.
+//
+// dataOptions - Comma separated list of options.
+func (client *HtmlToImageClient) SetDataOptions(dataOptions string) *HtmlToImageClient {
+    client.fields["data_options"] = dataOptions
+    return client
 }
 
 // Do not print the background graphics.
