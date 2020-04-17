@@ -1392,7 +1392,7 @@ func (client *HtmlToPdfClient) SetUseHttp(useHttp bool) *HtmlToPdfClient {
     return client
 }
 
-// Set a custom user agent HTTP header. It can be usefull if you are behind some proxy or firewall.
+// Set a custom user agent HTTP header. It can be useful if you are behind some proxy or firewall.
 //
 // userAgent - The user agent string.
 func (client *HtmlToPdfClient) SetUserAgent(userAgent string) *HtmlToPdfClient {
@@ -1946,7 +1946,7 @@ func (client *HtmlToImageClient) SetUseHttp(useHttp bool) *HtmlToImageClient {
     return client
 }
 
-// Set a custom user agent HTTP header. It can be usefull if you are behind some proxy or firewall.
+// Set a custom user agent HTTP header. It can be useful if you are behind some proxy or firewall.
 //
 // userAgent - The user agent string.
 func (client *HtmlToImageClient) SetUserAgent(userAgent string) *HtmlToImageClient {
@@ -2226,7 +2226,7 @@ func (client *ImageToImageClient) SetUseHttp(useHttp bool) *ImageToImageClient {
     return client
 }
 
-// Set a custom user agent HTTP header. It can be usefull if you are behind some proxy or firewall.
+// Set a custom user agent HTTP header. It can be useful if you are behind some proxy or firewall.
 //
 // userAgent - The user agent string.
 func (client *ImageToImageClient) SetUserAgent(userAgent string) *ImageToImageClient {
@@ -2605,7 +2605,7 @@ func (client *PdfToPdfClient) SetUseHttp(useHttp bool) *PdfToPdfClient {
     return client
 }
 
-// Set a custom user agent HTTP header. It can be usefull if you are behind some proxy or firewall.
+// Set a custom user agent HTTP header. It can be useful if you are behind some proxy or firewall.
 //
 // userAgent - The user agent string.
 func (client *PdfToPdfClient) SetUserAgent(userAgent string) *PdfToPdfClient {
@@ -2877,7 +2877,7 @@ func (client *ImageToPdfClient) SetUseHttp(useHttp bool) *ImageToPdfClient {
     return client
 }
 
-// Set a custom user agent HTTP header. It can be usefull if you are behind some proxy or firewall.
+// Set a custom user agent HTTP header. It can be useful if you are behind some proxy or firewall.
 //
 // userAgent - The user agent string.
 func (client *ImageToPdfClient) SetUserAgent(userAgent string) *ImageToPdfClient {
