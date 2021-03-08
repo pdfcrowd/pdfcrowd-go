@@ -38,7 +38,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "4.12.0"
+const CLIENT_VERSION = "5.0.0"
 
 type Error struct {
     message string
@@ -80,6 +80,7 @@ type connectionHelper struct {
 
     retryCount int
     retry int
+    converterVersion string
 
     transport *http.Transport
 }
@@ -88,8 +89,9 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/4.12.0 (http://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.0.0 (http://pdfcrowd.com)")
     helper.retryCount = 1
+    helper.converterVersion = "20.10"
     return helper
 }
 
@@ -131,6 +133,10 @@ func (helper *connectionHelper) setRetryCount(retryCount int) {
     helper.retryCount = retryCount
 }
 
+func (helper *connectionHelper) setConverterVersion(converterVersion string) {
+    helper.converterVersion = converterVersion
+}
+
 func (helper *connectionHelper) setProxy(host string, port int, userName, password string) {
     helper.proxyHost = host
     helper.proxyPort = port
@@ -162,8 +168,12 @@ func (helper *connectionHelper) getOutputSize() int {
     return helper.outputSize
 }
 
+func (helper *connectionHelper) getConverterVersion() string {
+    return helper.converterVersion
+}
+
 func createInvalidValueMessage(value interface{}, field string, converter string, hint string, id string) string {
-    message := fmt.Sprintf("Invalid value '%s' for the field '%s'.", value, field)
+    message := fmt.Sprintf("Invalid value '%s' for %s.", value, field)
     if len(hint) > 0 {
         message += " " + hint
     }
@@ -252,7 +262,10 @@ func (helper* connectionHelper) post(fields, files map[string]string, rawData ma
             return nil, err
         }
 
-        request, err := http.NewRequest("POST", helper.apiUri, body)
+        request, err := http.NewRequest(
+            "POST",
+            helper.apiUri + helper.converterVersion + "/",
+            body)
         if err != nil {
             return nil, err
         }
@@ -352,7 +365,7 @@ func NewHtmlToPdfClient(userName string, apiKey string) HtmlToPdfClient {
 func (client *HtmlToPdfClient) ConvertUrl(url string) ([]byte, error) {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return nil, Error{createInvalidValueMessage(url, "url", "html-to-pdf", "The supported protocols are http:// and https://.", "convert_url"), 470}
+        return nil, Error{createInvalidValueMessage(url, "ConvertUrl", "html-to-pdf", "The supported protocols are http:// and https://.", "convert_url"), 470}
     }
     
     client.fields["url"] = url
@@ -366,7 +379,7 @@ func (client *HtmlToPdfClient) ConvertUrl(url string) ([]byte, error) {
 func (client *HtmlToPdfClient) ConvertUrlToStream(url string, outStream io.Writer) error {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return Error{createInvalidValueMessage(url, "url", "html-to-pdf", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
+        return Error{createInvalidValueMessage(url, "ConvertUrlToStream::url", "html-to-pdf", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
     }
     
     client.fields["url"] = url
@@ -380,7 +393,7 @@ func (client *HtmlToPdfClient) ConvertUrlToStream(url string, outStream io.Write
 // filePath - The output file path. The string must not be empty.
 func (client *HtmlToPdfClient) ConvertUrlToFile(url string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "file_path", "html-to-pdf", "The string must not be empty.", "convert_url_to_file"), 470}
+        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "html-to-pdf", "The string must not be empty.", "convert_url_to_file"), 470}
     }
     
     outputFile, err := os.Create(filePath)
@@ -401,7 +414,7 @@ func (client *HtmlToPdfClient) ConvertUrlToFile(url string, filePath string) err
 // file - The path to a local file to convert. The file can be either a single file or an archive (.tar.gz, .tar.bz2, or .zip). If the HTML document refers to local external assets (images, style sheets, javascript), zip the document together with the assets. The file must exist and not be empty. The file name must have a valid extension.
 func (client *HtmlToPdfClient) ConvertFile(file string) ([]byte, error) {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return nil, Error{createInvalidValueMessage(file, "file", "html-to-pdf", "The file must exist and not be empty.", "convert_file"), 470}
+        return nil, Error{createInvalidValueMessage(file, "ConvertFile", "html-to-pdf", "The file must exist and not be empty.", "convert_file"), 470}
     }
     
     client.files["file"] = file
@@ -414,7 +427,7 @@ func (client *HtmlToPdfClient) ConvertFile(file string) ([]byte, error) {
 // outStream - The output stream that will contain the conversion output.
 func (client *HtmlToPdfClient) ConvertFileToStream(file string, outStream io.Writer) error {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return Error{createInvalidValueMessage(file, "file", "html-to-pdf", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
+        return Error{createInvalidValueMessage(file, "ConvertFileToStream::file", "html-to-pdf", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
     }
     
     client.files["file"] = file
@@ -428,7 +441,7 @@ func (client *HtmlToPdfClient) ConvertFileToStream(file string, outStream io.Wri
 // filePath - The output file path. The string must not be empty.
 func (client *HtmlToPdfClient) ConvertFileToFile(file string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "file_path", "html-to-pdf", "The string must not be empty.", "convert_file_to_file"), 470}
+        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "html-to-pdf", "The string must not be empty.", "convert_file_to_file"), 470}
     }
     
     outputFile, err := os.Create(filePath)
@@ -449,7 +462,7 @@ func (client *HtmlToPdfClient) ConvertFileToFile(file string, filePath string) e
 // text - The string content to convert. The string must not be empty.
 func (client *HtmlToPdfClient) ConvertString(text string) ([]byte, error) {
     if len(text) == 0 {
-        return nil, Error{createInvalidValueMessage(text, "text", "html-to-pdf", "The string must not be empty.", "convert_string"), 470}
+        return nil, Error{createInvalidValueMessage(text, "ConvertString", "html-to-pdf", "The string must not be empty.", "convert_string"), 470}
     }
     
     client.fields["text"] = text
@@ -462,7 +475,7 @@ func (client *HtmlToPdfClient) ConvertString(text string) ([]byte, error) {
 // outStream - The output stream that will contain the conversion output.
 func (client *HtmlToPdfClient) ConvertStringToStream(text string, outStream io.Writer) error {
     if len(text) == 0 {
-        return Error{createInvalidValueMessage(text, "text", "html-to-pdf", "The string must not be empty.", "convert_string_to_stream"), 470}
+        return Error{createInvalidValueMessage(text, "ConvertStringToStream::text", "html-to-pdf", "The string must not be empty.", "convert_string_to_stream"), 470}
     }
     
     client.fields["text"] = text
@@ -476,7 +489,7 @@ func (client *HtmlToPdfClient) ConvertStringToStream(text string, outStream io.W
 // filePath - The output file path. The string must not be empty.
 func (client *HtmlToPdfClient) ConvertStringToFile(text string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "file_path", "html-to-pdf", "The string must not be empty.", "convert_string_to_file"), 470}
+        return Error{createInvalidValueMessage(filePath, "ConvertStringToFile::file_path", "html-to-pdf", "The string must not be empty.", "convert_string_to_file"), 470}
     }
     
     outputFile, err := os.Create(filePath)
@@ -494,25 +507,25 @@ func (client *HtmlToPdfClient) ConvertStringToFile(text string, filePath string)
 
 // Set the output page size.
 //
-// pageSize - Allowed values are A2, A3, A4, A5, A6, Letter.
-func (client *HtmlToPdfClient) SetPageSize(pageSize string) *HtmlToPdfClient {
-    client.fields["page_size"] = pageSize
+// size - Allowed values are A0, A1, A2, A3, A4, A5, A6, Letter.
+func (client *HtmlToPdfClient) SetPageSize(size string) *HtmlToPdfClient {
+    client.fields["page_size"] = size
     return client
 }
 
 // Set the output page width. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF.
 //
-// pageWidth - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
-func (client *HtmlToPdfClient) SetPageWidth(pageWidth string) *HtmlToPdfClient {
-    client.fields["page_width"] = pageWidth
+// width - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+func (client *HtmlToPdfClient) SetPageWidth(width string) *HtmlToPdfClient {
+    client.fields["page_width"] = width
     return client
 }
 
 // Set the output page height. Use -1 for a single page PDF. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF.
 //
-// pageHeight - Can be -1 or specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
-func (client *HtmlToPdfClient) SetPageHeight(pageHeight string) *HtmlToPdfClient {
-    client.fields["page_height"] = pageHeight
+// height - Can be -1 or specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+func (client *HtmlToPdfClient) SetPageHeight(height string) *HtmlToPdfClient {
+    client.fields["page_height"] = height
     return client
 }
 
@@ -536,41 +549,41 @@ func (client *HtmlToPdfClient) SetOrientation(orientation string) *HtmlToPdfClie
 
 // Set the output page top margin.
 //
-// marginTop - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
-func (client *HtmlToPdfClient) SetMarginTop(marginTop string) *HtmlToPdfClient {
-    client.fields["margin_top"] = marginTop
+// top - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+func (client *HtmlToPdfClient) SetMarginTop(top string) *HtmlToPdfClient {
+    client.fields["margin_top"] = top
     return client
 }
 
 // Set the output page right margin.
 //
-// marginRight - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
-func (client *HtmlToPdfClient) SetMarginRight(marginRight string) *HtmlToPdfClient {
-    client.fields["margin_right"] = marginRight
+// right - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+func (client *HtmlToPdfClient) SetMarginRight(right string) *HtmlToPdfClient {
+    client.fields["margin_right"] = right
     return client
 }
 
 // Set the output page bottom margin.
 //
-// marginBottom - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
-func (client *HtmlToPdfClient) SetMarginBottom(marginBottom string) *HtmlToPdfClient {
-    client.fields["margin_bottom"] = marginBottom
+// bottom - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+func (client *HtmlToPdfClient) SetMarginBottom(bottom string) *HtmlToPdfClient {
+    client.fields["margin_bottom"] = bottom
     return client
 }
 
 // Set the output page left margin.
 //
-// marginLeft - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
-func (client *HtmlToPdfClient) SetMarginLeft(marginLeft string) *HtmlToPdfClient {
-    client.fields["margin_left"] = marginLeft
+// left - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+func (client *HtmlToPdfClient) SetMarginLeft(left string) *HtmlToPdfClient {
+    client.fields["margin_left"] = left
     return client
 }
 
 // Disable page margins.
 //
-// noMargins - Set to true to disable margins.
-func (client *HtmlToPdfClient) SetNoMargins(noMargins bool) *HtmlToPdfClient {
-    client.fields["no_margins"] = strconv.FormatBool(noMargins)
+// value - Set to true to disable margins.
+func (client *HtmlToPdfClient) SetNoMargins(value bool) *HtmlToPdfClient {
+    client.fields["no_margins"] = strconv.FormatBool(value)
     return client
 }
 
@@ -590,49 +603,57 @@ func (client *HtmlToPdfClient) SetPageMargins(top string, right string, bottom s
 
 // Load an HTML code from the specified URL and use it as the page header. The following classes can be used in the HTML. The content of the respective elements will be expanded as follows: pdfcrowd-page-count - the total page count of printed pages pdfcrowd-page-number - the current page number pdfcrowd-source-url - the source URL of a converted document The following attributes can be used: data-pdfcrowd-number-format - specifies the type of the used numerals Arabic numerals are used by default. Roman numerals can be generated by the roman and roman-lowercase values Example: <span class='pdfcrowd-page-number' data-pdfcrowd-number-format='roman'></span> data-pdfcrowd-placement - specifies where to place the source URL, allowed values: The URL is inserted to the content Example: <span class='pdfcrowd-source-url'></span> will produce <span>http://example.com</span> href - the URL is set to the href attribute Example: <a class='pdfcrowd-source-url' data-pdfcrowd-placement='href'>Link to source</a> will produce <a href='http://example.com'>Link to source</a> href-and-content - the URL is set to the href attribute and to the content Example: <a class='pdfcrowd-source-url' data-pdfcrowd-placement='href-and-content'></a> will produce <a href='http://example.com'>http://example.com</a>
 //
-// headerUrl - The supported protocols are http:// and https://.
-func (client *HtmlToPdfClient) SetHeaderUrl(headerUrl string) *HtmlToPdfClient {
-    client.fields["header_url"] = headerUrl
+// url - The supported protocols are http:// and https://.
+func (client *HtmlToPdfClient) SetHeaderUrl(url string) *HtmlToPdfClient {
+    client.fields["header_url"] = url
     return client
 }
 
 // Use the specified HTML code as the page header. The following classes can be used in the HTML. The content of the respective elements will be expanded as follows: pdfcrowd-page-count - the total page count of printed pages pdfcrowd-page-number - the current page number pdfcrowd-source-url - the source URL of a converted document The following attributes can be used: data-pdfcrowd-number-format - specifies the type of the used numerals Arabic numerals are used by default. Roman numerals can be generated by the roman and roman-lowercase values Example: <span class='pdfcrowd-page-number' data-pdfcrowd-number-format='roman'></span> data-pdfcrowd-placement - specifies where to place the source URL, allowed values: The URL is inserted to the content Example: <span class='pdfcrowd-source-url'></span> will produce <span>http://example.com</span> href - the URL is set to the href attribute Example: <a class='pdfcrowd-source-url' data-pdfcrowd-placement='href'>Link to source</a> will produce <a href='http://example.com'>Link to source</a> href-and-content - the URL is set to the href attribute and to the content Example: <a class='pdfcrowd-source-url' data-pdfcrowd-placement='href-and-content'></a> will produce <a href='http://example.com'>http://example.com</a>
 //
-// headerHtml - The string must not be empty.
-func (client *HtmlToPdfClient) SetHeaderHtml(headerHtml string) *HtmlToPdfClient {
-    client.fields["header_html"] = headerHtml
+// html - The string must not be empty.
+func (client *HtmlToPdfClient) SetHeaderHtml(html string) *HtmlToPdfClient {
+    client.fields["header_html"] = html
     return client
 }
 
 // Set the header height.
 //
-// headerHeight - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
-func (client *HtmlToPdfClient) SetHeaderHeight(headerHeight string) *HtmlToPdfClient {
-    client.fields["header_height"] = headerHeight
+// height - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+func (client *HtmlToPdfClient) SetHeaderHeight(height string) *HtmlToPdfClient {
+    client.fields["header_height"] = height
     return client
 }
 
 // Load an HTML code from the specified URL and use it as the page footer. The following classes can be used in the HTML. The content of the respective elements will be expanded as follows: pdfcrowd-page-count - the total page count of printed pages pdfcrowd-page-number - the current page number pdfcrowd-source-url - the source URL of a converted document The following attributes can be used: data-pdfcrowd-number-format - specifies the type of the used numerals Arabic numerals are used by default. Roman numerals can be generated by the roman and roman-lowercase values Example: <span class='pdfcrowd-page-number' data-pdfcrowd-number-format='roman'></span> data-pdfcrowd-placement - specifies where to place the source URL, allowed values: The URL is inserted to the content Example: <span class='pdfcrowd-source-url'></span> will produce <span>http://example.com</span> href - the URL is set to the href attribute Example: <a class='pdfcrowd-source-url' data-pdfcrowd-placement='href'>Link to source</a> will produce <a href='http://example.com'>Link to source</a> href-and-content - the URL is set to the href attribute and to the content Example: <a class='pdfcrowd-source-url' data-pdfcrowd-placement='href-and-content'></a> will produce <a href='http://example.com'>http://example.com</a>
 //
-// footerUrl - The supported protocols are http:// and https://.
-func (client *HtmlToPdfClient) SetFooterUrl(footerUrl string) *HtmlToPdfClient {
-    client.fields["footer_url"] = footerUrl
+// url - The supported protocols are http:// and https://.
+func (client *HtmlToPdfClient) SetFooterUrl(url string) *HtmlToPdfClient {
+    client.fields["footer_url"] = url
     return client
 }
 
 // Use the specified HTML as the page footer. The following classes can be used in the HTML. The content of the respective elements will be expanded as follows: pdfcrowd-page-count - the total page count of printed pages pdfcrowd-page-number - the current page number pdfcrowd-source-url - the source URL of a converted document The following attributes can be used: data-pdfcrowd-number-format - specifies the type of the used numerals Arabic numerals are used by default. Roman numerals can be generated by the roman and roman-lowercase values Example: <span class='pdfcrowd-page-number' data-pdfcrowd-number-format='roman'></span> data-pdfcrowd-placement - specifies where to place the source URL, allowed values: The URL is inserted to the content Example: <span class='pdfcrowd-source-url'></span> will produce <span>http://example.com</span> href - the URL is set to the href attribute Example: <a class='pdfcrowd-source-url' data-pdfcrowd-placement='href'>Link to source</a> will produce <a href='http://example.com'>Link to source</a> href-and-content - the URL is set to the href attribute and to the content Example: <a class='pdfcrowd-source-url' data-pdfcrowd-placement='href-and-content'></a> will produce <a href='http://example.com'>http://example.com</a>
 //
-// footerHtml - The string must not be empty.
-func (client *HtmlToPdfClient) SetFooterHtml(footerHtml string) *HtmlToPdfClient {
-    client.fields["footer_html"] = footerHtml
+// html - The string must not be empty.
+func (client *HtmlToPdfClient) SetFooterHtml(html string) *HtmlToPdfClient {
+    client.fields["footer_html"] = html
     return client
 }
 
 // Set the footer height.
 //
-// footerHeight - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
-func (client *HtmlToPdfClient) SetFooterHeight(footerHeight string) *HtmlToPdfClient {
-    client.fields["footer_height"] = footerHeight
+// height - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+func (client *HtmlToPdfClient) SetFooterHeight(height string) *HtmlToPdfClient {
+    client.fields["footer_height"] = height
+    return client
+}
+
+// Disable horizontal page margins for header and footer. The header/footer contents width will be equal to the physical page width.
+//
+// value - Set to true to disable horizontal margins for header and footer.
+func (client *HtmlToPdfClient) SetNoHeaderFooterHorizontalMargins(value bool) *HtmlToPdfClient {
+    client.fields["no_header_footer_horizontal_margins"] = strconv.FormatBool(value)
     return client
 }
 
@@ -670,33 +691,33 @@ func (client *HtmlToPdfClient) SetPageNumberingOffset(offset int) *HtmlToPdfClie
 
 // Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area.
 //
-// contentAreaX - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
-func (client *HtmlToPdfClient) SetContentAreaX(contentAreaX string) *HtmlToPdfClient {
-    client.fields["content_area_x"] = contentAreaX
+// x - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
+func (client *HtmlToPdfClient) SetContentAreaX(x string) *HtmlToPdfClient {
+    client.fields["content_area_x"] = x
     return client
 }
 
 // Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area.
 //
-// contentAreaY - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
-func (client *HtmlToPdfClient) SetContentAreaY(contentAreaY string) *HtmlToPdfClient {
-    client.fields["content_area_y"] = contentAreaY
+// y - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
+func (client *HtmlToPdfClient) SetContentAreaY(y string) *HtmlToPdfClient {
+    client.fields["content_area_y"] = y
     return client
 }
 
 // Set the width of the content area. It should be at least 1 inch.
 //
-// contentAreaWidth - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
-func (client *HtmlToPdfClient) SetContentAreaWidth(contentAreaWidth string) *HtmlToPdfClient {
-    client.fields["content_area_width"] = contentAreaWidth
+// width - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+func (client *HtmlToPdfClient) SetContentAreaWidth(width string) *HtmlToPdfClient {
+    client.fields["content_area_width"] = width
     return client
 }
 
 // Set the height of the content area. It should be at least 1 inch.
 //
-// contentAreaHeight - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
-func (client *HtmlToPdfClient) SetContentAreaHeight(contentAreaHeight string) *HtmlToPdfClient {
-    client.fields["content_area_height"] = contentAreaHeight
+// height - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+func (client *HtmlToPdfClient) SetContentAreaHeight(height string) *HtmlToPdfClient {
+    client.fields["content_area_height"] = height
     return client
 }
 
@@ -711,6 +732,14 @@ func (client *HtmlToPdfClient) SetContentArea(x string, y string, width string, 
     client.SetContentAreaY(y)
     client.SetContentAreaWidth(width)
     client.SetContentAreaHeight(height)
+    return client
+}
+
+// Specifies behavior in presence of CSS @page rules. It may affect the page size, margins and orientation.
+//
+// mode - The page rule mode. Allowed values are default, mode1, mode2.
+func (client *HtmlToPdfClient) SetCssPageRuleMode(mode string) *HtmlToPdfClient {
+    client.fields["css_page_rule_mode"] = mode
     return client
 }
 
@@ -740,161 +769,185 @@ func (client *HtmlToPdfClient) SetDataFormat(dataFormat string) *HtmlToPdfClient
 
 // Set the encoding of the data file set by setDataFile.
 //
-// dataEncoding - The data file encoding.
-func (client *HtmlToPdfClient) SetDataEncoding(dataEncoding string) *HtmlToPdfClient {
-    client.fields["data_encoding"] = dataEncoding
+// encoding - The data file encoding.
+func (client *HtmlToPdfClient) SetDataEncoding(encoding string) *HtmlToPdfClient {
+    client.fields["data_encoding"] = encoding
     return client
 }
 
 // Ignore undefined variables in the HTML template. The default mode is strict so any undefined variable causes the conversion to fail. You can use {% if variable is defined %} to check if the variable is defined.
 //
-// dataIgnoreUndefined - Set to true to ignore undefined variables.
-func (client *HtmlToPdfClient) SetDataIgnoreUndefined(dataIgnoreUndefined bool) *HtmlToPdfClient {
-    client.fields["data_ignore_undefined"] = strconv.FormatBool(dataIgnoreUndefined)
+// value - Set to true to ignore undefined variables.
+func (client *HtmlToPdfClient) SetDataIgnoreUndefined(value bool) *HtmlToPdfClient {
+    client.fields["data_ignore_undefined"] = strconv.FormatBool(value)
     return client
 }
 
 // Auto escape HTML symbols in the input data before placing them into the output.
 //
-// dataAutoEscape - Set to true to turn auto escaping on.
-func (client *HtmlToPdfClient) SetDataAutoEscape(dataAutoEscape bool) *HtmlToPdfClient {
-    client.fields["data_auto_escape"] = strconv.FormatBool(dataAutoEscape)
+// value - Set to true to turn auto escaping on.
+func (client *HtmlToPdfClient) SetDataAutoEscape(value bool) *HtmlToPdfClient {
+    client.fields["data_auto_escape"] = strconv.FormatBool(value)
     return client
 }
 
 // Auto trim whitespace around each template command block.
 //
-// dataTrimBlocks - Set to true to turn auto trimming on.
-func (client *HtmlToPdfClient) SetDataTrimBlocks(dataTrimBlocks bool) *HtmlToPdfClient {
-    client.fields["data_trim_blocks"] = strconv.FormatBool(dataTrimBlocks)
+// value - Set to true to turn auto trimming on.
+func (client *HtmlToPdfClient) SetDataTrimBlocks(value bool) *HtmlToPdfClient {
+    client.fields["data_trim_blocks"] = strconv.FormatBool(value)
     return client
 }
 
 // Set the advanced data options:csv_delimiter - The CSV data delimiter, the default is ,.xml_remove_root - Remove the root XML element from the input data.data_root - The name of the root element inserted into the input data without a root node (e.g. CSV), the default is data.
 //
-// dataOptions - Comma separated list of options.
-func (client *HtmlToPdfClient) SetDataOptions(dataOptions string) *HtmlToPdfClient {
-    client.fields["data_options"] = dataOptions
+// options - Comma separated list of options.
+func (client *HtmlToPdfClient) SetDataOptions(options string) *HtmlToPdfClient {
+    client.fields["data_options"] = options
     return client
 }
 
 // Apply the first page of the watermark PDF to every page of the output PDF.
 //
-// pageWatermark - The file path to a local watermark PDF file. The file must exist and not be empty.
-func (client *HtmlToPdfClient) SetPageWatermark(pageWatermark string) *HtmlToPdfClient {
-    client.files["page_watermark"] = pageWatermark
+// watermark - The file path to a local watermark PDF file. The file must exist and not be empty.
+func (client *HtmlToPdfClient) SetPageWatermark(watermark string) *HtmlToPdfClient {
+    client.files["page_watermark"] = watermark
     return client
 }
 
 // Load a watermark PDF from the specified URL and apply the first page of the watermark PDF to every page of the output PDF.
 //
-// pageWatermarkUrl - The supported protocols are http:// and https://.
-func (client *HtmlToPdfClient) SetPageWatermarkUrl(pageWatermarkUrl string) *HtmlToPdfClient {
-    client.fields["page_watermark_url"] = pageWatermarkUrl
+// url - The supported protocols are http:// and https://.
+func (client *HtmlToPdfClient) SetPageWatermarkUrl(url string) *HtmlToPdfClient {
+    client.fields["page_watermark_url"] = url
     return client
 }
 
 // Apply each page of the specified watermark PDF to the corresponding page of the output PDF.
 //
-// multipageWatermark - The file path to a local watermark PDF file. The file must exist and not be empty.
-func (client *HtmlToPdfClient) SetMultipageWatermark(multipageWatermark string) *HtmlToPdfClient {
-    client.files["multipage_watermark"] = multipageWatermark
+// watermark - The file path to a local watermark PDF file. The file must exist and not be empty.
+func (client *HtmlToPdfClient) SetMultipageWatermark(watermark string) *HtmlToPdfClient {
+    client.files["multipage_watermark"] = watermark
     return client
 }
 
 // Load a watermark PDF from the specified URL and apply each page of the specified watermark PDF to the corresponding page of the output PDF.
 //
-// multipageWatermarkUrl - The supported protocols are http:// and https://.
-func (client *HtmlToPdfClient) SetMultipageWatermarkUrl(multipageWatermarkUrl string) *HtmlToPdfClient {
-    client.fields["multipage_watermark_url"] = multipageWatermarkUrl
+// url - The supported protocols are http:// and https://.
+func (client *HtmlToPdfClient) SetMultipageWatermarkUrl(url string) *HtmlToPdfClient {
+    client.fields["multipage_watermark_url"] = url
     return client
 }
 
 // Apply the first page of the specified PDF to the background of every page of the output PDF.
 //
-// pageBackground - The file path to a local background PDF file. The file must exist and not be empty.
-func (client *HtmlToPdfClient) SetPageBackground(pageBackground string) *HtmlToPdfClient {
-    client.files["page_background"] = pageBackground
+// background - The file path to a local background PDF file. The file must exist and not be empty.
+func (client *HtmlToPdfClient) SetPageBackground(background string) *HtmlToPdfClient {
+    client.files["page_background"] = background
     return client
 }
 
 // Load a background PDF from the specified URL and apply the first page of the background PDF to every page of the output PDF.
 //
-// pageBackgroundUrl - The supported protocols are http:// and https://.
-func (client *HtmlToPdfClient) SetPageBackgroundUrl(pageBackgroundUrl string) *HtmlToPdfClient {
-    client.fields["page_background_url"] = pageBackgroundUrl
+// url - The supported protocols are http:// and https://.
+func (client *HtmlToPdfClient) SetPageBackgroundUrl(url string) *HtmlToPdfClient {
+    client.fields["page_background_url"] = url
     return client
 }
 
 // Apply each page of the specified PDF to the background of the corresponding page of the output PDF.
 //
-// multipageBackground - The file path to a local background PDF file. The file must exist and not be empty.
-func (client *HtmlToPdfClient) SetMultipageBackground(multipageBackground string) *HtmlToPdfClient {
-    client.files["multipage_background"] = multipageBackground
+// background - The file path to a local background PDF file. The file must exist and not be empty.
+func (client *HtmlToPdfClient) SetMultipageBackground(background string) *HtmlToPdfClient {
+    client.files["multipage_background"] = background
     return client
 }
 
 // Load a background PDF from the specified URL and apply each page of the specified background PDF to the corresponding page of the output PDF.
 //
-// multipageBackgroundUrl - The supported protocols are http:// and https://.
-func (client *HtmlToPdfClient) SetMultipageBackgroundUrl(multipageBackgroundUrl string) *HtmlToPdfClient {
-    client.fields["multipage_background_url"] = multipageBackgroundUrl
+// url - The supported protocols are http:// and https://.
+func (client *HtmlToPdfClient) SetMultipageBackgroundUrl(url string) *HtmlToPdfClient {
+    client.fields["multipage_background_url"] = url
     return client
 }
 
 // The page background color in RGB or RGBA hexadecimal format. The color fills the entire page regardless of the margins.
 //
-// pageBackgroundColor - The value must be in RRGGBB or RRGGBBAA hexadecimal format.
-func (client *HtmlToPdfClient) SetPageBackgroundColor(pageBackgroundColor string) *HtmlToPdfClient {
-    client.fields["page_background_color"] = pageBackgroundColor
+// color - The value must be in RRGGBB or RRGGBBAA hexadecimal format.
+func (client *HtmlToPdfClient) SetPageBackgroundColor(color string) *HtmlToPdfClient {
+    client.fields["page_background_color"] = color
+    return client
+}
+
+// Use the print version of the page if available (@media print).
+//
+// value - Set to true to use the print version of the page.
+func (client *HtmlToPdfClient) SetUsePrintMedia(value bool) *HtmlToPdfClient {
+    client.fields["use_print_media"] = strconv.FormatBool(value)
     return client
 }
 
 // Do not print the background graphics.
 //
-// noBackground - Set to true to disable the background graphics.
-func (client *HtmlToPdfClient) SetNoBackground(noBackground bool) *HtmlToPdfClient {
-    client.fields["no_background"] = strconv.FormatBool(noBackground)
+// value - Set to true to disable the background graphics.
+func (client *HtmlToPdfClient) SetNoBackground(value bool) *HtmlToPdfClient {
+    client.fields["no_background"] = strconv.FormatBool(value)
     return client
 }
 
 // Do not execute JavaScript.
 //
-// disableJavascript - Set to true to disable JavaScript in web pages.
-func (client *HtmlToPdfClient) SetDisableJavascript(disableJavascript bool) *HtmlToPdfClient {
-    client.fields["disable_javascript"] = strconv.FormatBool(disableJavascript)
+// value - Set to true to disable JavaScript in web pages.
+func (client *HtmlToPdfClient) SetDisableJavascript(value bool) *HtmlToPdfClient {
+    client.fields["disable_javascript"] = strconv.FormatBool(value)
     return client
 }
 
 // Do not load images.
 //
-// disableImageLoading - Set to true to disable loading of images.
-func (client *HtmlToPdfClient) SetDisableImageLoading(disableImageLoading bool) *HtmlToPdfClient {
-    client.fields["disable_image_loading"] = strconv.FormatBool(disableImageLoading)
+// value - Set to true to disable loading of images.
+func (client *HtmlToPdfClient) SetDisableImageLoading(value bool) *HtmlToPdfClient {
+    client.fields["disable_image_loading"] = strconv.FormatBool(value)
     return client
 }
 
 // Disable loading fonts from remote sources.
 //
-// disableRemoteFonts - Set to true disable loading remote fonts.
-func (client *HtmlToPdfClient) SetDisableRemoteFonts(disableRemoteFonts bool) *HtmlToPdfClient {
-    client.fields["disable_remote_fonts"] = strconv.FormatBool(disableRemoteFonts)
+// value - Set to true disable loading remote fonts.
+func (client *HtmlToPdfClient) SetDisableRemoteFonts(value bool) *HtmlToPdfClient {
+    client.fields["disable_remote_fonts"] = strconv.FormatBool(value)
+    return client
+}
+
+// Specifies how iframes are handled.
+//
+// iframes - Allowed values are all, same-origin, none.
+func (client *HtmlToPdfClient) SetLoadIframes(iframes string) *HtmlToPdfClient {
+    client.fields["load_iframes"] = iframes
     return client
 }
 
 // Try to block ads. Enabling this option can produce smaller output and speed up the conversion.
 //
-// blockAds - Set to true to block ads in web pages.
-func (client *HtmlToPdfClient) SetBlockAds(blockAds bool) *HtmlToPdfClient {
-    client.fields["block_ads"] = strconv.FormatBool(blockAds)
+// value - Set to true to block ads in web pages.
+func (client *HtmlToPdfClient) SetBlockAds(value bool) *HtmlToPdfClient {
+    client.fields["block_ads"] = strconv.FormatBool(value)
     return client
 }
 
 // Set the default HTML content text encoding.
 //
-// defaultEncoding - The text encoding of the HTML content.
-func (client *HtmlToPdfClient) SetDefaultEncoding(defaultEncoding string) *HtmlToPdfClient {
-    client.fields["default_encoding"] = defaultEncoding
+// encoding - The text encoding of the HTML content.
+func (client *HtmlToPdfClient) SetDefaultEncoding(encoding string) *HtmlToPdfClient {
+    client.fields["default_encoding"] = encoding
+    return client
+}
+
+// Set the locale for the conversion. This may affect the output format of dates, times and numbers.
+//
+// locale - The locale code according to ISO 639.
+func (client *HtmlToPdfClient) SetLocale(locale string) *HtmlToPdfClient {
+    client.fields["locale"] = locale
     return client
 }
 
@@ -924,22 +977,6 @@ func (client *HtmlToPdfClient) SetHttpAuth(userName string, password string) *Ht
     return client
 }
 
-// Use the print version of the page if available (@media print).
-//
-// usePrintMedia - Set to true to use the print version of the page.
-func (client *HtmlToPdfClient) SetUsePrintMedia(usePrintMedia bool) *HtmlToPdfClient {
-    client.fields["use_print_media"] = strconv.FormatBool(usePrintMedia)
-    return client
-}
-
-// Do not send the X-Pdfcrowd HTTP header in Pdfcrowd HTTP requests.
-//
-// noXpdfcrowdHeader - Set to true to disable sending X-Pdfcrowd HTTP header.
-func (client *HtmlToPdfClient) SetNoXpdfcrowdHeader(noXpdfcrowdHeader bool) *HtmlToPdfClient {
-    client.fields["no_xpdfcrowd_header"] = strconv.FormatBool(noXpdfcrowdHeader)
-    return client
-}
-
 // Set cookies that are sent in Pdfcrowd HTTP requests.
 //
 // cookies - The cookie string.
@@ -950,9 +987,9 @@ func (client *HtmlToPdfClient) SetCookies(cookies string) *HtmlToPdfClient {
 
 // Do not allow insecure HTTPS connections.
 //
-// verifySslCertificates - Set to true to enable SSL certificate verification.
-func (client *HtmlToPdfClient) SetVerifySslCertificates(verifySslCertificates bool) *HtmlToPdfClient {
-    client.fields["verify_ssl_certificates"] = strconv.FormatBool(verifySslCertificates)
+// value - Set to true to enable SSL certificate verification.
+func (client *HtmlToPdfClient) SetVerifySslCertificates(value bool) *HtmlToPdfClient {
+    client.fields["verify_ssl_certificates"] = strconv.FormatBool(value)
     return client
 }
 
@@ -972,35 +1009,43 @@ func (client *HtmlToPdfClient) SetFailOnAnyUrlError(failOnError bool) *HtmlToPdf
     return client
 }
 
+// Do not send the X-Pdfcrowd HTTP header in Pdfcrowd HTTP requests.
+//
+// value - Set to true to disable sending X-Pdfcrowd HTTP header.
+func (client *HtmlToPdfClient) SetNoXpdfcrowdHeader(value bool) *HtmlToPdfClient {
+    client.fields["no_xpdfcrowd_header"] = strconv.FormatBool(value)
+    return client
+}
+
 // Run a custom JavaScript after the document is loaded and ready to print. The script is intended for post-load DOM manipulation (add/remove elements, update CSS, ...). In addition to the standard browser APIs, the custom JavaScript code can use helper functions from our JavaScript library.
 //
-// customJavascript - A string containing a JavaScript code. The string must not be empty.
-func (client *HtmlToPdfClient) SetCustomJavascript(customJavascript string) *HtmlToPdfClient {
-    client.fields["custom_javascript"] = customJavascript
+// javascript - A string containing a JavaScript code. The string must not be empty.
+func (client *HtmlToPdfClient) SetCustomJavascript(javascript string) *HtmlToPdfClient {
+    client.fields["custom_javascript"] = javascript
     return client
 }
 
 // Run a custom JavaScript right after the document is loaded. The script is intended for early DOM manipulation (add/remove elements, update CSS, ...). In addition to the standard browser APIs, the custom JavaScript code can use helper functions from our JavaScript library.
 //
-// onLoadJavascript - A string containing a JavaScript code. The string must not be empty.
-func (client *HtmlToPdfClient) SetOnLoadJavascript(onLoadJavascript string) *HtmlToPdfClient {
-    client.fields["on_load_javascript"] = onLoadJavascript
+// javascript - A string containing a JavaScript code. The string must not be empty.
+func (client *HtmlToPdfClient) SetOnLoadJavascript(javascript string) *HtmlToPdfClient {
+    client.fields["on_load_javascript"] = javascript
     return client
 }
 
 // Set a custom HTTP header that is sent in Pdfcrowd HTTP requests.
 //
-// customHttpHeader - A string containing the header name and value separated by a colon.
-func (client *HtmlToPdfClient) SetCustomHttpHeader(customHttpHeader string) *HtmlToPdfClient {
-    client.fields["custom_http_header"] = customHttpHeader
+// header - A string containing the header name and value separated by a colon.
+func (client *HtmlToPdfClient) SetCustomHttpHeader(header string) *HtmlToPdfClient {
+    client.fields["custom_http_header"] = header
     return client
 }
 
 // Wait the specified number of milliseconds to finish all JavaScript after the document is loaded. Your API license defines the maximum wait time by "Max Delay" parameter.
 //
-// javascriptDelay - The number of milliseconds to wait. Must be a positive integer number or 0.
-func (client *HtmlToPdfClient) SetJavascriptDelay(javascriptDelay int) *HtmlToPdfClient {
-    client.fields["javascript_delay"] = strconv.Itoa(javascriptDelay)
+// delay - The number of milliseconds to wait. Must be a positive integer number or 0.
+func (client *HtmlToPdfClient) SetJavascriptDelay(delay int) *HtmlToPdfClient {
+    client.fields["javascript_delay"] = strconv.Itoa(delay)
     return client
 }
 
@@ -1030,17 +1075,17 @@ func (client *HtmlToPdfClient) SetWaitForElement(selectors string) *HtmlToPdfCli
 
 // Set the viewport width in pixels. The viewport is the user's visible area of the page.
 //
-// viewportWidth - The value must be in the range 96-65000.
-func (client *HtmlToPdfClient) SetViewportWidth(viewportWidth int) *HtmlToPdfClient {
-    client.fields["viewport_width"] = strconv.Itoa(viewportWidth)
+// width - The value must be in the range 96-65000.
+func (client *HtmlToPdfClient) SetViewportWidth(width int) *HtmlToPdfClient {
+    client.fields["viewport_width"] = strconv.Itoa(width)
     return client
 }
 
 // Set the viewport height in pixels. The viewport is the user's visible area of the page.
 //
-// viewportHeight - Must be a positive integer number.
-func (client *HtmlToPdfClient) SetViewportHeight(viewportHeight int) *HtmlToPdfClient {
-    client.fields["viewport_height"] = strconv.Itoa(viewportHeight)
+// height - Must be a positive integer number.
+func (client *HtmlToPdfClient) SetViewportHeight(height int) *HtmlToPdfClient {
+    client.fields["viewport_height"] = strconv.Itoa(height)
     return client
 }
 
@@ -1056,121 +1101,113 @@ func (client *HtmlToPdfClient) SetViewport(width int, height int) *HtmlToPdfClie
 
 // Set the rendering mode.
 //
-// renderingMode - The rendering mode. Allowed values are default, viewport.
-func (client *HtmlToPdfClient) SetRenderingMode(renderingMode string) *HtmlToPdfClient {
-    client.fields["rendering_mode"] = renderingMode
+// mode - The rendering mode. Allowed values are default, viewport.
+func (client *HtmlToPdfClient) SetRenderingMode(mode string) *HtmlToPdfClient {
+    client.fields["rendering_mode"] = mode
     return client
 }
 
 // Specifies the scaling mode used for fitting the HTML contents to the print area.
 //
-// smartScalingMode - The smart scaling mode. Allowed values are default, disabled, viewport-fit, content-fit, single-page-fit.
-func (client *HtmlToPdfClient) SetSmartScalingMode(smartScalingMode string) *HtmlToPdfClient {
-    client.fields["smart_scaling_mode"] = smartScalingMode
+// mode - The smart scaling mode. Allowed values are default, disabled, viewport-fit, content-fit, single-page-fit, mode1.
+func (client *HtmlToPdfClient) SetSmartScalingMode(mode string) *HtmlToPdfClient {
+    client.fields["smart_scaling_mode"] = mode
     return client
 }
 
 // Set the scaling factor (zoom) for the main page area.
 //
-// scaleFactor - The percentage value. The value must be in the range 10-500.
-func (client *HtmlToPdfClient) SetScaleFactor(scaleFactor int) *HtmlToPdfClient {
-    client.fields["scale_factor"] = strconv.Itoa(scaleFactor)
+// factor - The percentage value. The value must be in the range 10-500.
+func (client *HtmlToPdfClient) SetScaleFactor(factor int) *HtmlToPdfClient {
+    client.fields["scale_factor"] = strconv.Itoa(factor)
     return client
 }
 
 // Set the scaling factor (zoom) for the header and footer.
 //
-// headerFooterScaleFactor - The percentage value. The value must be in the range 10-500.
-func (client *HtmlToPdfClient) SetHeaderFooterScaleFactor(headerFooterScaleFactor int) *HtmlToPdfClient {
-    client.fields["header_footer_scale_factor"] = strconv.Itoa(headerFooterScaleFactor)
-    return client
-}
-
-// Disable the intelligent shrinking strategy that tries to optimally fit the HTML contents to a PDF page.
-//
-// disableSmartShrinking - Set to true to disable the intelligent shrinking strategy.
-func (client *HtmlToPdfClient) SetDisableSmartShrinking(disableSmartShrinking bool) *HtmlToPdfClient {
-    client.fields["disable_smart_shrinking"] = strconv.FormatBool(disableSmartShrinking)
+// factor - The percentage value. The value must be in the range 10-500.
+func (client *HtmlToPdfClient) SetHeaderFooterScaleFactor(factor int) *HtmlToPdfClient {
+    client.fields["header_footer_scale_factor"] = strconv.Itoa(factor)
     return client
 }
 
 // Set the quality of embedded JPEG images. A lower quality results in a smaller PDF file but can lead to compression artifacts.
 //
-// jpegQuality - The percentage value. The value must be in the range 1-100.
-func (client *HtmlToPdfClient) SetJpegQuality(jpegQuality int) *HtmlToPdfClient {
-    client.fields["jpeg_quality"] = strconv.Itoa(jpegQuality)
+// quality - The percentage value. The value must be in the range 1-100.
+func (client *HtmlToPdfClient) SetJpegQuality(quality int) *HtmlToPdfClient {
+    client.fields["jpeg_quality"] = strconv.Itoa(quality)
     return client
 }
 
 // Specify which image types will be converted to JPEG. Converting lossless compression image formats (PNG, GIF, ...) to JPEG may result in a smaller PDF file.
 //
-// convertImagesToJpeg - The image category. Allowed values are none, opaque, all.
-func (client *HtmlToPdfClient) SetConvertImagesToJpeg(convertImagesToJpeg string) *HtmlToPdfClient {
-    client.fields["convert_images_to_jpeg"] = convertImagesToJpeg
+// images - The image category. Allowed values are none, opaque, all.
+func (client *HtmlToPdfClient) SetConvertImagesToJpeg(images string) *HtmlToPdfClient {
+    client.fields["convert_images_to_jpeg"] = images
     return client
 }
 
 // Set the DPI of images in PDF. A lower DPI may result in a smaller PDF file. If the specified DPI is higher than the actual image DPI, the original image DPI is retained (no upscaling is performed). Use 0 to leave the images unaltered.
 //
-// imageDpi - The DPI value. Must be a positive integer number or 0.
-func (client *HtmlToPdfClient) SetImageDpi(imageDpi int) *HtmlToPdfClient {
-    client.fields["image_dpi"] = strconv.Itoa(imageDpi)
+// dpi - The DPI value. Must be a positive integer number or 0.
+func (client *HtmlToPdfClient) SetImageDpi(dpi int) *HtmlToPdfClient {
+    client.fields["image_dpi"] = strconv.Itoa(dpi)
     return client
 }
 
 // Create linearized PDF. This is also known as Fast Web View.
 //
-// linearize - Set to true to create linearized PDF.
-func (client *HtmlToPdfClient) SetLinearize(linearize bool) *HtmlToPdfClient {
-    client.fields["linearize"] = strconv.FormatBool(linearize)
+// value - Set to true to create linearized PDF.
+func (client *HtmlToPdfClient) SetLinearize(value bool) *HtmlToPdfClient {
+    client.fields["linearize"] = strconv.FormatBool(value)
     return client
 }
 
 // Encrypt the PDF. This prevents search engines from indexing the contents.
 //
-// encrypt - Set to true to enable PDF encryption.
-func (client *HtmlToPdfClient) SetEncrypt(encrypt bool) *HtmlToPdfClient {
-    client.fields["encrypt"] = strconv.FormatBool(encrypt)
+// value - Set to true to enable PDF encryption.
+func (client *HtmlToPdfClient) SetEncrypt(value bool) *HtmlToPdfClient {
+    client.fields["encrypt"] = strconv.FormatBool(value)
     return client
 }
 
 // Protect the PDF with a user password. When a PDF has a user password, it must be supplied in order to view the document and to perform operations allowed by the access permissions.
 //
-// userPassword - The user password.
-func (client *HtmlToPdfClient) SetUserPassword(userPassword string) *HtmlToPdfClient {
-    client.fields["user_password"] = userPassword
+// password - The user password.
+func (client *HtmlToPdfClient) SetUserPassword(password string) *HtmlToPdfClient {
+    client.fields["user_password"] = password
     return client
 }
 
 // Protect the PDF with an owner password. Supplying an owner password grants unlimited access to the PDF including changing the passwords and access permissions.
 //
-// ownerPassword - The owner password.
-func (client *HtmlToPdfClient) SetOwnerPassword(ownerPassword string) *HtmlToPdfClient {
-    client.fields["owner_password"] = ownerPassword
+// password - The owner password.
+func (client *HtmlToPdfClient) SetOwnerPassword(password string) *HtmlToPdfClient {
+    client.fields["owner_password"] = password
     return client
 }
 
 // Disallow printing of the output PDF.
 //
-// noPrint - Set to true to set the no-print flag in the output PDF.
-func (client *HtmlToPdfClient) SetNoPrint(noPrint bool) *HtmlToPdfClient {
-    client.fields["no_print"] = strconv.FormatBool(noPrint)
+// value - Set to true to set the no-print flag in the output PDF.
+func (client *HtmlToPdfClient) SetNoPrint(value bool) *HtmlToPdfClient {
+    client.fields["no_print"] = strconv.FormatBool(value)
     return client
 }
 
 // Disallow modification of the output PDF.
 //
-// noModify - Set to true to set the read-only only flag in the output PDF.
-func (client *HtmlToPdfClient) SetNoModify(noModify bool) *HtmlToPdfClient {
-    client.fields["no_modify"] = strconv.FormatBool(noModify)
+// value - Set to true to set the read-only only flag in the output PDF.
+func (client *HtmlToPdfClient) SetNoModify(value bool) *HtmlToPdfClient {
+    client.fields["no_modify"] = strconv.FormatBool(value)
     return client
 }
 
 // Disallow text and graphics extraction from the output PDF.
 //
-// noCopy - Set to true to set the no-copy flag in the output PDF.
-func (client *HtmlToPdfClient) SetNoCopy(noCopy bool) *HtmlToPdfClient {
-    client.fields["no_copy"] = strconv.FormatBool(noCopy)
+// value - Set to true to set the no-copy flag in the output PDF.
+func (client *HtmlToPdfClient) SetNoCopy(value bool) *HtmlToPdfClient {
+    client.fields["no_copy"] = strconv.FormatBool(value)
     return client
 }
 
@@ -1208,105 +1245,105 @@ func (client *HtmlToPdfClient) SetKeywords(keywords string) *HtmlToPdfClient {
 
 // Specify the page layout to be used when the document is opened.
 //
-// pageLayout - Allowed values are single-page, one-column, two-column-left, two-column-right.
-func (client *HtmlToPdfClient) SetPageLayout(pageLayout string) *HtmlToPdfClient {
-    client.fields["page_layout"] = pageLayout
+// layout - Allowed values are single-page, one-column, two-column-left, two-column-right.
+func (client *HtmlToPdfClient) SetPageLayout(layout string) *HtmlToPdfClient {
+    client.fields["page_layout"] = layout
     return client
 }
 
 // Specify how the document should be displayed when opened.
 //
-// pageMode - Allowed values are full-screen, thumbnails, outlines.
-func (client *HtmlToPdfClient) SetPageMode(pageMode string) *HtmlToPdfClient {
-    client.fields["page_mode"] = pageMode
+// mode - Allowed values are full-screen, thumbnails, outlines.
+func (client *HtmlToPdfClient) SetPageMode(mode string) *HtmlToPdfClient {
+    client.fields["page_mode"] = mode
     return client
 }
 
 // Specify how the page should be displayed when opened.
 //
-// initialZoomType - Allowed values are fit-width, fit-height, fit-page.
-func (client *HtmlToPdfClient) SetInitialZoomType(initialZoomType string) *HtmlToPdfClient {
-    client.fields["initial_zoom_type"] = initialZoomType
+// zoomType - Allowed values are fit-width, fit-height, fit-page.
+func (client *HtmlToPdfClient) SetInitialZoomType(zoomType string) *HtmlToPdfClient {
+    client.fields["initial_zoom_type"] = zoomType
     return client
 }
 
 // Display the specified page when the document is opened.
 //
-// initialPage - Must be a positive integer number.
-func (client *HtmlToPdfClient) SetInitialPage(initialPage int) *HtmlToPdfClient {
-    client.fields["initial_page"] = strconv.Itoa(initialPage)
+// page - Must be a positive integer number.
+func (client *HtmlToPdfClient) SetInitialPage(page int) *HtmlToPdfClient {
+    client.fields["initial_page"] = strconv.Itoa(page)
     return client
 }
 
 // Specify the initial page zoom in percents when the document is opened.
 //
-// initialZoom - Must be a positive integer number.
-func (client *HtmlToPdfClient) SetInitialZoom(initialZoom int) *HtmlToPdfClient {
-    client.fields["initial_zoom"] = strconv.Itoa(initialZoom)
+// zoom - Must be a positive integer number.
+func (client *HtmlToPdfClient) SetInitialZoom(zoom int) *HtmlToPdfClient {
+    client.fields["initial_zoom"] = strconv.Itoa(zoom)
     return client
 }
 
 // Specify whether to hide the viewer application's tool bars when the document is active.
 //
-// hideToolbar - Set to true to hide tool bars.
-func (client *HtmlToPdfClient) SetHideToolbar(hideToolbar bool) *HtmlToPdfClient {
-    client.fields["hide_toolbar"] = strconv.FormatBool(hideToolbar)
+// value - Set to true to hide tool bars.
+func (client *HtmlToPdfClient) SetHideToolbar(value bool) *HtmlToPdfClient {
+    client.fields["hide_toolbar"] = strconv.FormatBool(value)
     return client
 }
 
 // Specify whether to hide the viewer application's menu bar when the document is active.
 //
-// hideMenubar - Set to true to hide the menu bar.
-func (client *HtmlToPdfClient) SetHideMenubar(hideMenubar bool) *HtmlToPdfClient {
-    client.fields["hide_menubar"] = strconv.FormatBool(hideMenubar)
+// value - Set to true to hide the menu bar.
+func (client *HtmlToPdfClient) SetHideMenubar(value bool) *HtmlToPdfClient {
+    client.fields["hide_menubar"] = strconv.FormatBool(value)
     return client
 }
 
 // Specify whether to hide user interface elements in the document's window (such as scroll bars and navigation controls), leaving only the document's contents displayed.
 //
-// hideWindowUi - Set to true to hide ui elements.
-func (client *HtmlToPdfClient) SetHideWindowUi(hideWindowUi bool) *HtmlToPdfClient {
-    client.fields["hide_window_ui"] = strconv.FormatBool(hideWindowUi)
+// value - Set to true to hide ui elements.
+func (client *HtmlToPdfClient) SetHideWindowUi(value bool) *HtmlToPdfClient {
+    client.fields["hide_window_ui"] = strconv.FormatBool(value)
     return client
 }
 
 // Specify whether to resize the document's window to fit the size of the first displayed page.
 //
-// fitWindow - Set to true to resize the window.
-func (client *HtmlToPdfClient) SetFitWindow(fitWindow bool) *HtmlToPdfClient {
-    client.fields["fit_window"] = strconv.FormatBool(fitWindow)
+// value - Set to true to resize the window.
+func (client *HtmlToPdfClient) SetFitWindow(value bool) *HtmlToPdfClient {
+    client.fields["fit_window"] = strconv.FormatBool(value)
     return client
 }
 
 // Specify whether to position the document's window in the center of the screen.
 //
-// centerWindow - Set to true to center the window.
-func (client *HtmlToPdfClient) SetCenterWindow(centerWindow bool) *HtmlToPdfClient {
-    client.fields["center_window"] = strconv.FormatBool(centerWindow)
+// value - Set to true to center the window.
+func (client *HtmlToPdfClient) SetCenterWindow(value bool) *HtmlToPdfClient {
+    client.fields["center_window"] = strconv.FormatBool(value)
     return client
 }
 
 // Specify whether the window's title bar should display the document title. If false , the title bar should instead display the name of the PDF file containing the document.
 //
-// displayTitle - Set to true to display the title.
-func (client *HtmlToPdfClient) SetDisplayTitle(displayTitle bool) *HtmlToPdfClient {
-    client.fields["display_title"] = strconv.FormatBool(displayTitle)
+// value - Set to true to display the title.
+func (client *HtmlToPdfClient) SetDisplayTitle(value bool) *HtmlToPdfClient {
+    client.fields["display_title"] = strconv.FormatBool(value)
     return client
 }
 
 // Set the predominant reading order for text to right-to-left. This option has no direct effect on the document's contents or page numbering but can be used to determine the relative positioning of pages when displayed side by side or printed n-up
 //
-// rightToLeft - Set to true to set right-to-left reading order.
-func (client *HtmlToPdfClient) SetRightToLeft(rightToLeft bool) *HtmlToPdfClient {
-    client.fields["right_to_left"] = strconv.FormatBool(rightToLeft)
+// value - Set to true to set right-to-left reading order.
+func (client *HtmlToPdfClient) SetRightToLeft(value bool) *HtmlToPdfClient {
+    client.fields["right_to_left"] = strconv.FormatBool(value)
     return client
 }
 
 // Turn on the debug logging. Details about the conversion are stored in the debug log. The URL of the log can be obtained from the getDebugLogUrl method or available in conversion statistics.
 //
-// debugLog - Set to true to enable the debug logging.
-func (client *HtmlToPdfClient) SetDebugLog(debugLog bool) *HtmlToPdfClient {
-    client.fields["debug_log"] = strconv.FormatBool(debugLog)
+// value - Set to true to enable the debug logging.
+func (client *HtmlToPdfClient) SetDebugLog(value bool) *HtmlToPdfClient {
+    client.fields["debug_log"] = strconv.FormatBool(value)
     return client
 }
 
@@ -1343,6 +1380,11 @@ func (client *HtmlToPdfClient) GetOutputSize() int {
     return client.helper.getOutputSize()
 }
 
+// Get the version details.
+func (client *HtmlToPdfClient) GetVersion() string {
+    return fmt.Sprintf("client %s, API v2, converter %s", CLIENT_VERSION, client.helper.getConverterVersion())
+}
+
 // Tag the conversion with a custom value. The tag is used in conversion statistics. A value longer than 32 characters is cut off.
 //
 // tag - A string with the custom tag.
@@ -1353,50 +1395,115 @@ func (client *HtmlToPdfClient) SetTag(tag string) *HtmlToPdfClient {
 
 // A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
-// httpProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
-func (client *HtmlToPdfClient) SetHttpProxy(httpProxy string) *HtmlToPdfClient {
-    client.fields["http_proxy"] = httpProxy
+// proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *HtmlToPdfClient) SetHttpProxy(proxy string) *HtmlToPdfClient {
+    client.fields["http_proxy"] = proxy
     return client
 }
 
 // A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
-// httpsProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
-func (client *HtmlToPdfClient) SetHttpsProxy(httpsProxy string) *HtmlToPdfClient {
-    client.fields["https_proxy"] = httpsProxy
+// proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *HtmlToPdfClient) SetHttpsProxy(proxy string) *HtmlToPdfClient {
+    client.fields["https_proxy"] = proxy
     return client
 }
 
 // A client certificate to authenticate Pdfcrowd converter on your web server. The certificate is used for two-way SSL/TLS authentication and adds extra security.
 //
-// clientCertificate - The file must be in PKCS12 format. The file must exist and not be empty.
-func (client *HtmlToPdfClient) SetClientCertificate(clientCertificate string) *HtmlToPdfClient {
-    client.files["client_certificate"] = clientCertificate
+// certificate - The file must be in PKCS12 format. The file must exist and not be empty.
+func (client *HtmlToPdfClient) SetClientCertificate(certificate string) *HtmlToPdfClient {
+    client.files["client_certificate"] = certificate
     return client
 }
 
 // A password for PKCS12 file with a client certificate if it is needed.
 //
-// clientCertificatePassword -
-func (client *HtmlToPdfClient) SetClientCertificatePassword(clientCertificatePassword string) *HtmlToPdfClient {
-    client.fields["client_certificate_password"] = clientCertificatePassword
+// password -
+func (client *HtmlToPdfClient) SetClientCertificatePassword(password string) *HtmlToPdfClient {
+    client.fields["client_certificate_password"] = password
+    return client
+}
+
+// Set the internal DPI resolution used for positioning of PDF contents. It can help in situations when there are small inaccuracies in the PDF. It is recommended to use values that are a multiple of 72, such as 288 or 360.
+//
+// dpi - The DPI value. The value must be in the range of 72-600.
+func (client *HtmlToPdfClient) SetLayoutDpi(dpi int) *HtmlToPdfClient {
+    client.fields["layout_dpi"] = strconv.Itoa(dpi)
+    return client
+}
+
+// A 2D transformation matrix applied to the main contents on each page. The origin [0,0] is located at the top-left corner of the contents. The resolution is 72 dpi.
+//
+// matrix - A comma separated string of matrix elements: "scaleX,skewX,transX,skewY,scaleY,transY"
+func (client *HtmlToPdfClient) SetContentsMatrix(matrix string) *HtmlToPdfClient {
+    client.fields["contents_matrix"] = matrix
+    return client
+}
+
+// A 2D transformation matrix applied to the page header contents. The origin [0,0] is located at the top-left corner of the header. The resolution is 72 dpi.
+//
+// matrix - A comma separated string of matrix elements: "scaleX,skewX,transX,skewY,scaleY,transY"
+func (client *HtmlToPdfClient) SetHeaderMatrix(matrix string) *HtmlToPdfClient {
+    client.fields["header_matrix"] = matrix
+    return client
+}
+
+// A 2D transformation matrix applied to the page footer contents. The origin [0,0] is located at the top-left corner of the footer. The resolution is 72 dpi.
+//
+// matrix - A comma separated string of matrix elements: "scaleX,skewX,transX,skewY,scaleY,transY"
+func (client *HtmlToPdfClient) SetFooterMatrix(matrix string) *HtmlToPdfClient {
+    client.fields["footer_matrix"] = matrix
+    return client
+}
+
+// Disable automatic height adjustment that compensates for pixel to point rounding errors.
+//
+// value - Set to true to disable automatic height scale.
+func (client *HtmlToPdfClient) SetDisablePageHeightOptimization(value bool) *HtmlToPdfClient {
+    client.fields["disable_page_height_optimization"] = strconv.FormatBool(value)
+    return client
+}
+
+// Add special CSS classes to the main document's body element. This allows applying custom styling based on these classes: pdfcrowd-page-X - where X is the current page number pdfcrowd-page-odd - odd page pdfcrowd-page-even - even page
+// Warning: If your custom styling affects the contents area size (e.g. by using different margins, padding, border width), the resulting PDF may contain duplicit contents or some contents may be missing.
+//
+// value - Set to true to add the special CSS classes.
+func (client *HtmlToPdfClient) SetMainDocumentCssAnnotation(value bool) *HtmlToPdfClient {
+    client.fields["main_document_css_annotation"] = strconv.FormatBool(value)
+    return client
+}
+
+// Add special CSS classes to the header/footer's body element. This allows applying custom styling based on these classes: pdfcrowd-page-X - where X is the current page number pdfcrowd-page-count-X - where X is the total page count pdfcrowd-page-first - the first page pdfcrowd-page-last - the last page pdfcrowd-page-odd - odd page pdfcrowd-page-even - even page
+//
+// value - Set to true to add the special CSS classes.
+func (client *HtmlToPdfClient) SetHeaderFooterCssAnnotation(value bool) *HtmlToPdfClient {
+    client.fields["header_footer_css_annotation"] = strconv.FormatBool(value)
+    return client
+}
+
+// Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
+//
+// version - The version identifier. Allowed values are latest, 20.10, 18.10.
+func (client *HtmlToPdfClient) SetConverterVersion(version string) *HtmlToPdfClient {
+    client.helper.setConverterVersion(version)
     return client
 }
 
 // Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
 // Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
-// useHttp - Set to true to use HTTP.
-func (client *HtmlToPdfClient) SetUseHttp(useHttp bool) *HtmlToPdfClient {
-    client.helper.setUseHttp(useHttp)
+// value - Set to true to use HTTP.
+func (client *HtmlToPdfClient) SetUseHttp(value bool) *HtmlToPdfClient {
+    client.helper.setUseHttp(value)
     return client
 }
 
 // Set a custom user agent HTTP header. It can be useful if you are behind some proxy or firewall.
 //
-// userAgent - The user agent string.
-func (client *HtmlToPdfClient) SetUserAgent(userAgent string) *HtmlToPdfClient {
-    client.helper.setUserAgent(userAgent)
+// agent - The user agent string.
+func (client *HtmlToPdfClient) SetUserAgent(agent string) *HtmlToPdfClient {
+    client.helper.setUserAgent(agent)
     return client
 }
 
@@ -1413,9 +1520,9 @@ func (client *HtmlToPdfClient) SetProxy(host string, port int, userName string, 
 
 // Specifies the number of retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
-// retryCount - Number of retries wanted.
-func (client *HtmlToPdfClient) SetRetryCount(retryCount int) *HtmlToPdfClient {
-    client.helper.setRetryCount(retryCount)
+// count - Number of retries wanted.
+func (client *HtmlToPdfClient) SetRetryCount(count int) *HtmlToPdfClient {
+    client.helper.setRetryCount(count)
     return client
 }
 
@@ -1455,7 +1562,7 @@ func (client *HtmlToImageClient) SetOutputFormat(outputFormat string) *HtmlToIma
 func (client *HtmlToImageClient) ConvertUrl(url string) ([]byte, error) {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return nil, Error{createInvalidValueMessage(url, "url", "html-to-image", "The supported protocols are http:// and https://.", "convert_url"), 470}
+        return nil, Error{createInvalidValueMessage(url, "ConvertUrl", "html-to-image", "The supported protocols are http:// and https://.", "convert_url"), 470}
     }
     
     client.fields["url"] = url
@@ -1469,7 +1576,7 @@ func (client *HtmlToImageClient) ConvertUrl(url string) ([]byte, error) {
 func (client *HtmlToImageClient) ConvertUrlToStream(url string, outStream io.Writer) error {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return Error{createInvalidValueMessage(url, "url", "html-to-image", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
+        return Error{createInvalidValueMessage(url, "ConvertUrlToStream::url", "html-to-image", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
     }
     
     client.fields["url"] = url
@@ -1483,7 +1590,7 @@ func (client *HtmlToImageClient) ConvertUrlToStream(url string, outStream io.Wri
 // filePath - The output file path. The string must not be empty.
 func (client *HtmlToImageClient) ConvertUrlToFile(url string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "file_path", "html-to-image", "The string must not be empty.", "convert_url_to_file"), 470}
+        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "html-to-image", "The string must not be empty.", "convert_url_to_file"), 470}
     }
     
     outputFile, err := os.Create(filePath)
@@ -1504,7 +1611,7 @@ func (client *HtmlToImageClient) ConvertUrlToFile(url string, filePath string) e
 // file - The path to a local file to convert. The file can be either a single file or an archive (.tar.gz, .tar.bz2, or .zip). If the HTML document refers to local external assets (images, style sheets, javascript), zip the document together with the assets. The file must exist and not be empty. The file name must have a valid extension.
 func (client *HtmlToImageClient) ConvertFile(file string) ([]byte, error) {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return nil, Error{createInvalidValueMessage(file, "file", "html-to-image", "The file must exist and not be empty.", "convert_file"), 470}
+        return nil, Error{createInvalidValueMessage(file, "ConvertFile", "html-to-image", "The file must exist and not be empty.", "convert_file"), 470}
     }
     
     client.files["file"] = file
@@ -1517,7 +1624,7 @@ func (client *HtmlToImageClient) ConvertFile(file string) ([]byte, error) {
 // outStream - The output stream that will contain the conversion output.
 func (client *HtmlToImageClient) ConvertFileToStream(file string, outStream io.Writer) error {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return Error{createInvalidValueMessage(file, "file", "html-to-image", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
+        return Error{createInvalidValueMessage(file, "ConvertFileToStream::file", "html-to-image", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
     }
     
     client.files["file"] = file
@@ -1531,7 +1638,7 @@ func (client *HtmlToImageClient) ConvertFileToStream(file string, outStream io.W
 // filePath - The output file path. The string must not be empty.
 func (client *HtmlToImageClient) ConvertFileToFile(file string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "file_path", "html-to-image", "The string must not be empty.", "convert_file_to_file"), 470}
+        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "html-to-image", "The string must not be empty.", "convert_file_to_file"), 470}
     }
     
     outputFile, err := os.Create(filePath)
@@ -1552,7 +1659,7 @@ func (client *HtmlToImageClient) ConvertFileToFile(file string, filePath string)
 // text - The string content to convert. The string must not be empty.
 func (client *HtmlToImageClient) ConvertString(text string) ([]byte, error) {
     if len(text) == 0 {
-        return nil, Error{createInvalidValueMessage(text, "text", "html-to-image", "The string must not be empty.", "convert_string"), 470}
+        return nil, Error{createInvalidValueMessage(text, "ConvertString", "html-to-image", "The string must not be empty.", "convert_string"), 470}
     }
     
     client.fields["text"] = text
@@ -1565,7 +1672,7 @@ func (client *HtmlToImageClient) ConvertString(text string) ([]byte, error) {
 // outStream - The output stream that will contain the conversion output.
 func (client *HtmlToImageClient) ConvertStringToStream(text string, outStream io.Writer) error {
     if len(text) == 0 {
-        return Error{createInvalidValueMessage(text, "text", "html-to-image", "The string must not be empty.", "convert_string_to_stream"), 470}
+        return Error{createInvalidValueMessage(text, "ConvertStringToStream::text", "html-to-image", "The string must not be empty.", "convert_string_to_stream"), 470}
     }
     
     client.fields["text"] = text
@@ -1579,7 +1686,7 @@ func (client *HtmlToImageClient) ConvertStringToStream(text string, outStream io
 // filePath - The output file path. The string must not be empty.
 func (client *HtmlToImageClient) ConvertStringToFile(text string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "file_path", "html-to-image", "The string must not be empty.", "convert_string_to_file"), 470}
+        return Error{createInvalidValueMessage(filePath, "ConvertStringToFile::file_path", "html-to-image", "The string must not be empty.", "convert_string_to_file"), 470}
     }
     
     outputFile, err := os.Create(filePath)
@@ -1621,89 +1728,113 @@ func (client *HtmlToImageClient) SetDataFormat(dataFormat string) *HtmlToImageCl
 
 // Set the encoding of the data file set by setDataFile.
 //
-// dataEncoding - The data file encoding.
-func (client *HtmlToImageClient) SetDataEncoding(dataEncoding string) *HtmlToImageClient {
-    client.fields["data_encoding"] = dataEncoding
+// encoding - The data file encoding.
+func (client *HtmlToImageClient) SetDataEncoding(encoding string) *HtmlToImageClient {
+    client.fields["data_encoding"] = encoding
     return client
 }
 
 // Ignore undefined variables in the HTML template. The default mode is strict so any undefined variable causes the conversion to fail. You can use {% if variable is defined %} to check if the variable is defined.
 //
-// dataIgnoreUndefined - Set to true to ignore undefined variables.
-func (client *HtmlToImageClient) SetDataIgnoreUndefined(dataIgnoreUndefined bool) *HtmlToImageClient {
-    client.fields["data_ignore_undefined"] = strconv.FormatBool(dataIgnoreUndefined)
+// value - Set to true to ignore undefined variables.
+func (client *HtmlToImageClient) SetDataIgnoreUndefined(value bool) *HtmlToImageClient {
+    client.fields["data_ignore_undefined"] = strconv.FormatBool(value)
     return client
 }
 
 // Auto escape HTML symbols in the input data before placing them into the output.
 //
-// dataAutoEscape - Set to true to turn auto escaping on.
-func (client *HtmlToImageClient) SetDataAutoEscape(dataAutoEscape bool) *HtmlToImageClient {
-    client.fields["data_auto_escape"] = strconv.FormatBool(dataAutoEscape)
+// value - Set to true to turn auto escaping on.
+func (client *HtmlToImageClient) SetDataAutoEscape(value bool) *HtmlToImageClient {
+    client.fields["data_auto_escape"] = strconv.FormatBool(value)
     return client
 }
 
 // Auto trim whitespace around each template command block.
 //
-// dataTrimBlocks - Set to true to turn auto trimming on.
-func (client *HtmlToImageClient) SetDataTrimBlocks(dataTrimBlocks bool) *HtmlToImageClient {
-    client.fields["data_trim_blocks"] = strconv.FormatBool(dataTrimBlocks)
+// value - Set to true to turn auto trimming on.
+func (client *HtmlToImageClient) SetDataTrimBlocks(value bool) *HtmlToImageClient {
+    client.fields["data_trim_blocks"] = strconv.FormatBool(value)
     return client
 }
 
 // Set the advanced data options:csv_delimiter - The CSV data delimiter, the default is ,.xml_remove_root - Remove the root XML element from the input data.data_root - The name of the root element inserted into the input data without a root node (e.g. CSV), the default is data.
 //
-// dataOptions - Comma separated list of options.
-func (client *HtmlToImageClient) SetDataOptions(dataOptions string) *HtmlToImageClient {
-    client.fields["data_options"] = dataOptions
+// options - Comma separated list of options.
+func (client *HtmlToImageClient) SetDataOptions(options string) *HtmlToImageClient {
+    client.fields["data_options"] = options
+    return client
+}
+
+// Use the print version of the page if available (@media print).
+//
+// value - Set to true to use the print version of the page.
+func (client *HtmlToImageClient) SetUsePrintMedia(value bool) *HtmlToImageClient {
+    client.fields["use_print_media"] = strconv.FormatBool(value)
     return client
 }
 
 // Do not print the background graphics.
 //
-// noBackground - Set to true to disable the background graphics.
-func (client *HtmlToImageClient) SetNoBackground(noBackground bool) *HtmlToImageClient {
-    client.fields["no_background"] = strconv.FormatBool(noBackground)
+// value - Set to true to disable the background graphics.
+func (client *HtmlToImageClient) SetNoBackground(value bool) *HtmlToImageClient {
+    client.fields["no_background"] = strconv.FormatBool(value)
     return client
 }
 
 // Do not execute JavaScript.
 //
-// disableJavascript - Set to true to disable JavaScript in web pages.
-func (client *HtmlToImageClient) SetDisableJavascript(disableJavascript bool) *HtmlToImageClient {
-    client.fields["disable_javascript"] = strconv.FormatBool(disableJavascript)
+// value - Set to true to disable JavaScript in web pages.
+func (client *HtmlToImageClient) SetDisableJavascript(value bool) *HtmlToImageClient {
+    client.fields["disable_javascript"] = strconv.FormatBool(value)
     return client
 }
 
 // Do not load images.
 //
-// disableImageLoading - Set to true to disable loading of images.
-func (client *HtmlToImageClient) SetDisableImageLoading(disableImageLoading bool) *HtmlToImageClient {
-    client.fields["disable_image_loading"] = strconv.FormatBool(disableImageLoading)
+// value - Set to true to disable loading of images.
+func (client *HtmlToImageClient) SetDisableImageLoading(value bool) *HtmlToImageClient {
+    client.fields["disable_image_loading"] = strconv.FormatBool(value)
     return client
 }
 
 // Disable loading fonts from remote sources.
 //
-// disableRemoteFonts - Set to true disable loading remote fonts.
-func (client *HtmlToImageClient) SetDisableRemoteFonts(disableRemoteFonts bool) *HtmlToImageClient {
-    client.fields["disable_remote_fonts"] = strconv.FormatBool(disableRemoteFonts)
+// value - Set to true disable loading remote fonts.
+func (client *HtmlToImageClient) SetDisableRemoteFonts(value bool) *HtmlToImageClient {
+    client.fields["disable_remote_fonts"] = strconv.FormatBool(value)
+    return client
+}
+
+// Specifies how iframes are handled.
+//
+// iframes - Allowed values are all, same-origin, none.
+func (client *HtmlToImageClient) SetLoadIframes(iframes string) *HtmlToImageClient {
+    client.fields["load_iframes"] = iframes
     return client
 }
 
 // Try to block ads. Enabling this option can produce smaller output and speed up the conversion.
 //
-// blockAds - Set to true to block ads in web pages.
-func (client *HtmlToImageClient) SetBlockAds(blockAds bool) *HtmlToImageClient {
-    client.fields["block_ads"] = strconv.FormatBool(blockAds)
+// value - Set to true to block ads in web pages.
+func (client *HtmlToImageClient) SetBlockAds(value bool) *HtmlToImageClient {
+    client.fields["block_ads"] = strconv.FormatBool(value)
     return client
 }
 
 // Set the default HTML content text encoding.
 //
-// defaultEncoding - The text encoding of the HTML content.
-func (client *HtmlToImageClient) SetDefaultEncoding(defaultEncoding string) *HtmlToImageClient {
-    client.fields["default_encoding"] = defaultEncoding
+// encoding - The text encoding of the HTML content.
+func (client *HtmlToImageClient) SetDefaultEncoding(encoding string) *HtmlToImageClient {
+    client.fields["default_encoding"] = encoding
+    return client
+}
+
+// Set the locale for the conversion. This may affect the output format of dates, times and numbers.
+//
+// locale - The locale code according to ISO 639.
+func (client *HtmlToImageClient) SetLocale(locale string) *HtmlToImageClient {
+    client.fields["locale"] = locale
     return client
 }
 
@@ -1733,22 +1864,6 @@ func (client *HtmlToImageClient) SetHttpAuth(userName string, password string) *
     return client
 }
 
-// Use the print version of the page if available (@media print).
-//
-// usePrintMedia - Set to true to use the print version of the page.
-func (client *HtmlToImageClient) SetUsePrintMedia(usePrintMedia bool) *HtmlToImageClient {
-    client.fields["use_print_media"] = strconv.FormatBool(usePrintMedia)
-    return client
-}
-
-// Do not send the X-Pdfcrowd HTTP header in Pdfcrowd HTTP requests.
-//
-// noXpdfcrowdHeader - Set to true to disable sending X-Pdfcrowd HTTP header.
-func (client *HtmlToImageClient) SetNoXpdfcrowdHeader(noXpdfcrowdHeader bool) *HtmlToImageClient {
-    client.fields["no_xpdfcrowd_header"] = strconv.FormatBool(noXpdfcrowdHeader)
-    return client
-}
-
 // Set cookies that are sent in Pdfcrowd HTTP requests.
 //
 // cookies - The cookie string.
@@ -1759,9 +1874,9 @@ func (client *HtmlToImageClient) SetCookies(cookies string) *HtmlToImageClient {
 
 // Do not allow insecure HTTPS connections.
 //
-// verifySslCertificates - Set to true to enable SSL certificate verification.
-func (client *HtmlToImageClient) SetVerifySslCertificates(verifySslCertificates bool) *HtmlToImageClient {
-    client.fields["verify_ssl_certificates"] = strconv.FormatBool(verifySslCertificates)
+// value - Set to true to enable SSL certificate verification.
+func (client *HtmlToImageClient) SetVerifySslCertificates(value bool) *HtmlToImageClient {
+    client.fields["verify_ssl_certificates"] = strconv.FormatBool(value)
     return client
 }
 
@@ -1781,35 +1896,43 @@ func (client *HtmlToImageClient) SetFailOnAnyUrlError(failOnError bool) *HtmlToI
     return client
 }
 
+// Do not send the X-Pdfcrowd HTTP header in Pdfcrowd HTTP requests.
+//
+// value - Set to true to disable sending X-Pdfcrowd HTTP header.
+func (client *HtmlToImageClient) SetNoXpdfcrowdHeader(value bool) *HtmlToImageClient {
+    client.fields["no_xpdfcrowd_header"] = strconv.FormatBool(value)
+    return client
+}
+
 // Run a custom JavaScript after the document is loaded and ready to print. The script is intended for post-load DOM manipulation (add/remove elements, update CSS, ...). In addition to the standard browser APIs, the custom JavaScript code can use helper functions from our JavaScript library.
 //
-// customJavascript - A string containing a JavaScript code. The string must not be empty.
-func (client *HtmlToImageClient) SetCustomJavascript(customJavascript string) *HtmlToImageClient {
-    client.fields["custom_javascript"] = customJavascript
+// javascript - A string containing a JavaScript code. The string must not be empty.
+func (client *HtmlToImageClient) SetCustomJavascript(javascript string) *HtmlToImageClient {
+    client.fields["custom_javascript"] = javascript
     return client
 }
 
 // Run a custom JavaScript right after the document is loaded. The script is intended for early DOM manipulation (add/remove elements, update CSS, ...). In addition to the standard browser APIs, the custom JavaScript code can use helper functions from our JavaScript library.
 //
-// onLoadJavascript - A string containing a JavaScript code. The string must not be empty.
-func (client *HtmlToImageClient) SetOnLoadJavascript(onLoadJavascript string) *HtmlToImageClient {
-    client.fields["on_load_javascript"] = onLoadJavascript
+// javascript - A string containing a JavaScript code. The string must not be empty.
+func (client *HtmlToImageClient) SetOnLoadJavascript(javascript string) *HtmlToImageClient {
+    client.fields["on_load_javascript"] = javascript
     return client
 }
 
 // Set a custom HTTP header that is sent in Pdfcrowd HTTP requests.
 //
-// customHttpHeader - A string containing the header name and value separated by a colon.
-func (client *HtmlToImageClient) SetCustomHttpHeader(customHttpHeader string) *HtmlToImageClient {
-    client.fields["custom_http_header"] = customHttpHeader
+// header - A string containing the header name and value separated by a colon.
+func (client *HtmlToImageClient) SetCustomHttpHeader(header string) *HtmlToImageClient {
+    client.fields["custom_http_header"] = header
     return client
 }
 
 // Wait the specified number of milliseconds to finish all JavaScript after the document is loaded. Your API license defines the maximum wait time by "Max Delay" parameter.
 //
-// javascriptDelay - The number of milliseconds to wait. Must be a positive integer number or 0.
-func (client *HtmlToImageClient) SetJavascriptDelay(javascriptDelay int) *HtmlToImageClient {
-    client.fields["javascript_delay"] = strconv.Itoa(javascriptDelay)
+// delay - The number of milliseconds to wait. Must be a positive integer number or 0.
+func (client *HtmlToImageClient) SetJavascriptDelay(delay int) *HtmlToImageClient {
+    client.fields["javascript_delay"] = strconv.Itoa(delay)
     return client
 }
 
@@ -1839,33 +1962,41 @@ func (client *HtmlToImageClient) SetWaitForElement(selectors string) *HtmlToImag
 
 // Set the output image width in pixels.
 //
-// screenshotWidth - The value must be in the range 96-65000.
-func (client *HtmlToImageClient) SetScreenshotWidth(screenshotWidth int) *HtmlToImageClient {
-    client.fields["screenshot_width"] = strconv.Itoa(screenshotWidth)
+// width - The value must be in the range 96-65000.
+func (client *HtmlToImageClient) SetScreenshotWidth(width int) *HtmlToImageClient {
+    client.fields["screenshot_width"] = strconv.Itoa(width)
     return client
 }
 
 // Set the output image height in pixels. If it is not specified, actual document height is used.
 //
-// screenshotHeight - Must be a positive integer number.
-func (client *HtmlToImageClient) SetScreenshotHeight(screenshotHeight int) *HtmlToImageClient {
-    client.fields["screenshot_height"] = strconv.Itoa(screenshotHeight)
+// height - Must be a positive integer number.
+func (client *HtmlToImageClient) SetScreenshotHeight(height int) *HtmlToImageClient {
+    client.fields["screenshot_height"] = strconv.Itoa(height)
     return client
 }
 
 // Set the scaling factor (zoom) for the output image.
 //
-// scaleFactor - The percentage value. Must be a positive integer number.
-func (client *HtmlToImageClient) SetScaleFactor(scaleFactor int) *HtmlToImageClient {
-    client.fields["scale_factor"] = strconv.Itoa(scaleFactor)
+// factor - The percentage value. Must be a positive integer number.
+func (client *HtmlToImageClient) SetScaleFactor(factor int) *HtmlToImageClient {
+    client.fields["scale_factor"] = strconv.Itoa(factor)
+    return client
+}
+
+// The output image background color.
+//
+// color - The value must be in RRGGBB or RRGGBBAA hexadecimal format.
+func (client *HtmlToImageClient) SetBackgroundColor(color string) *HtmlToImageClient {
+    client.fields["background_color"] = color
     return client
 }
 
 // Turn on the debug logging. Details about the conversion are stored in the debug log. The URL of the log can be obtained from the getDebugLogUrl method or available in conversion statistics.
 //
-// debugLog - Set to true to enable the debug logging.
-func (client *HtmlToImageClient) SetDebugLog(debugLog bool) *HtmlToImageClient {
-    client.fields["debug_log"] = strconv.FormatBool(debugLog)
+// value - Set to true to enable the debug logging.
+func (client *HtmlToImageClient) SetDebugLog(value bool) *HtmlToImageClient {
+    client.fields["debug_log"] = strconv.FormatBool(value)
     return client
 }
 
@@ -1897,6 +2028,11 @@ func (client *HtmlToImageClient) GetOutputSize() int {
     return client.helper.getOutputSize()
 }
 
+// Get the version details.
+func (client *HtmlToImageClient) GetVersion() string {
+    return fmt.Sprintf("client %s, API v2, converter %s", CLIENT_VERSION, client.helper.getConverterVersion())
+}
+
 // Tag the conversion with a custom value. The tag is used in conversion statistics. A value longer than 32 characters is cut off.
 //
 // tag - A string with the custom tag.
@@ -1907,50 +2043,58 @@ func (client *HtmlToImageClient) SetTag(tag string) *HtmlToImageClient {
 
 // A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
-// httpProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
-func (client *HtmlToImageClient) SetHttpProxy(httpProxy string) *HtmlToImageClient {
-    client.fields["http_proxy"] = httpProxy
+// proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *HtmlToImageClient) SetHttpProxy(proxy string) *HtmlToImageClient {
+    client.fields["http_proxy"] = proxy
     return client
 }
 
 // A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
-// httpsProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
-func (client *HtmlToImageClient) SetHttpsProxy(httpsProxy string) *HtmlToImageClient {
-    client.fields["https_proxy"] = httpsProxy
+// proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *HtmlToImageClient) SetHttpsProxy(proxy string) *HtmlToImageClient {
+    client.fields["https_proxy"] = proxy
     return client
 }
 
 // A client certificate to authenticate Pdfcrowd converter on your web server. The certificate is used for two-way SSL/TLS authentication and adds extra security.
 //
-// clientCertificate - The file must be in PKCS12 format. The file must exist and not be empty.
-func (client *HtmlToImageClient) SetClientCertificate(clientCertificate string) *HtmlToImageClient {
-    client.files["client_certificate"] = clientCertificate
+// certificate - The file must be in PKCS12 format. The file must exist and not be empty.
+func (client *HtmlToImageClient) SetClientCertificate(certificate string) *HtmlToImageClient {
+    client.files["client_certificate"] = certificate
     return client
 }
 
 // A password for PKCS12 file with a client certificate if it is needed.
 //
-// clientCertificatePassword -
-func (client *HtmlToImageClient) SetClientCertificatePassword(clientCertificatePassword string) *HtmlToImageClient {
-    client.fields["client_certificate_password"] = clientCertificatePassword
+// password -
+func (client *HtmlToImageClient) SetClientCertificatePassword(password string) *HtmlToImageClient {
+    client.fields["client_certificate_password"] = password
+    return client
+}
+
+// Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
+//
+// version - The version identifier. Allowed values are latest, 20.10, 18.10.
+func (client *HtmlToImageClient) SetConverterVersion(version string) *HtmlToImageClient {
+    client.helper.setConverterVersion(version)
     return client
 }
 
 // Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
 // Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
-// useHttp - Set to true to use HTTP.
-func (client *HtmlToImageClient) SetUseHttp(useHttp bool) *HtmlToImageClient {
-    client.helper.setUseHttp(useHttp)
+// value - Set to true to use HTTP.
+func (client *HtmlToImageClient) SetUseHttp(value bool) *HtmlToImageClient {
+    client.helper.setUseHttp(value)
     return client
 }
 
 // Set a custom user agent HTTP header. It can be useful if you are behind some proxy or firewall.
 //
-// userAgent - The user agent string.
-func (client *HtmlToImageClient) SetUserAgent(userAgent string) *HtmlToImageClient {
-    client.helper.setUserAgent(userAgent)
+// agent - The user agent string.
+func (client *HtmlToImageClient) SetUserAgent(agent string) *HtmlToImageClient {
+    client.helper.setUserAgent(agent)
     return client
 }
 
@@ -1967,9 +2111,9 @@ func (client *HtmlToImageClient) SetProxy(host string, port int, userName string
 
 // Specifies the number of retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
-// retryCount - Number of retries wanted.
-func (client *HtmlToImageClient) SetRetryCount(retryCount int) *HtmlToImageClient {
-    client.helper.setRetryCount(retryCount)
+// count - Number of retries wanted.
+func (client *HtmlToImageClient) SetRetryCount(count int) *HtmlToImageClient {
+    client.helper.setRetryCount(count)
     return client
 }
 
@@ -2001,7 +2145,7 @@ func NewImageToImageClient(userName string, apiKey string) ImageToImageClient {
 func (client *ImageToImageClient) ConvertUrl(url string) ([]byte, error) {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return nil, Error{createInvalidValueMessage(url, "url", "image-to-image", "The supported protocols are http:// and https://.", "convert_url"), 470}
+        return nil, Error{createInvalidValueMessage(url, "ConvertUrl", "image-to-image", "The supported protocols are http:// and https://.", "convert_url"), 470}
     }
     
     client.fields["url"] = url
@@ -2015,7 +2159,7 @@ func (client *ImageToImageClient) ConvertUrl(url string) ([]byte, error) {
 func (client *ImageToImageClient) ConvertUrlToStream(url string, outStream io.Writer) error {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return Error{createInvalidValueMessage(url, "url", "image-to-image", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
+        return Error{createInvalidValueMessage(url, "ConvertUrlToStream::url", "image-to-image", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
     }
     
     client.fields["url"] = url
@@ -2029,7 +2173,7 @@ func (client *ImageToImageClient) ConvertUrlToStream(url string, outStream io.Wr
 // filePath - The output file path. The string must not be empty.
 func (client *ImageToImageClient) ConvertUrlToFile(url string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "file_path", "image-to-image", "The string must not be empty.", "convert_url_to_file"), 470}
+        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "image-to-image", "The string must not be empty.", "convert_url_to_file"), 470}
     }
     
     outputFile, err := os.Create(filePath)
@@ -2047,10 +2191,10 @@ func (client *ImageToImageClient) ConvertUrlToFile(url string, filePath string) 
 
 // Convert a local file.
 //
-// file - The path to a local file to convert. The file can be either a single file or an archive (.tar.gz, .tar.bz2, or .zip). The file must exist and not be empty.
+// file - The path to a local file to convert. The file must exist and not be empty.
 func (client *ImageToImageClient) ConvertFile(file string) ([]byte, error) {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return nil, Error{createInvalidValueMessage(file, "file", "image-to-image", "The file must exist and not be empty.", "convert_file"), 470}
+        return nil, Error{createInvalidValueMessage(file, "ConvertFile", "image-to-image", "The file must exist and not be empty.", "convert_file"), 470}
     }
     
     client.files["file"] = file
@@ -2059,11 +2203,11 @@ func (client *ImageToImageClient) ConvertFile(file string) ([]byte, error) {
 
 // Convert a local file and write the result to an output stream.
 //
-// file - The path to a local file to convert. The file can be either a single file or an archive (.tar.gz, .tar.bz2, or .zip). The file must exist and not be empty.
+// file - The path to a local file to convert. The file must exist and not be empty.
 // outStream - The output stream that will contain the conversion output.
 func (client *ImageToImageClient) ConvertFileToStream(file string, outStream io.Writer) error {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return Error{createInvalidValueMessage(file, "file", "image-to-image", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
+        return Error{createInvalidValueMessage(file, "ConvertFileToStream::file", "image-to-image", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
     }
     
     client.files["file"] = file
@@ -2073,11 +2217,11 @@ func (client *ImageToImageClient) ConvertFileToStream(file string, outStream io.
 
 // Convert a local file and write the result to a local file.
 //
-// file - The path to a local file to convert. The file can be either a single file or an archive (.tar.gz, .tar.bz2, or .zip). The file must exist and not be empty.
+// file - The path to a local file to convert. The file must exist and not be empty.
 // filePath - The output file path. The string must not be empty.
 func (client *ImageToImageClient) ConvertFileToFile(file string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "file_path", "image-to-image", "The string must not be empty.", "convert_file_to_file"), 470}
+        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "image-to-image", "The string must not be empty.", "convert_file_to_file"), 470}
     }
     
     outputFile, err := os.Create(filePath)
@@ -2117,7 +2261,7 @@ func (client *ImageToImageClient) ConvertRawDataToStream(data []byte, outStream 
 // filePath - The output file path. The string must not be empty.
 func (client *ImageToImageClient) ConvertRawDataToFile(data []byte, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "file_path", "image-to-image", "The string must not be empty.", "convert_raw_data_to_file"), 470}
+        return Error{createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "image-to-image", "The string must not be empty.", "convert_raw_data_to_file"), 470}
     }
     
     outputFile, err := os.Create(filePath)
@@ -2159,9 +2303,9 @@ func (client *ImageToImageClient) SetRotate(rotate string) *ImageToImageClient {
 
 // Turn on the debug logging. Details about the conversion are stored in the debug log. The URL of the log can be obtained from the getDebugLogUrl method or available in conversion statistics.
 //
-// debugLog - Set to true to enable the debug logging.
-func (client *ImageToImageClient) SetDebugLog(debugLog bool) *ImageToImageClient {
-    client.fields["debug_log"] = strconv.FormatBool(debugLog)
+// value - Set to true to enable the debug logging.
+func (client *ImageToImageClient) SetDebugLog(value bool) *ImageToImageClient {
+    client.fields["debug_log"] = strconv.FormatBool(value)
     return client
 }
 
@@ -2193,6 +2337,11 @@ func (client *ImageToImageClient) GetOutputSize() int {
     return client.helper.getOutputSize()
 }
 
+// Get the version details.
+func (client *ImageToImageClient) GetVersion() string {
+    return fmt.Sprintf("client %s, API v2, converter %s", CLIENT_VERSION, client.helper.getConverterVersion())
+}
+
 // Tag the conversion with a custom value. The tag is used in conversion statistics. A value longer than 32 characters is cut off.
 //
 // tag - A string with the custom tag.
@@ -2203,34 +2352,42 @@ func (client *ImageToImageClient) SetTag(tag string) *ImageToImageClient {
 
 // A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
-// httpProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
-func (client *ImageToImageClient) SetHttpProxy(httpProxy string) *ImageToImageClient {
-    client.fields["http_proxy"] = httpProxy
+// proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *ImageToImageClient) SetHttpProxy(proxy string) *ImageToImageClient {
+    client.fields["http_proxy"] = proxy
     return client
 }
 
 // A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
-// httpsProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
-func (client *ImageToImageClient) SetHttpsProxy(httpsProxy string) *ImageToImageClient {
-    client.fields["https_proxy"] = httpsProxy
+// proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *ImageToImageClient) SetHttpsProxy(proxy string) *ImageToImageClient {
+    client.fields["https_proxy"] = proxy
+    return client
+}
+
+// Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
+//
+// version - The version identifier. Allowed values are latest, 20.10, 18.10.
+func (client *ImageToImageClient) SetConverterVersion(version string) *ImageToImageClient {
+    client.helper.setConverterVersion(version)
     return client
 }
 
 // Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
 // Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
-// useHttp - Set to true to use HTTP.
-func (client *ImageToImageClient) SetUseHttp(useHttp bool) *ImageToImageClient {
-    client.helper.setUseHttp(useHttp)
+// value - Set to true to use HTTP.
+func (client *ImageToImageClient) SetUseHttp(value bool) *ImageToImageClient {
+    client.helper.setUseHttp(value)
     return client
 }
 
 // Set a custom user agent HTTP header. It can be useful if you are behind some proxy or firewall.
 //
-// userAgent - The user agent string.
-func (client *ImageToImageClient) SetUserAgent(userAgent string) *ImageToImageClient {
-    client.helper.setUserAgent(userAgent)
+// agent - The user agent string.
+func (client *ImageToImageClient) SetUserAgent(agent string) *ImageToImageClient {
+    client.helper.setUserAgent(agent)
     return client
 }
 
@@ -2247,9 +2404,9 @@ func (client *ImageToImageClient) SetProxy(host string, port int, userName strin
 
 // Specifies the number of retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
-// retryCount - Number of retries wanted.
-func (client *ImageToImageClient) SetRetryCount(retryCount int) *ImageToImageClient {
-    client.helper.setRetryCount(retryCount)
+// count - Number of retries wanted.
+func (client *ImageToImageClient) SetRetryCount(count int) *ImageToImageClient {
+    client.helper.setRetryCount(count)
     return client
 }
 
@@ -2301,7 +2458,7 @@ func (client *PdfToPdfClient) ConvertToStream(outStream io.Writer) error {
 // filePath - The output file path. The string must not be empty.
 func (client *PdfToPdfClient) ConvertToFile(filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "file_path", "pdf-to-pdf", "The string must not be empty.", "convert_to_file"), 470}
+        return Error{createInvalidValueMessage(filePath, "ConvertToFile", "pdf-to-pdf", "The string must not be empty.", "convert_to_file"), 470}
     }
     
     outputFile, err := os.Create(filePath)
@@ -2324,234 +2481,234 @@ func (client *PdfToPdfClient) AddPdfFile(filePath string) *PdfToPdfClient {
 
 // Add in-memory raw PDF data to the list of the input PDFs.Typical usage is for adding PDF created by another Pdfcrowd converter. Example in PHP: $clientPdf2Pdf->addPdfRawData($clientHtml2Pdf->convertUrl('http://www.example.com'));
 //
-// pdfRawData - The raw PDF data. The input data must be PDF content.
-func (client *PdfToPdfClient) AddPdfRawData(pdfRawData []byte) *PdfToPdfClient {
-    client.rawData["f_" + strconv.Itoa(client.fileId)] = pdfRawData
+// data - The raw PDF data. The input data must be PDF content.
+func (client *PdfToPdfClient) AddPdfRawData(data []byte) *PdfToPdfClient {
+    client.rawData["f_" + strconv.Itoa(client.fileId)] = data
     client.fileId++
     return client
 }
 
 // Apply the first page of the watermark PDF to every page of the output PDF.
 //
-// pageWatermark - The file path to a local watermark PDF file. The file must exist and not be empty.
-func (client *PdfToPdfClient) SetPageWatermark(pageWatermark string) *PdfToPdfClient {
-    client.files["page_watermark"] = pageWatermark
+// watermark - The file path to a local watermark PDF file. The file must exist and not be empty.
+func (client *PdfToPdfClient) SetPageWatermark(watermark string) *PdfToPdfClient {
+    client.files["page_watermark"] = watermark
     return client
 }
 
 // Load a watermark PDF from the specified URL and apply the first page of the watermark PDF to every page of the output PDF.
 //
-// pageWatermarkUrl - The supported protocols are http:// and https://.
-func (client *PdfToPdfClient) SetPageWatermarkUrl(pageWatermarkUrl string) *PdfToPdfClient {
-    client.fields["page_watermark_url"] = pageWatermarkUrl
+// url - The supported protocols are http:// and https://.
+func (client *PdfToPdfClient) SetPageWatermarkUrl(url string) *PdfToPdfClient {
+    client.fields["page_watermark_url"] = url
     return client
 }
 
 // Apply each page of the specified watermark PDF to the corresponding page of the output PDF.
 //
-// multipageWatermark - The file path to a local watermark PDF file. The file must exist and not be empty.
-func (client *PdfToPdfClient) SetMultipageWatermark(multipageWatermark string) *PdfToPdfClient {
-    client.files["multipage_watermark"] = multipageWatermark
+// watermark - The file path to a local watermark PDF file. The file must exist and not be empty.
+func (client *PdfToPdfClient) SetMultipageWatermark(watermark string) *PdfToPdfClient {
+    client.files["multipage_watermark"] = watermark
     return client
 }
 
 // Load a watermark PDF from the specified URL and apply each page of the specified watermark PDF to the corresponding page of the output PDF.
 //
-// multipageWatermarkUrl - The supported protocols are http:// and https://.
-func (client *PdfToPdfClient) SetMultipageWatermarkUrl(multipageWatermarkUrl string) *PdfToPdfClient {
-    client.fields["multipage_watermark_url"] = multipageWatermarkUrl
+// url - The supported protocols are http:// and https://.
+func (client *PdfToPdfClient) SetMultipageWatermarkUrl(url string) *PdfToPdfClient {
+    client.fields["multipage_watermark_url"] = url
     return client
 }
 
 // Apply the first page of the specified PDF to the background of every page of the output PDF.
 //
-// pageBackground - The file path to a local background PDF file. The file must exist and not be empty.
-func (client *PdfToPdfClient) SetPageBackground(pageBackground string) *PdfToPdfClient {
-    client.files["page_background"] = pageBackground
+// background - The file path to a local background PDF file. The file must exist and not be empty.
+func (client *PdfToPdfClient) SetPageBackground(background string) *PdfToPdfClient {
+    client.files["page_background"] = background
     return client
 }
 
 // Load a background PDF from the specified URL and apply the first page of the background PDF to every page of the output PDF.
 //
-// pageBackgroundUrl - The supported protocols are http:// and https://.
-func (client *PdfToPdfClient) SetPageBackgroundUrl(pageBackgroundUrl string) *PdfToPdfClient {
-    client.fields["page_background_url"] = pageBackgroundUrl
+// url - The supported protocols are http:// and https://.
+func (client *PdfToPdfClient) SetPageBackgroundUrl(url string) *PdfToPdfClient {
+    client.fields["page_background_url"] = url
     return client
 }
 
 // Apply each page of the specified PDF to the background of the corresponding page of the output PDF.
 //
-// multipageBackground - The file path to a local background PDF file. The file must exist and not be empty.
-func (client *PdfToPdfClient) SetMultipageBackground(multipageBackground string) *PdfToPdfClient {
-    client.files["multipage_background"] = multipageBackground
+// background - The file path to a local background PDF file. The file must exist and not be empty.
+func (client *PdfToPdfClient) SetMultipageBackground(background string) *PdfToPdfClient {
+    client.files["multipage_background"] = background
     return client
 }
 
 // Load a background PDF from the specified URL and apply each page of the specified background PDF to the corresponding page of the output PDF.
 //
-// multipageBackgroundUrl - The supported protocols are http:// and https://.
-func (client *PdfToPdfClient) SetMultipageBackgroundUrl(multipageBackgroundUrl string) *PdfToPdfClient {
-    client.fields["multipage_background_url"] = multipageBackgroundUrl
+// url - The supported protocols are http:// and https://.
+func (client *PdfToPdfClient) SetMultipageBackgroundUrl(url string) *PdfToPdfClient {
+    client.fields["multipage_background_url"] = url
     return client
 }
 
 // Create linearized PDF. This is also known as Fast Web View.
 //
-// linearize - Set to true to create linearized PDF.
-func (client *PdfToPdfClient) SetLinearize(linearize bool) *PdfToPdfClient {
-    client.fields["linearize"] = strconv.FormatBool(linearize)
+// value - Set to true to create linearized PDF.
+func (client *PdfToPdfClient) SetLinearize(value bool) *PdfToPdfClient {
+    client.fields["linearize"] = strconv.FormatBool(value)
     return client
 }
 
 // Encrypt the PDF. This prevents search engines from indexing the contents.
 //
-// encrypt - Set to true to enable PDF encryption.
-func (client *PdfToPdfClient) SetEncrypt(encrypt bool) *PdfToPdfClient {
-    client.fields["encrypt"] = strconv.FormatBool(encrypt)
+// value - Set to true to enable PDF encryption.
+func (client *PdfToPdfClient) SetEncrypt(value bool) *PdfToPdfClient {
+    client.fields["encrypt"] = strconv.FormatBool(value)
     return client
 }
 
 // Protect the PDF with a user password. When a PDF has a user password, it must be supplied in order to view the document and to perform operations allowed by the access permissions.
 //
-// userPassword - The user password.
-func (client *PdfToPdfClient) SetUserPassword(userPassword string) *PdfToPdfClient {
-    client.fields["user_password"] = userPassword
+// password - The user password.
+func (client *PdfToPdfClient) SetUserPassword(password string) *PdfToPdfClient {
+    client.fields["user_password"] = password
     return client
 }
 
 // Protect the PDF with an owner password. Supplying an owner password grants unlimited access to the PDF including changing the passwords and access permissions.
 //
-// ownerPassword - The owner password.
-func (client *PdfToPdfClient) SetOwnerPassword(ownerPassword string) *PdfToPdfClient {
-    client.fields["owner_password"] = ownerPassword
+// password - The owner password.
+func (client *PdfToPdfClient) SetOwnerPassword(password string) *PdfToPdfClient {
+    client.fields["owner_password"] = password
     return client
 }
 
 // Disallow printing of the output PDF.
 //
-// noPrint - Set to true to set the no-print flag in the output PDF.
-func (client *PdfToPdfClient) SetNoPrint(noPrint bool) *PdfToPdfClient {
-    client.fields["no_print"] = strconv.FormatBool(noPrint)
+// value - Set to true to set the no-print flag in the output PDF.
+func (client *PdfToPdfClient) SetNoPrint(value bool) *PdfToPdfClient {
+    client.fields["no_print"] = strconv.FormatBool(value)
     return client
 }
 
 // Disallow modification of the output PDF.
 //
-// noModify - Set to true to set the read-only only flag in the output PDF.
-func (client *PdfToPdfClient) SetNoModify(noModify bool) *PdfToPdfClient {
-    client.fields["no_modify"] = strconv.FormatBool(noModify)
+// value - Set to true to set the read-only only flag in the output PDF.
+func (client *PdfToPdfClient) SetNoModify(value bool) *PdfToPdfClient {
+    client.fields["no_modify"] = strconv.FormatBool(value)
     return client
 }
 
 // Disallow text and graphics extraction from the output PDF.
 //
-// noCopy - Set to true to set the no-copy flag in the output PDF.
-func (client *PdfToPdfClient) SetNoCopy(noCopy bool) *PdfToPdfClient {
-    client.fields["no_copy"] = strconv.FormatBool(noCopy)
+// value - Set to true to set the no-copy flag in the output PDF.
+func (client *PdfToPdfClient) SetNoCopy(value bool) *PdfToPdfClient {
+    client.fields["no_copy"] = strconv.FormatBool(value)
     return client
 }
 
 // Specify the page layout to be used when the document is opened.
 //
-// pageLayout - Allowed values are single-page, one-column, two-column-left, two-column-right.
-func (client *PdfToPdfClient) SetPageLayout(pageLayout string) *PdfToPdfClient {
-    client.fields["page_layout"] = pageLayout
+// layout - Allowed values are single-page, one-column, two-column-left, two-column-right.
+func (client *PdfToPdfClient) SetPageLayout(layout string) *PdfToPdfClient {
+    client.fields["page_layout"] = layout
     return client
 }
 
 // Specify how the document should be displayed when opened.
 //
-// pageMode - Allowed values are full-screen, thumbnails, outlines.
-func (client *PdfToPdfClient) SetPageMode(pageMode string) *PdfToPdfClient {
-    client.fields["page_mode"] = pageMode
+// mode - Allowed values are full-screen, thumbnails, outlines.
+func (client *PdfToPdfClient) SetPageMode(mode string) *PdfToPdfClient {
+    client.fields["page_mode"] = mode
     return client
 }
 
 // Specify how the page should be displayed when opened.
 //
-// initialZoomType - Allowed values are fit-width, fit-height, fit-page.
-func (client *PdfToPdfClient) SetInitialZoomType(initialZoomType string) *PdfToPdfClient {
-    client.fields["initial_zoom_type"] = initialZoomType
+// zoomType - Allowed values are fit-width, fit-height, fit-page.
+func (client *PdfToPdfClient) SetInitialZoomType(zoomType string) *PdfToPdfClient {
+    client.fields["initial_zoom_type"] = zoomType
     return client
 }
 
 // Display the specified page when the document is opened.
 //
-// initialPage - Must be a positive integer number.
-func (client *PdfToPdfClient) SetInitialPage(initialPage int) *PdfToPdfClient {
-    client.fields["initial_page"] = strconv.Itoa(initialPage)
+// page - Must be a positive integer number.
+func (client *PdfToPdfClient) SetInitialPage(page int) *PdfToPdfClient {
+    client.fields["initial_page"] = strconv.Itoa(page)
     return client
 }
 
 // Specify the initial page zoom in percents when the document is opened.
 //
-// initialZoom - Must be a positive integer number.
-func (client *PdfToPdfClient) SetInitialZoom(initialZoom int) *PdfToPdfClient {
-    client.fields["initial_zoom"] = strconv.Itoa(initialZoom)
+// zoom - Must be a positive integer number.
+func (client *PdfToPdfClient) SetInitialZoom(zoom int) *PdfToPdfClient {
+    client.fields["initial_zoom"] = strconv.Itoa(zoom)
     return client
 }
 
 // Specify whether to hide the viewer application's tool bars when the document is active.
 //
-// hideToolbar - Set to true to hide tool bars.
-func (client *PdfToPdfClient) SetHideToolbar(hideToolbar bool) *PdfToPdfClient {
-    client.fields["hide_toolbar"] = strconv.FormatBool(hideToolbar)
+// value - Set to true to hide tool bars.
+func (client *PdfToPdfClient) SetHideToolbar(value bool) *PdfToPdfClient {
+    client.fields["hide_toolbar"] = strconv.FormatBool(value)
     return client
 }
 
 // Specify whether to hide the viewer application's menu bar when the document is active.
 //
-// hideMenubar - Set to true to hide the menu bar.
-func (client *PdfToPdfClient) SetHideMenubar(hideMenubar bool) *PdfToPdfClient {
-    client.fields["hide_menubar"] = strconv.FormatBool(hideMenubar)
+// value - Set to true to hide the menu bar.
+func (client *PdfToPdfClient) SetHideMenubar(value bool) *PdfToPdfClient {
+    client.fields["hide_menubar"] = strconv.FormatBool(value)
     return client
 }
 
 // Specify whether to hide user interface elements in the document's window (such as scroll bars and navigation controls), leaving only the document's contents displayed.
 //
-// hideWindowUi - Set to true to hide ui elements.
-func (client *PdfToPdfClient) SetHideWindowUi(hideWindowUi bool) *PdfToPdfClient {
-    client.fields["hide_window_ui"] = strconv.FormatBool(hideWindowUi)
+// value - Set to true to hide ui elements.
+func (client *PdfToPdfClient) SetHideWindowUi(value bool) *PdfToPdfClient {
+    client.fields["hide_window_ui"] = strconv.FormatBool(value)
     return client
 }
 
 // Specify whether to resize the document's window to fit the size of the first displayed page.
 //
-// fitWindow - Set to true to resize the window.
-func (client *PdfToPdfClient) SetFitWindow(fitWindow bool) *PdfToPdfClient {
-    client.fields["fit_window"] = strconv.FormatBool(fitWindow)
+// value - Set to true to resize the window.
+func (client *PdfToPdfClient) SetFitWindow(value bool) *PdfToPdfClient {
+    client.fields["fit_window"] = strconv.FormatBool(value)
     return client
 }
 
 // Specify whether to position the document's window in the center of the screen.
 //
-// centerWindow - Set to true to center the window.
-func (client *PdfToPdfClient) SetCenterWindow(centerWindow bool) *PdfToPdfClient {
-    client.fields["center_window"] = strconv.FormatBool(centerWindow)
+// value - Set to true to center the window.
+func (client *PdfToPdfClient) SetCenterWindow(value bool) *PdfToPdfClient {
+    client.fields["center_window"] = strconv.FormatBool(value)
     return client
 }
 
 // Specify whether the window's title bar should display the document title. If false , the title bar should instead display the name of the PDF file containing the document.
 //
-// displayTitle - Set to true to display the title.
-func (client *PdfToPdfClient) SetDisplayTitle(displayTitle bool) *PdfToPdfClient {
-    client.fields["display_title"] = strconv.FormatBool(displayTitle)
+// value - Set to true to display the title.
+func (client *PdfToPdfClient) SetDisplayTitle(value bool) *PdfToPdfClient {
+    client.fields["display_title"] = strconv.FormatBool(value)
     return client
 }
 
 // Set the predominant reading order for text to right-to-left. This option has no direct effect on the document's contents or page numbering but can be used to determine the relative positioning of pages when displayed side by side or printed n-up
 //
-// rightToLeft - Set to true to set right-to-left reading order.
-func (client *PdfToPdfClient) SetRightToLeft(rightToLeft bool) *PdfToPdfClient {
-    client.fields["right_to_left"] = strconv.FormatBool(rightToLeft)
+// value - Set to true to set right-to-left reading order.
+func (client *PdfToPdfClient) SetRightToLeft(value bool) *PdfToPdfClient {
+    client.fields["right_to_left"] = strconv.FormatBool(value)
     return client
 }
 
 // Turn on the debug logging. Details about the conversion are stored in the debug log. The URL of the log can be obtained from the getDebugLogUrl method or available in conversion statistics.
 //
-// debugLog - Set to true to enable the debug logging.
-func (client *PdfToPdfClient) SetDebugLog(debugLog bool) *PdfToPdfClient {
-    client.fields["debug_log"] = strconv.FormatBool(debugLog)
+// value - Set to true to enable the debug logging.
+func (client *PdfToPdfClient) SetDebugLog(value bool) *PdfToPdfClient {
+    client.fields["debug_log"] = strconv.FormatBool(value)
     return client
 }
 
@@ -2588,6 +2745,11 @@ func (client *PdfToPdfClient) GetOutputSize() int {
     return client.helper.getOutputSize()
 }
 
+// Get the version details.
+func (client *PdfToPdfClient) GetVersion() string {
+    return fmt.Sprintf("client %s, API v2, converter %s", CLIENT_VERSION, client.helper.getConverterVersion())
+}
+
 // Tag the conversion with a custom value. The tag is used in conversion statistics. A value longer than 32 characters is cut off.
 //
 // tag - A string with the custom tag.
@@ -2596,20 +2758,28 @@ func (client *PdfToPdfClient) SetTag(tag string) *PdfToPdfClient {
     return client
 }
 
+// Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
+//
+// version - The version identifier. Allowed values are latest, 20.10, 18.10.
+func (client *PdfToPdfClient) SetConverterVersion(version string) *PdfToPdfClient {
+    client.helper.setConverterVersion(version)
+    return client
+}
+
 // Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
 // Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
-// useHttp - Set to true to use HTTP.
-func (client *PdfToPdfClient) SetUseHttp(useHttp bool) *PdfToPdfClient {
-    client.helper.setUseHttp(useHttp)
+// value - Set to true to use HTTP.
+func (client *PdfToPdfClient) SetUseHttp(value bool) *PdfToPdfClient {
+    client.helper.setUseHttp(value)
     return client
 }
 
 // Set a custom user agent HTTP header. It can be useful if you are behind some proxy or firewall.
 //
-// userAgent - The user agent string.
-func (client *PdfToPdfClient) SetUserAgent(userAgent string) *PdfToPdfClient {
-    client.helper.setUserAgent(userAgent)
+// agent - The user agent string.
+func (client *PdfToPdfClient) SetUserAgent(agent string) *PdfToPdfClient {
+    client.helper.setUserAgent(agent)
     return client
 }
 
@@ -2626,9 +2796,9 @@ func (client *PdfToPdfClient) SetProxy(host string, port int, userName string, p
 
 // Specifies the number of retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
-// retryCount - Number of retries wanted.
-func (client *PdfToPdfClient) SetRetryCount(retryCount int) *PdfToPdfClient {
-    client.helper.setRetryCount(retryCount)
+// count - Number of retries wanted.
+func (client *PdfToPdfClient) SetRetryCount(count int) *PdfToPdfClient {
+    client.helper.setRetryCount(count)
     return client
 }
 
@@ -2660,7 +2830,7 @@ func NewImageToPdfClient(userName string, apiKey string) ImageToPdfClient {
 func (client *ImageToPdfClient) ConvertUrl(url string) ([]byte, error) {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return nil, Error{createInvalidValueMessage(url, "url", "image-to-pdf", "The supported protocols are http:// and https://.", "convert_url"), 470}
+        return nil, Error{createInvalidValueMessage(url, "ConvertUrl", "image-to-pdf", "The supported protocols are http:// and https://.", "convert_url"), 470}
     }
     
     client.fields["url"] = url
@@ -2674,7 +2844,7 @@ func (client *ImageToPdfClient) ConvertUrl(url string) ([]byte, error) {
 func (client *ImageToPdfClient) ConvertUrlToStream(url string, outStream io.Writer) error {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return Error{createInvalidValueMessage(url, "url", "image-to-pdf", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
+        return Error{createInvalidValueMessage(url, "ConvertUrlToStream::url", "image-to-pdf", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
     }
     
     client.fields["url"] = url
@@ -2688,7 +2858,7 @@ func (client *ImageToPdfClient) ConvertUrlToStream(url string, outStream io.Writ
 // filePath - The output file path. The string must not be empty.
 func (client *ImageToPdfClient) ConvertUrlToFile(url string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "file_path", "image-to-pdf", "The string must not be empty.", "convert_url_to_file"), 470}
+        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "image-to-pdf", "The string must not be empty.", "convert_url_to_file"), 470}
     }
     
     outputFile, err := os.Create(filePath)
@@ -2706,10 +2876,10 @@ func (client *ImageToPdfClient) ConvertUrlToFile(url string, filePath string) er
 
 // Convert a local file.
 //
-// file - The path to a local file to convert. The file can be either a single file or an archive (.tar.gz, .tar.bz2, or .zip). The file must exist and not be empty.
+// file - The path to a local file to convert. The file must exist and not be empty.
 func (client *ImageToPdfClient) ConvertFile(file string) ([]byte, error) {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return nil, Error{createInvalidValueMessage(file, "file", "image-to-pdf", "The file must exist and not be empty.", "convert_file"), 470}
+        return nil, Error{createInvalidValueMessage(file, "ConvertFile", "image-to-pdf", "The file must exist and not be empty.", "convert_file"), 470}
     }
     
     client.files["file"] = file
@@ -2718,11 +2888,11 @@ func (client *ImageToPdfClient) ConvertFile(file string) ([]byte, error) {
 
 // Convert a local file and write the result to an output stream.
 //
-// file - The path to a local file to convert. The file can be either a single file or an archive (.tar.gz, .tar.bz2, or .zip). The file must exist and not be empty.
+// file - The path to a local file to convert. The file must exist and not be empty.
 // outStream - The output stream that will contain the conversion output.
 func (client *ImageToPdfClient) ConvertFileToStream(file string, outStream io.Writer) error {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return Error{createInvalidValueMessage(file, "file", "image-to-pdf", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
+        return Error{createInvalidValueMessage(file, "ConvertFileToStream::file", "image-to-pdf", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
     }
     
     client.files["file"] = file
@@ -2732,11 +2902,11 @@ func (client *ImageToPdfClient) ConvertFileToStream(file string, outStream io.Wr
 
 // Convert a local file and write the result to a local file.
 //
-// file - The path to a local file to convert. The file can be either a single file or an archive (.tar.gz, .tar.bz2, or .zip). The file must exist and not be empty.
+// file - The path to a local file to convert. The file must exist and not be empty.
 // filePath - The output file path. The string must not be empty.
 func (client *ImageToPdfClient) ConvertFileToFile(file string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "file_path", "image-to-pdf", "The string must not be empty.", "convert_file_to_file"), 470}
+        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "image-to-pdf", "The string must not be empty.", "convert_file_to_file"), 470}
     }
     
     outputFile, err := os.Create(filePath)
@@ -2776,7 +2946,7 @@ func (client *ImageToPdfClient) ConvertRawDataToStream(data []byte, outStream io
 // filePath - The output file path. The string must not be empty.
 func (client *ImageToPdfClient) ConvertRawDataToFile(data []byte, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "file_path", "image-to-pdf", "The string must not be empty.", "convert_raw_data_to_file"), 470}
+        return Error{createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "image-to-pdf", "The string must not be empty.", "convert_raw_data_to_file"), 470}
     }
     
     outputFile, err := os.Create(filePath)
@@ -2810,9 +2980,9 @@ func (client *ImageToPdfClient) SetRotate(rotate string) *ImageToPdfClient {
 
 // Turn on the debug logging. Details about the conversion are stored in the debug log. The URL of the log can be obtained from the getDebugLogUrl method or available in conversion statistics.
 //
-// debugLog - Set to true to enable the debug logging.
-func (client *ImageToPdfClient) SetDebugLog(debugLog bool) *ImageToPdfClient {
-    client.fields["debug_log"] = strconv.FormatBool(debugLog)
+// value - Set to true to enable the debug logging.
+func (client *ImageToPdfClient) SetDebugLog(value bool) *ImageToPdfClient {
+    client.fields["debug_log"] = strconv.FormatBool(value)
     return client
 }
 
@@ -2844,6 +3014,11 @@ func (client *ImageToPdfClient) GetOutputSize() int {
     return client.helper.getOutputSize()
 }
 
+// Get the version details.
+func (client *ImageToPdfClient) GetVersion() string {
+    return fmt.Sprintf("client %s, API v2, converter %s", CLIENT_VERSION, client.helper.getConverterVersion())
+}
+
 // Tag the conversion with a custom value. The tag is used in conversion statistics. A value longer than 32 characters is cut off.
 //
 // tag - A string with the custom tag.
@@ -2854,34 +3029,42 @@ func (client *ImageToPdfClient) SetTag(tag string) *ImageToPdfClient {
 
 // A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
-// httpProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
-func (client *ImageToPdfClient) SetHttpProxy(httpProxy string) *ImageToPdfClient {
-    client.fields["http_proxy"] = httpProxy
+// proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *ImageToPdfClient) SetHttpProxy(proxy string) *ImageToPdfClient {
+    client.fields["http_proxy"] = proxy
     return client
 }
 
 // A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
-// httpsProxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
-func (client *ImageToPdfClient) SetHttpsProxy(httpsProxy string) *ImageToPdfClient {
-    client.fields["https_proxy"] = httpsProxy
+// proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *ImageToPdfClient) SetHttpsProxy(proxy string) *ImageToPdfClient {
+    client.fields["https_proxy"] = proxy
+    return client
+}
+
+// Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
+//
+// version - The version identifier. Allowed values are latest, 20.10, 18.10.
+func (client *ImageToPdfClient) SetConverterVersion(version string) *ImageToPdfClient {
+    client.helper.setConverterVersion(version)
     return client
 }
 
 // Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
 // Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
-// useHttp - Set to true to use HTTP.
-func (client *ImageToPdfClient) SetUseHttp(useHttp bool) *ImageToPdfClient {
-    client.helper.setUseHttp(useHttp)
+// value - Set to true to use HTTP.
+func (client *ImageToPdfClient) SetUseHttp(value bool) *ImageToPdfClient {
+    client.helper.setUseHttp(value)
     return client
 }
 
 // Set a custom user agent HTTP header. It can be useful if you are behind some proxy or firewall.
 //
-// userAgent - The user agent string.
-func (client *ImageToPdfClient) SetUserAgent(userAgent string) *ImageToPdfClient {
-    client.helper.setUserAgent(userAgent)
+// agent - The user agent string.
+func (client *ImageToPdfClient) SetUserAgent(agent string) *ImageToPdfClient {
+    client.helper.setUserAgent(agent)
     return client
 }
 
@@ -2898,9 +3081,9 @@ func (client *ImageToPdfClient) SetProxy(host string, port int, userName string,
 
 // Specifies the number of retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
-// retryCount - Number of retries wanted.
-func (client *ImageToPdfClient) SetRetryCount(retryCount int) *ImageToPdfClient {
-    client.helper.setRetryCount(retryCount)
+// count - Number of retries wanted.
+func (client *ImageToPdfClient) SetRetryCount(count int) *ImageToPdfClient {
+    client.helper.setRetryCount(count)
     return client
 }
 
