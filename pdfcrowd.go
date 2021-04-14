@@ -38,7 +38,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.0.0"
+const CLIENT_VERSION = "5.1.0"
 
 type Error struct {
     message string
@@ -89,7 +89,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.0.0 (http://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.1.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -497,6 +497,56 @@ func (client *HtmlToPdfClient) ConvertStringToFile(text string, filePath string)
         return err
     }
     err = client.ConvertStringToStream(text, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
+// Convert an input stream.
+//
+// inStream - The input stream with the source data.
+func (client *HtmlToPdfClient) ConvertStream(inStream io.Reader) ([]byte, error) {
+    data, errRead := ioutil.ReadAll(inStream)
+    if errRead != nil {
+        return nil, errRead
+    }
+
+    client.rawData["stream"] = data
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert an input stream and write the result to an output stream.
+//
+// inStream - The input stream with the source data.
+// outStream - The output stream that will contain the conversion output.
+func (client *HtmlToPdfClient) ConvertStreamToStream(inStream io.Reader, outStream io.Writer) error {
+    data, errRead := ioutil.ReadAll(inStream)
+    if errRead != nil {
+        return errRead
+    }
+
+    client.rawData["stream"] = data
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert an input stream and write the result to a local file.
+//
+// inStream - The input stream with the source data.
+// filePath - The output file path. The string must not be empty.
+func (client *HtmlToPdfClient) ConvertStreamToFile(inStream io.Reader, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "html-to-pdf", "The string must not be empty.", "convert_stream_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertStreamToStream(inStream, outputFile)
     outputFile.Close()
     if err != nil {
         os.Remove(filePath)
@@ -1702,6 +1752,56 @@ func (client *HtmlToImageClient) ConvertStringToFile(text string, filePath strin
     return nil
 }
 
+// Convert an input stream.
+//
+// inStream - The input stream with the source data.
+func (client *HtmlToImageClient) ConvertStream(inStream io.Reader) ([]byte, error) {
+    data, errRead := ioutil.ReadAll(inStream)
+    if errRead != nil {
+        return nil, errRead
+    }
+
+    client.rawData["stream"] = data
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert an input stream and write the result to an output stream.
+//
+// inStream - The input stream with the source data.
+// outStream - The output stream that will contain the conversion output.
+func (client *HtmlToImageClient) ConvertStreamToStream(inStream io.Reader, outStream io.Writer) error {
+    data, errRead := ioutil.ReadAll(inStream)
+    if errRead != nil {
+        return errRead
+    }
+
+    client.rawData["stream"] = data
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert an input stream and write the result to a local file.
+//
+// inStream - The input stream with the source data.
+// filePath - The output file path. The string must not be empty.
+func (client *HtmlToImageClient) ConvertStreamToFile(inStream io.Reader, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "html-to-image", "The string must not be empty.", "convert_stream_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertStreamToStream(inStream, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
 // Set the input data for template rendering. The data format can be JSON, XML, YAML or CSV.
 //
 // dataString - The input data string.
@@ -2269,6 +2369,56 @@ func (client *ImageToImageClient) ConvertRawDataToFile(data []byte, filePath str
         return err
     }
     err = client.ConvertRawDataToStream(data, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
+// Convert an input stream.
+//
+// inStream - The input stream with the source data.
+func (client *ImageToImageClient) ConvertStream(inStream io.Reader) ([]byte, error) {
+    data, errRead := ioutil.ReadAll(inStream)
+    if errRead != nil {
+        return nil, errRead
+    }
+
+    client.rawData["stream"] = data
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert an input stream and write the result to an output stream.
+//
+// inStream - The input stream with the source data.
+// outStream - The output stream that will contain the conversion output.
+func (client *ImageToImageClient) ConvertStreamToStream(inStream io.Reader, outStream io.Writer) error {
+    data, errRead := ioutil.ReadAll(inStream)
+    if errRead != nil {
+        return errRead
+    }
+
+    client.rawData["stream"] = data
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert an input stream and write the result to a local file.
+//
+// inStream - The input stream with the source data.
+// filePath - The output file path. The string must not be empty.
+func (client *ImageToImageClient) ConvertStreamToFile(inStream io.Reader, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "image-to-image", "The string must not be empty.", "convert_stream_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertStreamToStream(inStream, outputFile)
     outputFile.Close()
     if err != nil {
         os.Remove(filePath)
@@ -2954,6 +3104,56 @@ func (client *ImageToPdfClient) ConvertRawDataToFile(data []byte, filePath strin
         return err
     }
     err = client.ConvertRawDataToStream(data, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
+// Convert an input stream.
+//
+// inStream - The input stream with the source data.
+func (client *ImageToPdfClient) ConvertStream(inStream io.Reader) ([]byte, error) {
+    data, errRead := ioutil.ReadAll(inStream)
+    if errRead != nil {
+        return nil, errRead
+    }
+
+    client.rawData["stream"] = data
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert an input stream and write the result to an output stream.
+//
+// inStream - The input stream with the source data.
+// outStream - The output stream that will contain the conversion output.
+func (client *ImageToPdfClient) ConvertStreamToStream(inStream io.Reader, outStream io.Writer) error {
+    data, errRead := ioutil.ReadAll(inStream)
+    if errRead != nil {
+        return errRead
+    }
+
+    client.rawData["stream"] = data
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert an input stream and write the result to a local file.
+//
+// inStream - The input stream with the source data.
+// filePath - The output file path. The string must not be empty.
+func (client *ImageToPdfClient) ConvertStreamToFile(inStream io.Reader, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "image-to-pdf", "The string must not be empty.", "convert_stream_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertStreamToStream(inStream, outputFile)
     outputFile.Close()
     if err != nil {
         os.Remove(filePath)
