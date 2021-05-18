@@ -1051,7 +1051,7 @@ func (client *HtmlToPdfClient) SetElementToConvert(selectors string) *HtmlToPdfC
     return client
 }
 
-// Specify the DOM handling when only a part of the document is converted.
+// Specify the DOM handling when only a part of the document is converted. This can affect the CSS rules used.
 //
 // mode - Allowed values are cut-out, remove-siblings, hide-siblings.
 func (client *HtmlToPdfClient) SetElementToConvertMode(mode string) *HtmlToPdfClient {
@@ -1980,7 +1980,7 @@ func (client *HtmlToImageClient) SetElementToConvert(selectors string) *HtmlToIm
     return client
 }
 
-// Specify the DOM handling when only a part of the document is converted.
+// Specify the DOM handling when only a part of the document is converted. This can affect the CSS rules used.
 //
 // mode - Allowed values are cut-out, remove-siblings, hide-siblings.
 func (client *HtmlToImageClient) SetElementToConvertMode(mode string) *HtmlToImageClient {
