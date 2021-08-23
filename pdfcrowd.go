@@ -38,7 +38,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.1.1"
+const CLIENT_VERSION = "5.2.0"
 
 type Error struct {
     message string
@@ -89,7 +89,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.1.1 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.2.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -555,6 +555,14 @@ func (client *HtmlToPdfClient) ConvertStreamToFile(inStream io.Reader, filePath 
     return nil
 }
 
+// Set the file name of the main HTML document stored in the input archive. If not specified, the first HTML file in the archive is used for conversion. Use this method if the input archive contains multiple HTML documents.
+//
+// filename - The file name.
+func (client *HtmlToPdfClient) SetZipMainFilename(filename string) *HtmlToPdfClient {
+    client.fields["zip_main_filename"] = filename
+    return client
+}
+
 // Set the output page size.
 //
 // size - Allowed values are A0, A1, A2, A3, A4, A5, A6, Letter.
@@ -745,6 +753,14 @@ func (client *HtmlToPdfClient) SetHeaderHeight(height string) *HtmlToPdfClient {
     return client
 }
 
+// Set the file name of the header HTML document stored in the input archive. Use this method if the input archive contains multiple HTML documents.
+//
+// filename - The file name.
+func (client *HtmlToPdfClient) SetZipHeaderFilename(filename string) *HtmlToPdfClient {
+    client.fields["zip_header_filename"] = filename
+    return client
+}
+
 // Load an HTML code from the specified URL and use it as the page footer. The following classes can be used in the HTML. The content of the respective elements will be expanded as follows: pdfcrowd-page-count - the total page count of printed pages pdfcrowd-page-number - the current page number pdfcrowd-source-url - the source URL of a converted document The following attributes can be used: data-pdfcrowd-number-format - specifies the type of the used numerals. Allowed values: arabic - Arabic numerals, they are used by default roman - Roman numerals eastern-arabic - Eastern Arabic numerals bengali - Bengali numerals devanagari - Devanagari numerals thai - Thai numerals east-asia - Chinese, Vietnamese, Japanese and Korean numerals chinese-formal - Chinese formal numerals Please contact us if you need another type of numerals. Example: <span class='pdfcrowd-page-number' data-pdfcrowd-number-format='roman'></span> data-pdfcrowd-placement - specifies where to place the source URL. Allowed values: The URL is inserted to the content Example: <span class='pdfcrowd-source-url'></span> will produce <span>http://example.com</span> href - the URL is set to the href attribute Example: <a class='pdfcrowd-source-url' data-pdfcrowd-placement='href'>Link to source</a> will produce <a href='http://example.com'>Link to source</a> href-and-content - the URL is set to the href attribute and to the content Example: <a class='pdfcrowd-source-url' data-pdfcrowd-placement='href-and-content'></a> will produce <a href='http://example.com'>http://example.com</a>
 //
 // url - The supported protocols are http:// and https://.
@@ -766,6 +782,14 @@ func (client *HtmlToPdfClient) SetFooterHtml(html string) *HtmlToPdfClient {
 // height - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
 func (client *HtmlToPdfClient) SetFooterHeight(height string) *HtmlToPdfClient {
     client.fields["footer_height"] = height
+    return client
+}
+
+// Set the file name of the footer HTML document stored in the input archive. Use this method if the input archive contains multiple HTML documents.
+//
+// filename - The file name.
+func (client *HtmlToPdfClient) SetZipFooterFilename(filename string) *HtmlToPdfClient {
+    client.fields["zip_footer_filename"] = filename
     return client
 }
 
@@ -1226,6 +1250,14 @@ func (client *HtmlToPdfClient) SetAuthor(author string) *HtmlToPdfClient {
 // keywords - The string with the keywords.
 func (client *HtmlToPdfClient) SetKeywords(keywords string) *HtmlToPdfClient {
     client.fields["keywords"] = keywords
+    return client
+}
+
+// Extract meta tags (author, keywords and description) from the input HTML and use them in the output PDF.
+//
+// value - Set to true to extract meta tags.
+func (client *HtmlToPdfClient) SetExtractMetaTags(value bool) *HtmlToPdfClient {
+    client.fields["extract_meta_tags"] = strconv.FormatBool(value)
     return client
 }
 
@@ -1800,6 +1832,14 @@ func (client *HtmlToImageClient) ConvertStreamToFile(inStream io.Reader, filePat
         return err
     }
     return nil
+}
+
+// Set the file name of the main HTML document stored in the input archive. If not specified, the first HTML file in the archive is used for conversion. Use this method if the input archive contains multiple HTML documents.
+//
+// filename - The file name.
+func (client *HtmlToImageClient) SetZipMainFilename(filename string) *HtmlToImageClient {
+    client.fields["zip_main_filename"] = filename
+    return client
 }
 
 // Use the print version of the page if available (@media print).
@@ -2755,6 +2795,46 @@ func (client *PdfToPdfClient) SetNoModify(value bool) *PdfToPdfClient {
 // value - Set to true to set the no-copy flag in the output PDF.
 func (client *PdfToPdfClient) SetNoCopy(value bool) *PdfToPdfClient {
     client.fields["no_copy"] = strconv.FormatBool(value)
+    return client
+}
+
+// Set the title of the PDF.
+//
+// title - The title.
+func (client *PdfToPdfClient) SetTitle(title string) *PdfToPdfClient {
+    client.fields["title"] = title
+    return client
+}
+
+// Set the subject of the PDF.
+//
+// subject - The subject.
+func (client *PdfToPdfClient) SetSubject(subject string) *PdfToPdfClient {
+    client.fields["subject"] = subject
+    return client
+}
+
+// Set the author of the PDF.
+//
+// author - The author.
+func (client *PdfToPdfClient) SetAuthor(author string) *PdfToPdfClient {
+    client.fields["author"] = author
+    return client
+}
+
+// Associate keywords with the document.
+//
+// keywords - The string with the keywords.
+func (client *PdfToPdfClient) SetKeywords(keywords string) *PdfToPdfClient {
+    client.fields["keywords"] = keywords
+    return client
+}
+
+// Use metadata (title, subject, author and keywords) from the n-th input PDF.
+//
+// index - Set the index of the input PDF file from which to use the metadata. 0 means no metadata. Must be a positive integer number or 0.
+func (client *PdfToPdfClient) SetUseMetadataFrom(index int) *PdfToPdfClient {
+    client.fields["use_metadata_from"] = strconv.Itoa(index)
     return client
 }
 
