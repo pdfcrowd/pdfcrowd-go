@@ -38,7 +38,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.2.2"
+const CLIENT_VERSION = "5.3.0"
 
 type Error struct {
     message string
@@ -89,7 +89,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.2.2 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.3.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -934,6 +934,14 @@ func (client *HtmlToPdfClient) SetDisableImageLoading(value bool) *HtmlToPdfClie
 // value - Set to true disable loading remote fonts.
 func (client *HtmlToPdfClient) SetDisableRemoteFonts(value bool) *HtmlToPdfClient {
     client.fields["disable_remote_fonts"] = strconv.FormatBool(value)
+    return client
+}
+
+// Use a mobile user agent.
+//
+// value - Set to true to use a mobile user agent.
+func (client *HtmlToPdfClient) SetUseMobileUserAgent(value bool) *HtmlToPdfClient {
+    client.fields["use_mobile_user_agent"] = strconv.FormatBool(value)
     return client
 }
 
@@ -1879,6 +1887,14 @@ func (client *HtmlToImageClient) SetDisableImageLoading(value bool) *HtmlToImage
 // value - Set to true disable loading remote fonts.
 func (client *HtmlToImageClient) SetDisableRemoteFonts(value bool) *HtmlToImageClient {
     client.fields["disable_remote_fonts"] = strconv.FormatBool(value)
+    return client
+}
+
+// Use a mobile user agent.
+//
+// value - Set to true to use a mobile user agent.
+func (client *HtmlToImageClient) SetUseMobileUserAgent(value bool) *HtmlToImageClient {
+    client.fields["use_mobile_user_agent"] = strconv.FormatBool(value)
     return client
 }
 
