@@ -1,5 +1,5 @@
-VERSION = 5.3.0
-DIR_NAME := pdfcrowd-5.3.0
+VERSION = 5.4.0
+DIR_NAME := pdfcrowd-5.4.0
 
 dist: dist/pdfcrowd-$(VERSION)-go.zip
 

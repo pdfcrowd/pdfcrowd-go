@@ -35,10 +35,11 @@ import (
     "net/url"
     "crypto/tls"
     "strconv"
+    "path/filepath"
     "regexp"
 )
 
-const CLIENT_VERSION = "5.3.0"
+const CLIENT_VERSION = "5.4.0"
 
 type Error struct {
     message string
@@ -89,7 +90,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.3.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.4.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -1107,7 +1108,7 @@ func (client *HtmlToPdfClient) SetViewportWidth(width int) *HtmlToPdfClient {
     return client
 }
 
-// Set the viewport height in pixels. The viewport is the user's visible area of the page.
+// Set the viewport height in pixels. The viewport is the user's visible area of the page. If the input HTML uses lazily loaded images, try using a large value that covers the entire height of the HTML, e.g. 100000.
 //
 // height - Must be a positive integer number.
 func (client *HtmlToPdfClient) SetViewportHeight(height int) *HtmlToPdfClient {
@@ -1118,7 +1119,7 @@ func (client *HtmlToPdfClient) SetViewportHeight(height int) *HtmlToPdfClient {
 // Set the viewport size. The viewport is the user's visible area of the page.
 //
 // width - Set the viewport width in pixels. The viewport is the user's visible area of the page. The value must be in the range 96-65000.
-// height - Set the viewport height in pixels. The viewport is the user's visible area of the page. Must be a positive integer number.
+// height - Set the viewport height in pixels. The viewport is the user's visible area of the page. If the input HTML uses lazily loaded images, try using a large value that covers the entire height of the HTML, e.g. 100000. Must be a positive integer number.
 func (client *HtmlToPdfClient) SetViewport(width int, height int) *HtmlToPdfClient {
     client.SetViewportWidth(width)
     client.SetViewportHeight(height)
@@ -1443,7 +1444,7 @@ func (client *HtmlToPdfClient) GetDebugLogUrl() string {
 }
 
 // Get the number of conversion credits available in your account.
-// This method can only be called after a call to one of the convertXYZ methods.
+// This method can only be called after a call to one of the convertXtoY methods.
 // The returned value can differ from the actual count if you run parallel conversions.
 // The special value 999999 is returned if the information is not available.
 func (client *HtmlToPdfClient) GetRemainingCreditCount() int {
@@ -1589,7 +1590,7 @@ func (client *HtmlToPdfClient) SetUseHttp(value bool) *HtmlToPdfClient {
     return client
 }
 
-// Set a custom user agent HTTP header. It can be useful if you are behind some proxy or firewall.
+// Set a custom user agent HTTP header. It can be useful if you are behind a proxy or a firewall.
 //
 // agent - The user agent string.
 func (client *HtmlToPdfClient) SetUserAgent(agent string) *HtmlToPdfClient {
@@ -1608,9 +1609,9 @@ func (client *HtmlToPdfClient) SetProxy(host string, port int, userName string, 
     return client
 }
 
-// Specifies the number of retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
+// Specifies the number of automatic retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
-// count - Number of retries wanted.
+// count - Number of retries.
 func (client *HtmlToPdfClient) SetRetryCount(count int) *HtmlToPdfClient {
     client.helper.setRetryCount(count)
     return client
@@ -2162,7 +2163,7 @@ func (client *HtmlToImageClient) GetDebugLogUrl() string {
 }
 
 // Get the number of conversion credits available in your account.
-// This method can only be called after a call to one of the convertXYZ methods.
+// This method can only be called after a call to one of the convertXtoY methods.
 // The returned value can differ from the actual count if you run parallel conversions.
 // The special value 999999 is returned if the information is not available.
 func (client *HtmlToImageClient) GetRemainingCreditCount() int {
@@ -2246,7 +2247,7 @@ func (client *HtmlToImageClient) SetUseHttp(value bool) *HtmlToImageClient {
     return client
 }
 
-// Set a custom user agent HTTP header. It can be useful if you are behind some proxy or firewall.
+// Set a custom user agent HTTP header. It can be useful if you are behind a proxy or a firewall.
 //
 // agent - The user agent string.
 func (client *HtmlToImageClient) SetUserAgent(agent string) *HtmlToImageClient {
@@ -2265,9 +2266,9 @@ func (client *HtmlToImageClient) SetProxy(host string, port int, userName string
     return client
 }
 
-// Specifies the number of retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
+// Specifies the number of automatic retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
-// count - Number of retries wanted.
+// count - Number of retries.
 func (client *HtmlToImageClient) SetRetryCount(count int) *HtmlToImageClient {
     client.helper.setRetryCount(count)
     return client
@@ -2521,7 +2522,7 @@ func (client *ImageToImageClient) GetDebugLogUrl() string {
 }
 
 // Get the number of conversion credits available in your account.
-// This method can only be called after a call to one of the convertXYZ methods.
+// This method can only be called after a call to one of the convertXtoY methods.
 // The returned value can differ from the actual count if you run parallel conversions.
 // The special value 999999 is returned if the information is not available.
 func (client *ImageToImageClient) GetRemainingCreditCount() int {
@@ -2589,7 +2590,7 @@ func (client *ImageToImageClient) SetUseHttp(value bool) *ImageToImageClient {
     return client
 }
 
-// Set a custom user agent HTTP header. It can be useful if you are behind some proxy or firewall.
+// Set a custom user agent HTTP header. It can be useful if you are behind a proxy or a firewall.
 //
 // agent - The user agent string.
 func (client *ImageToImageClient) SetUserAgent(agent string) *ImageToImageClient {
@@ -2608,9 +2609,9 @@ func (client *ImageToImageClient) SetProxy(host string, port int, userName strin
     return client
 }
 
-// Specifies the number of retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
+// Specifies the number of automatic retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
-// count - Number of retries wanted.
+// count - Number of retries.
 func (client *ImageToImageClient) SetRetryCount(count int) *ImageToImageClient {
     client.helper.setRetryCount(count)
     return client
@@ -2691,6 +2692,14 @@ func (client *PdfToPdfClient) AddPdfFile(filePath string) *PdfToPdfClient {
 func (client *PdfToPdfClient) AddPdfRawData(data []byte) *PdfToPdfClient {
     client.rawData["f_" + strconv.Itoa(client.fileId)] = data
     client.fileId++
+    return client
+}
+
+// Password to open the encrypted PDF file.
+//
+// password - The input PDF password.
+func (client *PdfToPdfClient) SetInputPdfPassword(password string) *PdfToPdfClient {
+    client.fields["input_pdf_password"] = password
     return client
 }
 
@@ -2964,7 +2973,7 @@ func (client *PdfToPdfClient) GetDebugLogUrl() string {
 }
 
 // Get the number of conversion credits available in your account.
-// This method can only be called after a call to one of the convertXYZ methods.
+// This method can only be called after a call to one of the convertXtoY methods.
 // The returned value can differ from the actual count if you run parallel conversions.
 // The special value 999999 is returned if the information is not available.
 func (client *PdfToPdfClient) GetRemainingCreditCount() int {
@@ -3021,7 +3030,7 @@ func (client *PdfToPdfClient) SetUseHttp(value bool) *PdfToPdfClient {
     return client
 }
 
-// Set a custom user agent HTTP header. It can be useful if you are behind some proxy or firewall.
+// Set a custom user agent HTTP header. It can be useful if you are behind a proxy or a firewall.
 //
 // agent - The user agent string.
 func (client *PdfToPdfClient) SetUserAgent(agent string) *PdfToPdfClient {
@@ -3040,9 +3049,9 @@ func (client *PdfToPdfClient) SetProxy(host string, port int, userName string, p
     return client
 }
 
-// Specifies the number of retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
+// Specifies the number of automatic retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
-// count - Number of retries wanted.
+// count - Number of retries.
 func (client *PdfToPdfClient) SetRetryCount(count int) *PdfToPdfClient {
     client.helper.setRetryCount(count)
     return client
@@ -3288,7 +3297,7 @@ func (client *ImageToPdfClient) GetDebugLogUrl() string {
 }
 
 // Get the number of conversion credits available in your account.
-// This method can only be called after a call to one of the convertXYZ methods.
+// This method can only be called after a call to one of the convertXtoY methods.
 // The returned value can differ from the actual count if you run parallel conversions.
 // The special value 999999 is returned if the information is not available.
 func (client *ImageToPdfClient) GetRemainingCreditCount() int {
@@ -3356,7 +3365,7 @@ func (client *ImageToPdfClient) SetUseHttp(value bool) *ImageToPdfClient {
     return client
 }
 
-// Set a custom user agent HTTP header. It can be useful if you are behind some proxy or firewall.
+// Set a custom user agent HTTP header. It can be useful if you are behind a proxy or a firewall.
 //
 // agent - The user agent string.
 func (client *ImageToPdfClient) SetUserAgent(agent string) *ImageToPdfClient {
@@ -3375,11 +3384,440 @@ func (client *ImageToPdfClient) SetProxy(host string, port int, userName string,
     return client
 }
 
-// Specifies the number of retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
+// Specifies the number of automatic retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
-// count - Number of retries wanted.
+// count - Number of retries.
 func (client *ImageToPdfClient) SetRetryCount(count int) *ImageToPdfClient {
     client.helper.setRetryCount(count)
     return client
 }
 
+// Conversion from PDF to HTML.
+type PdfToHtmlClient struct {
+    helper connectionHelper
+    fields map[string]string
+    files map[string]string
+    rawData map[string][]byte
+    fileId int
+}
+
+// Constructor for the Pdfcrowd API client.
+//
+// userName - Your username at Pdfcrowd.
+// apiKey - Your API key.
+func NewPdfToHtmlClient(userName string, apiKey string) PdfToHtmlClient {
+    helper := newConnectionHelper(userName, apiKey)
+    fields := map[string]string{
+        "input_format": "pdf",
+        "output_format": "html",
+    }
+    return PdfToHtmlClient{ helper, fields, make(map[string]string), make(map[string][]byte), 1}
+}
+
+// Convert a PDF.
+//
+// url - The address of the PDF to convert. The supported protocols are http:// and https://.
+func (client *PdfToHtmlClient) ConvertUrl(url string) ([]byte, error) {
+    re, _ := regexp.Compile("(?i)^https?://.*$")
+    if !re.MatchString(url) {
+        return nil, Error{createInvalidValueMessage(url, "ConvertUrl", "pdf-to-html", "The supported protocols are http:// and https://.", "convert_url"), 470}
+    }
+    
+    client.fields["url"] = url
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert a PDF and write the result to an output stream.
+//
+// url - The address of the PDF to convert. The supported protocols are http:// and https://.
+// outStream - The output stream that will contain the conversion output.
+func (client *PdfToHtmlClient) ConvertUrlToStream(url string, outStream io.Writer) error {
+    re, _ := regexp.Compile("(?i)^https?://.*$")
+    if !re.MatchString(url) {
+        return Error{createInvalidValueMessage(url, "ConvertUrlToStream::url", "pdf-to-html", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
+    }
+    
+    client.fields["url"] = url
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert a PDF and write the result to a local file.
+//
+// url - The address of the PDF to convert. The supported protocols are http:// and https://.
+// filePath - The output file path. The string must not be empty. The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.
+func (client *PdfToHtmlClient) ConvertUrlToFile(url string, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "pdf-to-html", "The string must not be empty.", "convert_url_to_file"), 470}
+    }
+    
+    if !client.isOutputTypeValid(filePath) {
+        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "pdf-to-html", "The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.", "convert_url_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertUrlToStream(url, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
+// Convert a local file.
+//
+// file - The path to a local file to convert. The file must exist and not be empty.
+func (client *PdfToHtmlClient) ConvertFile(file string) ([]byte, error) {
+    if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
+        return nil, Error{createInvalidValueMessage(file, "ConvertFile", "pdf-to-html", "The file must exist and not be empty.", "convert_file"), 470}
+    }
+    
+    client.files["file"] = file
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert a local file and write the result to an output stream.
+//
+// file - The path to a local file to convert. The file must exist and not be empty.
+// outStream - The output stream that will contain the conversion output.
+func (client *PdfToHtmlClient) ConvertFileToStream(file string, outStream io.Writer) error {
+    if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
+        return Error{createInvalidValueMessage(file, "ConvertFileToStream::file", "pdf-to-html", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
+    }
+    
+    client.files["file"] = file
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert a local file and write the result to a local file.
+//
+// file - The path to a local file to convert. The file must exist and not be empty.
+// filePath - The output file path. The string must not be empty. The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.
+func (client *PdfToHtmlClient) ConvertFileToFile(file string, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "pdf-to-html", "The string must not be empty.", "convert_file_to_file"), 470}
+    }
+    
+    if !client.isOutputTypeValid(filePath) {
+        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "pdf-to-html", "The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.", "convert_file_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertFileToStream(file, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
+// Convert raw data.
+//
+// data - The raw content to be converted.
+func (client *PdfToHtmlClient) ConvertRawData(data []byte) ([]byte, error) {
+    client.rawData["file"] = data
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert raw data and write the result to an output stream.
+//
+// data - The raw content to be converted.
+// outStream - The output stream that will contain the conversion output.
+func (client *PdfToHtmlClient) ConvertRawDataToStream(data []byte, outStream io.Writer) error {
+    client.rawData["file"] = data
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert raw data to a file.
+//
+// data - The raw content to be converted.
+// filePath - The output file path. The string must not be empty. The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.
+func (client *PdfToHtmlClient) ConvertRawDataToFile(data []byte, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "pdf-to-html", "The string must not be empty.", "convert_raw_data_to_file"), 470}
+    }
+    
+    if !client.isOutputTypeValid(filePath) {
+        return Error{createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "pdf-to-html", "The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.", "convert_raw_data_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertRawDataToStream(data, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
+// Convert the contents of an input stream.
+//
+// inStream - The input stream with source data.
+func (client *PdfToHtmlClient) ConvertStream(inStream io.Reader) ([]byte, error) {
+    data, errRead := ioutil.ReadAll(inStream)
+    if errRead != nil {
+        return nil, errRead
+    }
+
+    client.rawData["stream"] = data
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert the contents of an input stream and write the result to an output stream.
+//
+// inStream - The input stream with source data.
+// outStream - The output stream that will contain the conversion output.
+func (client *PdfToHtmlClient) ConvertStreamToStream(inStream io.Reader, outStream io.Writer) error {
+    data, errRead := ioutil.ReadAll(inStream)
+    if errRead != nil {
+        return errRead
+    }
+
+    client.rawData["stream"] = data
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert the contents of an input stream and write the result to a local file.
+//
+// inStream - The input stream with source data.
+// filePath - The output file path. The string must not be empty. The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.
+func (client *PdfToHtmlClient) ConvertStreamToFile(inStream io.Reader, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "pdf-to-html", "The string must not be empty.", "convert_stream_to_file"), 470}
+    }
+    
+    if !client.isOutputTypeValid(filePath) {
+        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "pdf-to-html", "The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.", "convert_stream_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertStreamToStream(inStream, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
+// Password to open the encrypted PDF file.
+//
+// password - The input PDF password.
+func (client *PdfToHtmlClient) SetPdfPassword(password string) *PdfToHtmlClient {
+    client.fields["pdf_password"] = password
+    return client
+}
+
+// Set the scaling factor (zoom) for the main page area.
+//
+// factor - The percentage value. Must be a positive integer number.
+func (client *PdfToHtmlClient) SetScaleFactor(factor int) *PdfToHtmlClient {
+    client.fields["scale_factor"] = strconv.Itoa(factor)
+    return client
+}
+
+// Set the page range to print.
+//
+// pages - A comma separated list of page numbers or ranges.
+func (client *PdfToHtmlClient) SetPrintPageRange(pages string) *PdfToHtmlClient {
+    client.fields["print_page_range"] = pages
+    return client
+}
+
+// Specifies where the images are stored.
+//
+// mode - The image storage mode. Allowed values are embed, separate.
+func (client *PdfToHtmlClient) SetImageMode(mode string) *PdfToHtmlClient {
+    client.fields["image_mode"] = mode
+    return client
+}
+
+// Specifies where the style sheets are stored.
+//
+// mode - The style sheet storage mode. Allowed values are embed, separate.
+func (client *PdfToHtmlClient) SetCssMode(mode string) *PdfToHtmlClient {
+    client.fields["css_mode"] = mode
+    return client
+}
+
+// Specifies where the fonts are stored.
+//
+// mode - The font storage mode. Allowed values are embed, separate.
+func (client *PdfToHtmlClient) SetFontMode(mode string) *PdfToHtmlClient {
+    client.fields["font_mode"] = mode
+    return client
+}
+
+// A helper method to determine if the output file is a zip archive. The output of the conversion may be either an HTML file or a zip file containing the HTML and its external assets.
+func (client *PdfToHtmlClient) IsZippedOutput() bool {
+    return client.fields["image_mode"] == "separate" || client.fields["css_mode"] == "separate" || client.fields["font_mode"] == "separate" || client.fields["force_zip"] == "true"
+}
+
+// Enforces the zip output format.
+//
+// value - Set to true to get the output as a zip archive.
+func (client *PdfToHtmlClient) SetForceZip(value bool) *PdfToHtmlClient {
+    client.fields["force_zip"] = strconv.FormatBool(value)
+    return client
+}
+
+// Set the HTML title. The title from the input PDF is used by default.
+//
+// title - The HTML title.
+func (client *PdfToHtmlClient) SetTitle(title string) *PdfToHtmlClient {
+    client.fields["title"] = title
+    return client
+}
+
+// Set the HTML subject. The subject from the input PDF is used by default.
+//
+// subject - The HTML subject.
+func (client *PdfToHtmlClient) SetSubject(subject string) *PdfToHtmlClient {
+    client.fields["subject"] = subject
+    return client
+}
+
+// Set the HTML author. The author from the input PDF is used by default.
+//
+// author - The HTML author.
+func (client *PdfToHtmlClient) SetAuthor(author string) *PdfToHtmlClient {
+    client.fields["author"] = author
+    return client
+}
+
+// Associate keywords with the HTML document. Keywords from the input PDF are used by default.
+//
+// keywords - The string containing the keywords.
+func (client *PdfToHtmlClient) SetKeywords(keywords string) *PdfToHtmlClient {
+    client.fields["keywords"] = keywords
+    return client
+}
+
+// Turn on the debug logging. Details about the conversion are stored in the debug log. The URL of the log can be obtained from the getDebugLogUrl method or available in conversion statistics.
+//
+// value - Set to true to enable the debug logging.
+func (client *PdfToHtmlClient) SetDebugLog(value bool) *PdfToHtmlClient {
+    client.fields["debug_log"] = strconv.FormatBool(value)
+    return client
+}
+
+// Get the URL of the debug log for the last conversion.
+func (client *PdfToHtmlClient) GetDebugLogUrl() string {
+    return client.helper.getDebugLogUrl()
+}
+
+// Get the number of conversion credits available in your account.
+// This method can only be called after a call to one of the convertXtoY methods.
+// The returned value can differ from the actual count if you run parallel conversions.
+// The special value 999999 is returned if the information is not available.
+func (client *PdfToHtmlClient) GetRemainingCreditCount() int {
+    return client.helper.getRemainingCreditCount()
+}
+
+// Get the number of credits consumed by the last conversion.
+func (client *PdfToHtmlClient) GetConsumedCreditCount() int {
+    return client.helper.getConsumedCreditCount()
+}
+
+// Get the job id.
+func (client *PdfToHtmlClient) GetJobId() string {
+    return client.helper.getJobId()
+}
+
+// Get the total number of pages in the output document.
+func (client *PdfToHtmlClient) GetPageCount() int {
+    return client.helper.getPageCount()
+}
+
+// Get the size of the output in bytes.
+func (client *PdfToHtmlClient) GetOutputSize() int {
+    return client.helper.getOutputSize()
+}
+
+// Get the version details.
+func (client *PdfToHtmlClient) GetVersion() string {
+    return fmt.Sprintf("client %s, API v2, converter %s", CLIENT_VERSION, client.helper.getConverterVersion())
+}
+
+// Tag the conversion with a custom value. The tag is used in conversion statistics. A value longer than 32 characters is cut off.
+//
+// tag - A string with the custom tag.
+func (client *PdfToHtmlClient) SetTag(tag string) *PdfToHtmlClient {
+    client.fields["tag"] = tag
+    return client
+}
+
+// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+//
+// proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *PdfToHtmlClient) SetHttpProxy(proxy string) *PdfToHtmlClient {
+    client.fields["http_proxy"] = proxy
+    return client
+}
+
+// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+//
+// proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *PdfToHtmlClient) SetHttpsProxy(proxy string) *PdfToHtmlClient {
+    client.fields["https_proxy"] = proxy
+    return client
+}
+
+// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
+//
+// value - Set to true to use HTTP.
+func (client *PdfToHtmlClient) SetUseHttp(value bool) *PdfToHtmlClient {
+    client.helper.setUseHttp(value)
+    return client
+}
+
+// Set a custom user agent HTTP header. It can be useful if you are behind a proxy or a firewall.
+//
+// agent - The user agent string.
+func (client *PdfToHtmlClient) SetUserAgent(agent string) *PdfToHtmlClient {
+    client.helper.setUserAgent(agent)
+    return client
+}
+
+// Specifies an HTTP proxy that the API client library will use to connect to the internet.
+//
+// host - The proxy hostname.
+// port - The proxy port.
+// userName - The username.
+// password - The password.
+func (client *PdfToHtmlClient) SetProxy(host string, port int, userName string, password string) *PdfToHtmlClient {
+    client.helper.setProxy(host, port, userName, password)
+    return client
+}
+
+// Specifies the number of automatic retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
+//
+// count - Number of retries.
+func (client *PdfToHtmlClient) SetRetryCount(count int) *PdfToHtmlClient {
+    client.helper.setRetryCount(count)
+    return client
+}
+
+func (client *PdfToHtmlClient) isOutputTypeValid(file_path string) bool {
+    extension := filepath.Ext(file_path)
+    return (extension == ".zip") == client.IsZippedOutput()
+}
