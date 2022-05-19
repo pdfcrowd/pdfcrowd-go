@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.5.0"
+const CLIENT_VERSION = "5.6.0"
 
 type Error struct {
     message string
@@ -90,7 +90,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.5.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.6.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -1187,6 +1187,14 @@ func (client *HtmlToPdfClient) SetConvertImagesToJpeg(images string) *HtmlToPdfC
 // dpi - The DPI value. Must be a positive integer number or 0.
 func (client *HtmlToPdfClient) SetImageDpi(dpi int) *HtmlToPdfClient {
     client.fields["image_dpi"] = strconv.Itoa(dpi)
+    return client
+}
+
+// Convert HTML forms to fillable PDF forms. Details can be found in the blog post.
+//
+// value - Set to true to make fillable PDF forms.
+func (client *HtmlToPdfClient) SetEnablePdfForms(value bool) *HtmlToPdfClient {
+    client.fields["enable_pdf_forms"] = strconv.FormatBool(value)
     return client
 }
 
