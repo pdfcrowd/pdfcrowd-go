@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.6.0"
+const CLIENT_VERSION = "5.6.1"
 
 type Error struct {
     message string
@@ -90,7 +90,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.6.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.6.1 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -574,7 +574,7 @@ func (client *HtmlToPdfClient) SetPageSize(size string) *HtmlToPdfClient {
 
 // Set the output page width. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF.
 //
-// width - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
 func (client *HtmlToPdfClient) SetPageWidth(width string) *HtmlToPdfClient {
     client.fields["page_width"] = width
     return client
@@ -582,7 +582,7 @@ func (client *HtmlToPdfClient) SetPageWidth(width string) *HtmlToPdfClient {
 
 // Set the output page height. Use -1 for a single page PDF. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF.
 //
-// height - Can be -1 or specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+// height - The value must be -1 or specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
 func (client *HtmlToPdfClient) SetPageHeight(height string) *HtmlToPdfClient {
     client.fields["page_height"] = height
     return client
@@ -590,8 +590,8 @@ func (client *HtmlToPdfClient) SetPageHeight(height string) *HtmlToPdfClient {
 
 // Set the output page dimensions.
 //
-// width - Set the output page width. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
-// height - Set the output page height. Use -1 for a single page PDF. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF. Can be -1 or specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+// width - Set the output page width. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// height - Set the output page height. Use -1 for a single page PDF. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF. The value must be -1 or specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
 func (client *HtmlToPdfClient) SetPageDimensions(width string, height string) *HtmlToPdfClient {
     client.SetPageWidth(width)
     client.SetPageHeight(height)
@@ -608,7 +608,7 @@ func (client *HtmlToPdfClient) SetOrientation(orientation string) *HtmlToPdfClie
 
 // Set the output page top margin.
 //
-// top - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+// top - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
 func (client *HtmlToPdfClient) SetMarginTop(top string) *HtmlToPdfClient {
     client.fields["margin_top"] = top
     return client
@@ -616,7 +616,7 @@ func (client *HtmlToPdfClient) SetMarginTop(top string) *HtmlToPdfClient {
 
 // Set the output page right margin.
 //
-// right - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+// right - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
 func (client *HtmlToPdfClient) SetMarginRight(right string) *HtmlToPdfClient {
     client.fields["margin_right"] = right
     return client
@@ -624,7 +624,7 @@ func (client *HtmlToPdfClient) SetMarginRight(right string) *HtmlToPdfClient {
 
 // Set the output page bottom margin.
 //
-// bottom - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+// bottom - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
 func (client *HtmlToPdfClient) SetMarginBottom(bottom string) *HtmlToPdfClient {
     client.fields["margin_bottom"] = bottom
     return client
@@ -632,7 +632,7 @@ func (client *HtmlToPdfClient) SetMarginBottom(bottom string) *HtmlToPdfClient {
 
 // Set the output page left margin.
 //
-// left - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+// left - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
 func (client *HtmlToPdfClient) SetMarginLeft(left string) *HtmlToPdfClient {
     client.fields["margin_left"] = left
     return client
@@ -648,10 +648,10 @@ func (client *HtmlToPdfClient) SetNoMargins(value bool) *HtmlToPdfClient {
 
 // Set the output page margins.
 //
-// top - Set the output page top margin. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
-// right - Set the output page right margin. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
-// bottom - Set the output page bottom margin. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
-// left - Set the output page left margin. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+// top - Set the output page top margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// right - Set the output page right margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// bottom - Set the output page bottom margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// left - Set the output page left margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
 func (client *HtmlToPdfClient) SetPageMargins(top string, right string, bottom string, left string) *HtmlToPdfClient {
     client.SetMarginTop(top)
     client.SetMarginRight(right)
@@ -678,7 +678,7 @@ func (client *HtmlToPdfClient) SetPageNumberingOffset(offset int) *HtmlToPdfClie
 
 // Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area.
 //
-// x - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
+// x - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt". It may contain a negative value.
 func (client *HtmlToPdfClient) SetContentAreaX(x string) *HtmlToPdfClient {
     client.fields["content_area_x"] = x
     return client
@@ -686,7 +686,7 @@ func (client *HtmlToPdfClient) SetContentAreaX(x string) *HtmlToPdfClient {
 
 // Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area.
 //
-// y - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
+// y - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt". It may contain a negative value.
 func (client *HtmlToPdfClient) SetContentAreaY(y string) *HtmlToPdfClient {
     client.fields["content_area_y"] = y
     return client
@@ -694,7 +694,7 @@ func (client *HtmlToPdfClient) SetContentAreaY(y string) *HtmlToPdfClient {
 
 // Set the width of the content area. It should be at least 1 inch.
 //
-// width - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
 func (client *HtmlToPdfClient) SetContentAreaWidth(width string) *HtmlToPdfClient {
     client.fields["content_area_width"] = width
     return client
@@ -702,7 +702,7 @@ func (client *HtmlToPdfClient) SetContentAreaWidth(width string) *HtmlToPdfClien
 
 // Set the height of the content area. It should be at least 1 inch.
 //
-// height - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
 func (client *HtmlToPdfClient) SetContentAreaHeight(height string) *HtmlToPdfClient {
     client.fields["content_area_height"] = height
     return client
@@ -710,10 +710,10 @@ func (client *HtmlToPdfClient) SetContentAreaHeight(height string) *HtmlToPdfCli
 
 // Set the content area position and size. The content area enables to specify a web page area to be converted.
 //
-// x - Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
-// y - Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt). It may contain a negative value.
-// width - Set the width of the content area. It should be at least 1 inch. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
-// height - Set the height of the content area. It should be at least 1 inch. Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+// x - Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt". It may contain a negative value.
+// y - Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt". It may contain a negative value.
+// width - Set the width of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// height - Set the height of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
 func (client *HtmlToPdfClient) SetContentArea(x string, y string, width string, height string) *HtmlToPdfClient {
     client.SetContentAreaX(x)
     client.SetContentAreaY(y)
@@ -748,7 +748,7 @@ func (client *HtmlToPdfClient) SetHeaderHtml(html string) *HtmlToPdfClient {
 
 // Set the header height.
 //
-// height - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
 func (client *HtmlToPdfClient) SetHeaderHeight(height string) *HtmlToPdfClient {
     client.fields["header_height"] = height
     return client
@@ -780,7 +780,7 @@ func (client *HtmlToPdfClient) SetFooterHtml(html string) *HtmlToPdfClient {
 
 // Set the footer height.
 //
-// height - Can be specified in inches (in), millimeters (mm), centimeters (cm), or points (pt).
+// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
 func (client *HtmlToPdfClient) SetFooterHeight(height string) *HtmlToPdfClient {
     client.fields["footer_height"] = height
     return client
