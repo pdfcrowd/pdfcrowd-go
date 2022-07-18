@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.6.1"
+const CLIENT_VERSION = "5.6.2"
 
 type Error struct {
     message string
@@ -90,7 +90,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.6.1 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.6.2 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -178,7 +178,7 @@ func createInvalidValueMessage(value interface{}, field string, converter string
     if len(hint) > 0 {
         message += " " + hint
     }
-    return message + " " + fmt.Sprintf("Details: https://www.pdfcrowd.com/doc/api/%s/go/ref/#%s", converter, id)
+    return message + " " + fmt.Sprintf("Details: https://www.pdfcrowd.com/api/%s-go/ref/#%s", converter, id)
 }
 
 func encodeMultipartPostData(fields, files map[string]string, rawData map[string][]byte) (io.Reader, string, error) {
