@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.6.2"
+const CLIENT_VERSION = "5.7.0"
 
 type Error struct {
     message string
@@ -90,7 +90,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.6.2 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.7.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -1110,7 +1110,7 @@ func (client *HtmlToPdfClient) SetAutoDetectElementToConvert(value bool) *HtmlTo
 
 // The input HTML is automatically enhanced to improve the readability.
 //
-// enhancements - Allowed values are none, readability-v1.
+// enhancements - Allowed values are none, readability-v1, readability-v2, readability-v3.
 func (client *HtmlToPdfClient) SetReadabilityEnhancements(enhancements string) *HtmlToPdfClient {
     client.fields["readability_enhancements"] = enhancements
     return client
@@ -2087,7 +2087,7 @@ func (client *HtmlToImageClient) SetAutoDetectElementToConvert(value bool) *Html
 
 // The input HTML is automatically enhanced to improve the readability.
 //
-// enhancements - Allowed values are none, readability-v1.
+// enhancements - Allowed values are none, readability-v1, readability-v2, readability-v3.
 func (client *HtmlToImageClient) SetReadabilityEnhancements(enhancements string) *HtmlToImageClient {
     client.fields["readability_enhancements"] = enhancements
     return client
