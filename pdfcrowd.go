@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.8.0"
+const CLIENT_VERSION = "5.9.0"
 
 type Error struct {
     message string
@@ -72,6 +72,7 @@ type connectionHelper struct {
     consumedCredits int
     jobId string
     pageCount int
+    totalPageCount int
     outputSize int
 
     proxyHost string
@@ -90,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.8.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.9.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -102,6 +103,7 @@ func (helper *connectionHelper) resetResponseData() {
     helper.consumedCredits = 0
     helper.jobId = ""
     helper.pageCount = 0
+    helper.totalPageCount = 0
     helper.outputSize = 0
     helper.retry = 0
 }
@@ -163,6 +165,10 @@ func (helper *connectionHelper) getJobId() string {
 
 func (helper *connectionHelper) getPageCount() int {
     return helper.pageCount
+}
+
+func (helper *connectionHelper) getTotalPageCount() int {
+    return helper.totalPageCount
 }
 
 func (helper *connectionHelper) getOutputSize() int {
@@ -310,6 +316,7 @@ func (helper* connectionHelper) post(fields, files map[string]string, rawData ma
         helper.consumedCredits = getIntHeader(response, "X-Pdfcrowd-Consumed-Credits", -1)
         helper.jobId = getStringHeader(response, "X-Pdfcrowd-Job-Id")
         helper.pageCount = getIntHeader(response, "X-Pdfcrowd-Pages", -1)
+        helper.totalPageCount = getIntHeader(response, "X-Pdfcrowd-Total-Pages", -1)
         helper.outputSize = getIntHeader(response, "X-Pdfcrowd-Output-Size", -1)
 
         if (response.StatusCode == 502 || len(os.Getenv("PDFCROWD_UNIT_TEST_MODE")) > 0) && helper.retryCount > helper.retry {
@@ -1110,7 +1117,7 @@ func (client *HtmlToPdfClient) SetAutoDetectElementToConvert(value bool) *HtmlTo
 
 // The input HTML is automatically enhanced to improve the readability.
 //
-// enhancements - Allowed values are none, readability-v1, readability-v2, readability-v3.
+// enhancements - Allowed values are none, readability-v1, readability-v2, readability-v3, readability-v4.
 func (client *HtmlToPdfClient) SetReadabilityEnhancements(enhancements string) *HtmlToPdfClient {
     client.fields["readability_enhancements"] = enhancements
     return client
@@ -1485,9 +1492,14 @@ func (client *HtmlToPdfClient) GetJobId() string {
     return client.helper.getJobId()
 }
 
-// Get the total number of pages in the output document.
+// Get the number of pages in the output document.
 func (client *HtmlToPdfClient) GetPageCount() int {
     return client.helper.getPageCount()
+}
+
+// Get the total number of pages in the original output document, including the pages excluded by setPrintPageRange().
+func (client *HtmlToPdfClient) GetTotalPageCount() int {
+    return client.helper.getTotalPageCount()
 }
 
 // Get the size of the output in bytes.
@@ -2087,7 +2099,7 @@ func (client *HtmlToImageClient) SetAutoDetectElementToConvert(value bool) *Html
 
 // The input HTML is automatically enhanced to improve the readability.
 //
-// enhancements - Allowed values are none, readability-v1, readability-v2, readability-v3.
+// enhancements - Allowed values are none, readability-v1, readability-v2, readability-v3, readability-v4.
 func (client *HtmlToImageClient) SetReadabilityEnhancements(enhancements string) *HtmlToImageClient {
     client.fields["readability_enhancements"] = enhancements
     return client
@@ -3030,7 +3042,7 @@ func (client *PdfToPdfClient) GetJobId() string {
     return client.helper.getJobId()
 }
 
-// Get the total number of pages in the output document.
+// Get the number of pages in the output document.
 func (client *PdfToPdfClient) GetPageCount() int {
     return client.helper.getPageCount()
 }
@@ -3782,7 +3794,7 @@ func (client *PdfToHtmlClient) GetJobId() string {
     return client.helper.getJobId()
 }
 
-// Get the total number of pages in the output document.
+// Get the number of pages in the output document.
 func (client *PdfToHtmlClient) GetPageCount() int {
     return client.helper.getPageCount()
 }
