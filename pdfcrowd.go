@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.9.0"
+const CLIENT_VERSION = "5.10.0"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.9.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.10.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -1159,7 +1159,7 @@ func (client *HtmlToPdfClient) SetRenderingMode(mode string) *HtmlToPdfClient {
 
 // Specifies the scaling mode used for fitting the HTML contents to the print area.
 //
-// mode - The smart scaling mode. Allowed values are default, disabled, viewport-fit, content-fit, single-page-fit, mode1.
+// mode - The smart scaling mode. Allowed values are default, disabled, viewport-fit, content-fit, single-page-fit, single-page-fit-ex, mode1.
 func (client *HtmlToPdfClient) SetSmartScalingMode(mode string) *HtmlToPdfClient {
     client.fields["smart_scaling_mode"] = mode
     return client
@@ -3335,6 +3335,246 @@ func (client *ImageToPdfClient) SetRotate(rotate string) *ImageToPdfClient {
     return client
 }
 
+// Apply a watermark to each page of the output PDF file. A watermark can be either a PDF or an image. If a multi-page file (PDF or TIFF) is used, the first page is used as the watermark.
+//
+// watermark - The file path to a local file. The file must exist and not be empty.
+func (client *ImageToPdfClient) SetPageWatermark(watermark string) *ImageToPdfClient {
+    client.files["page_watermark"] = watermark
+    return client
+}
+
+// Load a file from the specified URL and apply the file as a watermark to each page of the output PDF. A watermark can be either a PDF or an image. If a multi-page file (PDF or TIFF) is used, the first page is used as the watermark.
+//
+// url - The supported protocols are http:// and https://.
+func (client *ImageToPdfClient) SetPageWatermarkUrl(url string) *ImageToPdfClient {
+    client.fields["page_watermark_url"] = url
+    return client
+}
+
+// Apply each page of a watermark to the corresponding page of the output PDF. A watermark can be either a PDF or an image.
+//
+// watermark - The file path to a local file. The file must exist and not be empty.
+func (client *ImageToPdfClient) SetMultipageWatermark(watermark string) *ImageToPdfClient {
+    client.files["multipage_watermark"] = watermark
+    return client
+}
+
+// Load a file from the specified URL and apply each page of the file as a watermark to the corresponding page of the output PDF. A watermark can be either a PDF or an image.
+//
+// url - The supported protocols are http:// and https://.
+func (client *ImageToPdfClient) SetMultipageWatermarkUrl(url string) *ImageToPdfClient {
+    client.fields["multipage_watermark_url"] = url
+    return client
+}
+
+// Apply a background to each page of the output PDF file. A background can be either a PDF or an image. If a multi-page file (PDF or TIFF) is used, the first page is used as the background.
+//
+// background - The file path to a local file. The file must exist and not be empty.
+func (client *ImageToPdfClient) SetPageBackground(background string) *ImageToPdfClient {
+    client.files["page_background"] = background
+    return client
+}
+
+// Load a file from the specified URL and apply the file as a background to each page of the output PDF. A background can be either a PDF or an image. If a multi-page file (PDF or TIFF) is used, the first page is used as the background.
+//
+// url - The supported protocols are http:// and https://.
+func (client *ImageToPdfClient) SetPageBackgroundUrl(url string) *ImageToPdfClient {
+    client.fields["page_background_url"] = url
+    return client
+}
+
+// Apply each page of a background to the corresponding page of the output PDF. A background can be either a PDF or an image.
+//
+// background - The file path to a local file. The file must exist and not be empty.
+func (client *ImageToPdfClient) SetMultipageBackground(background string) *ImageToPdfClient {
+    client.files["multipage_background"] = background
+    return client
+}
+
+// Load a file from the specified URL and apply each page of the file as a background to the corresponding page of the output PDF. A background can be either a PDF or an image.
+//
+// url - The supported protocols are http:// and https://.
+func (client *ImageToPdfClient) SetMultipageBackgroundUrl(url string) *ImageToPdfClient {
+    client.fields["multipage_background_url"] = url
+    return client
+}
+
+// Create linearized PDF. This is also known as Fast Web View.
+//
+// value - Set to true to create linearized PDF.
+func (client *ImageToPdfClient) SetLinearize(value bool) *ImageToPdfClient {
+    client.fields["linearize"] = strconv.FormatBool(value)
+    return client
+}
+
+// Encrypt the PDF. This prevents search engines from indexing the contents.
+//
+// value - Set to true to enable PDF encryption.
+func (client *ImageToPdfClient) SetEncrypt(value bool) *ImageToPdfClient {
+    client.fields["encrypt"] = strconv.FormatBool(value)
+    return client
+}
+
+// Protect the PDF with a user password. When a PDF has a user password, it must be supplied in order to view the document and to perform operations allowed by the access permissions.
+//
+// password - The user password.
+func (client *ImageToPdfClient) SetUserPassword(password string) *ImageToPdfClient {
+    client.fields["user_password"] = password
+    return client
+}
+
+// Protect the PDF with an owner password. Supplying an owner password grants unlimited access to the PDF including changing the passwords and access permissions.
+//
+// password - The owner password.
+func (client *ImageToPdfClient) SetOwnerPassword(password string) *ImageToPdfClient {
+    client.fields["owner_password"] = password
+    return client
+}
+
+// Disallow printing of the output PDF.
+//
+// value - Set to true to set the no-print flag in the output PDF.
+func (client *ImageToPdfClient) SetNoPrint(value bool) *ImageToPdfClient {
+    client.fields["no_print"] = strconv.FormatBool(value)
+    return client
+}
+
+// Disallow modification of the output PDF.
+//
+// value - Set to true to set the read-only only flag in the output PDF.
+func (client *ImageToPdfClient) SetNoModify(value bool) *ImageToPdfClient {
+    client.fields["no_modify"] = strconv.FormatBool(value)
+    return client
+}
+
+// Disallow text and graphics extraction from the output PDF.
+//
+// value - Set to true to set the no-copy flag in the output PDF.
+func (client *ImageToPdfClient) SetNoCopy(value bool) *ImageToPdfClient {
+    client.fields["no_copy"] = strconv.FormatBool(value)
+    return client
+}
+
+// Set the title of the PDF.
+//
+// title - The title.
+func (client *ImageToPdfClient) SetTitle(title string) *ImageToPdfClient {
+    client.fields["title"] = title
+    return client
+}
+
+// Set the subject of the PDF.
+//
+// subject - The subject.
+func (client *ImageToPdfClient) SetSubject(subject string) *ImageToPdfClient {
+    client.fields["subject"] = subject
+    return client
+}
+
+// Set the author of the PDF.
+//
+// author - The author.
+func (client *ImageToPdfClient) SetAuthor(author string) *ImageToPdfClient {
+    client.fields["author"] = author
+    return client
+}
+
+// Associate keywords with the document.
+//
+// keywords - The string with the keywords.
+func (client *ImageToPdfClient) SetKeywords(keywords string) *ImageToPdfClient {
+    client.fields["keywords"] = keywords
+    return client
+}
+
+// Specify the page layout to be used when the document is opened.
+//
+// layout - Allowed values are single-page, one-column, two-column-left, two-column-right.
+func (client *ImageToPdfClient) SetPageLayout(layout string) *ImageToPdfClient {
+    client.fields["page_layout"] = layout
+    return client
+}
+
+// Specify how the document should be displayed when opened.
+//
+// mode - Allowed values are full-screen, thumbnails, outlines.
+func (client *ImageToPdfClient) SetPageMode(mode string) *ImageToPdfClient {
+    client.fields["page_mode"] = mode
+    return client
+}
+
+// Specify how the page should be displayed when opened.
+//
+// zoomType - Allowed values are fit-width, fit-height, fit-page.
+func (client *ImageToPdfClient) SetInitialZoomType(zoomType string) *ImageToPdfClient {
+    client.fields["initial_zoom_type"] = zoomType
+    return client
+}
+
+// Display the specified page when the document is opened.
+//
+// page - Must be a positive integer number.
+func (client *ImageToPdfClient) SetInitialPage(page int) *ImageToPdfClient {
+    client.fields["initial_page"] = strconv.Itoa(page)
+    return client
+}
+
+// Specify the initial page zoom in percents when the document is opened.
+//
+// zoom - Must be a positive integer number.
+func (client *ImageToPdfClient) SetInitialZoom(zoom int) *ImageToPdfClient {
+    client.fields["initial_zoom"] = strconv.Itoa(zoom)
+    return client
+}
+
+// Specify whether to hide the viewer application's tool bars when the document is active.
+//
+// value - Set to true to hide tool bars.
+func (client *ImageToPdfClient) SetHideToolbar(value bool) *ImageToPdfClient {
+    client.fields["hide_toolbar"] = strconv.FormatBool(value)
+    return client
+}
+
+// Specify whether to hide the viewer application's menu bar when the document is active.
+//
+// value - Set to true to hide the menu bar.
+func (client *ImageToPdfClient) SetHideMenubar(value bool) *ImageToPdfClient {
+    client.fields["hide_menubar"] = strconv.FormatBool(value)
+    return client
+}
+
+// Specify whether to hide user interface elements in the document's window (such as scroll bars and navigation controls), leaving only the document's contents displayed.
+//
+// value - Set to true to hide ui elements.
+func (client *ImageToPdfClient) SetHideWindowUi(value bool) *ImageToPdfClient {
+    client.fields["hide_window_ui"] = strconv.FormatBool(value)
+    return client
+}
+
+// Specify whether to resize the document's window to fit the size of the first displayed page.
+//
+// value - Set to true to resize the window.
+func (client *ImageToPdfClient) SetFitWindow(value bool) *ImageToPdfClient {
+    client.fields["fit_window"] = strconv.FormatBool(value)
+    return client
+}
+
+// Specify whether to position the document's window in the center of the screen.
+//
+// value - Set to true to center the window.
+func (client *ImageToPdfClient) SetCenterWindow(value bool) *ImageToPdfClient {
+    client.fields["center_window"] = strconv.FormatBool(value)
+    return client
+}
+
+// Specify whether the window's title bar should display the document title. If false , the title bar should instead display the name of the PDF file containing the document.
+//
+// value - Set to true to display the title.
+func (client *ImageToPdfClient) SetDisplayTitle(value bool) *ImageToPdfClient {
+    client.fields["display_title"] = strconv.FormatBool(value)
+    return client
+}
+
 // Turn on the debug logging. Details about the conversion are stored in the debug log. The URL of the log can be obtained from the getDebugLogUrl method or available in conversion statistics.
 //
 // value - Set to true to enable the debug logging.
@@ -3873,3 +4113,445 @@ func (client *PdfToHtmlClient) isOutputTypeValid(file_path string) bool {
     extension := filepath.Ext(file_path)
     return (extension == ".zip") == client.IsZippedOutput()
 }
+// Conversion from PDF to text.
+type PdfToTextClient struct {
+    helper connectionHelper
+    fields map[string]string
+    files map[string]string
+    rawData map[string][]byte
+    fileId int
+}
+
+// Constructor for the Pdfcrowd API client.
+//
+// userName - Your username at Pdfcrowd.
+// apiKey - Your API key.
+func NewPdfToTextClient(userName string, apiKey string) PdfToTextClient {
+    helper := newConnectionHelper(userName, apiKey)
+    fields := map[string]string{
+        "input_format": "pdf",
+        "output_format": "txt",
+    }
+    return PdfToTextClient{ helper, fields, make(map[string]string), make(map[string][]byte), 1}
+}
+
+// Convert a PDF.
+//
+// url - The address of the PDF to convert. The supported protocols are http:// and https://.
+func (client *PdfToTextClient) ConvertUrl(url string) ([]byte, error) {
+    re, _ := regexp.Compile("(?i)^https?://.*$")
+    if !re.MatchString(url) {
+        return nil, Error{createInvalidValueMessage(url, "ConvertUrl", "pdf-to-text", "The supported protocols are http:// and https://.", "convert_url"), 470}
+    }
+    
+    client.fields["url"] = url
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert a PDF and write the result to an output stream.
+//
+// url - The address of the PDF to convert. The supported protocols are http:// and https://.
+// outStream - The output stream that will contain the conversion output.
+func (client *PdfToTextClient) ConvertUrlToStream(url string, outStream io.Writer) error {
+    re, _ := regexp.Compile("(?i)^https?://.*$")
+    if !re.MatchString(url) {
+        return Error{createInvalidValueMessage(url, "ConvertUrlToStream::url", "pdf-to-text", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
+    }
+    
+    client.fields["url"] = url
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert a PDF and write the result to a local file.
+//
+// url - The address of the PDF to convert. The supported protocols are http:// and https://.
+// filePath - The output file path. The string must not be empty.
+func (client *PdfToTextClient) ConvertUrlToFile(url string, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "pdf-to-text", "The string must not be empty.", "convert_url_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertUrlToStream(url, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
+// Convert a local file.
+//
+// file - The path to a local file to convert. The file must exist and not be empty.
+func (client *PdfToTextClient) ConvertFile(file string) ([]byte, error) {
+    if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
+        return nil, Error{createInvalidValueMessage(file, "ConvertFile", "pdf-to-text", "The file must exist and not be empty.", "convert_file"), 470}
+    }
+    
+    client.files["file"] = file
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert a local file and write the result to an output stream.
+//
+// file - The path to a local file to convert. The file must exist and not be empty.
+// outStream - The output stream that will contain the conversion output.
+func (client *PdfToTextClient) ConvertFileToStream(file string, outStream io.Writer) error {
+    if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
+        return Error{createInvalidValueMessage(file, "ConvertFileToStream::file", "pdf-to-text", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
+    }
+    
+    client.files["file"] = file
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert a local file and write the result to a local file.
+//
+// file - The path to a local file to convert. The file must exist and not be empty.
+// filePath - The output file path. The string must not be empty.
+func (client *PdfToTextClient) ConvertFileToFile(file string, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "pdf-to-text", "The string must not be empty.", "convert_file_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertFileToStream(file, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
+// Convert raw data.
+//
+// data - The raw content to be converted.
+func (client *PdfToTextClient) ConvertRawData(data []byte) ([]byte, error) {
+    client.rawData["file"] = data
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert raw data and write the result to an output stream.
+//
+// data - The raw content to be converted.
+// outStream - The output stream that will contain the conversion output.
+func (client *PdfToTextClient) ConvertRawDataToStream(data []byte, outStream io.Writer) error {
+    client.rawData["file"] = data
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert raw data to a file.
+//
+// data - The raw content to be converted.
+// filePath - The output file path. The string must not be empty.
+func (client *PdfToTextClient) ConvertRawDataToFile(data []byte, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "pdf-to-text", "The string must not be empty.", "convert_raw_data_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertRawDataToStream(data, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
+// Convert the contents of an input stream.
+//
+// inStream - The input stream with source data.
+func (client *PdfToTextClient) ConvertStream(inStream io.Reader) ([]byte, error) {
+    data, errRead := ioutil.ReadAll(inStream)
+    if errRead != nil {
+        return nil, errRead
+    }
+
+    client.rawData["stream"] = data
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert the contents of an input stream and write the result to an output stream.
+//
+// inStream - The input stream with source data.
+// outStream - The output stream that will contain the conversion output.
+func (client *PdfToTextClient) ConvertStreamToStream(inStream io.Reader, outStream io.Writer) error {
+    data, errRead := ioutil.ReadAll(inStream)
+    if errRead != nil {
+        return errRead
+    }
+
+    client.rawData["stream"] = data
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert the contents of an input stream and write the result to a local file.
+//
+// inStream - The input stream with source data.
+// filePath - The output file path. The string must not be empty.
+func (client *PdfToTextClient) ConvertStreamToFile(inStream io.Reader, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "pdf-to-text", "The string must not be empty.", "convert_stream_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertStreamToStream(inStream, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
+// The password to open the encrypted PDF file.
+//
+// password - The input PDF password.
+func (client *PdfToTextClient) SetPdfPassword(password string) *PdfToTextClient {
+    client.fields["pdf_password"] = password
+    return client
+}
+
+// Set the page range to print.
+//
+// pages - A comma separated list of page numbers or ranges.
+func (client *PdfToTextClient) SetPrintPageRange(pages string) *PdfToTextClient {
+    client.fields["print_page_range"] = pages
+    return client
+}
+
+// Ignore the original PDF layout.
+//
+// value - Set to true to ignore the layout.
+func (client *PdfToTextClient) SetNoLayout(value bool) *PdfToTextClient {
+    client.fields["no_layout"] = strconv.FormatBool(value)
+    return client
+}
+
+// The end-of-line convention for the text output.
+//
+// eol - Allowed values are unix, dos, mac.
+func (client *PdfToTextClient) SetEol(eol string) *PdfToTextClient {
+    client.fields["eol"] = eol
+    return client
+}
+
+// Specify the page break mode for the text output.
+//
+// mode - Allowed values are none, default, custom.
+func (client *PdfToTextClient) SetPageBreakMode(mode string) *PdfToTextClient {
+    client.fields["page_break_mode"] = mode
+    return client
+}
+
+// Specify the custom page break.
+//
+// pageBreak - String to insert between the pages.
+func (client *PdfToTextClient) SetCustomPageBreak(pageBreak string) *PdfToTextClient {
+    client.fields["custom_page_break"] = pageBreak
+    return client
+}
+
+// Specify the paragraph detection mode.
+//
+// mode - Allowed values are none, bounding-box, characters.
+func (client *PdfToTextClient) SetParagraphMode(mode string) *PdfToTextClient {
+    client.fields["paragraph_mode"] = mode
+    return client
+}
+
+// Set the maximum line spacing when the paragraph detection mode is enabled.
+//
+// threshold - The value must be a positive integer percentage.
+func (client *PdfToTextClient) SetLineSpacingThreshold(threshold string) *PdfToTextClient {
+    client.fields["line_spacing_threshold"] = threshold
+    return client
+}
+
+// Remove the hyphen character from the end of lines.
+//
+// value - Set to true to remove hyphens.
+func (client *PdfToTextClient) SetRemoveHyphenation(value bool) *PdfToTextClient {
+    client.fields["remove_hyphenation"] = strconv.FormatBool(value)
+    return client
+}
+
+// Remove empty lines from the text output.
+//
+// value - Set to true to remove empty lines.
+func (client *PdfToTextClient) SetRemoveEmptyLines(value bool) *PdfToTextClient {
+    client.fields["remove_empty_lines"] = strconv.FormatBool(value)
+    return client
+}
+
+// Set the top left X coordinate of the crop area in points.
+//
+// x - Must be a positive integer number or 0.
+func (client *PdfToTextClient) SetCropAreaX(x int) *PdfToTextClient {
+    client.fields["crop_area_x"] = strconv.Itoa(x)
+    return client
+}
+
+// Set the top left Y coordinate of the crop area in points.
+//
+// y - Must be a positive integer number or 0.
+func (client *PdfToTextClient) SetCropAreaY(y int) *PdfToTextClient {
+    client.fields["crop_area_y"] = strconv.Itoa(y)
+    return client
+}
+
+// Set the width of the crop area in points.
+//
+// width - Must be a positive integer number or 0.
+func (client *PdfToTextClient) SetCropAreaWidth(width int) *PdfToTextClient {
+    client.fields["crop_area_width"] = strconv.Itoa(width)
+    return client
+}
+
+// Set the height of the crop area in points.
+//
+// height - Must be a positive integer number or 0.
+func (client *PdfToTextClient) SetCropAreaHeight(height int) *PdfToTextClient {
+    client.fields["crop_area_height"] = strconv.Itoa(height)
+    return client
+}
+
+// Set the crop area. It allows to extract just a part of a PDF page.
+//
+// x - Set the top left X coordinate of the crop area in points. Must be a positive integer number or 0.
+// y - Set the top left Y coordinate of the crop area in points. Must be a positive integer number or 0.
+// width - Set the width of the crop area in points. Must be a positive integer number or 0.
+// height - Set the height of the crop area in points. Must be a positive integer number or 0.
+func (client *PdfToTextClient) SetCropArea(x int, y int, width int, height int) *PdfToTextClient {
+    client.SetCropAreaX(x)
+    client.SetCropAreaY(y)
+    client.SetCropAreaWidth(width)
+    client.SetCropAreaHeight(height)
+    return client
+}
+
+// Turn on the debug logging. Details about the conversion are stored in the debug log. The URL of the log can be obtained from the getDebugLogUrl method or available in conversion statistics.
+//
+// value - Set to true to enable the debug logging.
+func (client *PdfToTextClient) SetDebugLog(value bool) *PdfToTextClient {
+    client.fields["debug_log"] = strconv.FormatBool(value)
+    return client
+}
+
+// Get the URL of the debug log for the last conversion.
+func (client *PdfToTextClient) GetDebugLogUrl() string {
+    return client.helper.getDebugLogUrl()
+}
+
+// Get the number of conversion credits available in your account.
+// This method can only be called after a call to one of the convertXtoY methods.
+// The returned value can differ from the actual count if you run parallel conversions.
+// The special value 999999 is returned if the information is not available.
+func (client *PdfToTextClient) GetRemainingCreditCount() int {
+    return client.helper.getRemainingCreditCount()
+}
+
+// Get the number of credits consumed by the last conversion.
+func (client *PdfToTextClient) GetConsumedCreditCount() int {
+    return client.helper.getConsumedCreditCount()
+}
+
+// Get the job id.
+func (client *PdfToTextClient) GetJobId() string {
+    return client.helper.getJobId()
+}
+
+// Get the number of pages in the output document.
+func (client *PdfToTextClient) GetPageCount() int {
+    return client.helper.getPageCount()
+}
+
+// Get the size of the output in bytes.
+func (client *PdfToTextClient) GetOutputSize() int {
+    return client.helper.getOutputSize()
+}
+
+// Get the version details.
+func (client *PdfToTextClient) GetVersion() string {
+    return fmt.Sprintf("client %s, API v2, converter %s", CLIENT_VERSION, client.helper.getConverterVersion())
+}
+
+// Tag the conversion with a custom value. The tag is used in conversion statistics. A value longer than 32 characters is cut off.
+//
+// tag - A string with the custom tag.
+func (client *PdfToTextClient) SetTag(tag string) *PdfToTextClient {
+    client.fields["tag"] = tag
+    return client
+}
+
+// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+//
+// proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *PdfToTextClient) SetHttpProxy(proxy string) *PdfToTextClient {
+    client.fields["http_proxy"] = proxy
+    return client
+}
+
+// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+//
+// proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *PdfToTextClient) SetHttpsProxy(proxy string) *PdfToTextClient {
+    client.fields["https_proxy"] = proxy
+    return client
+}
+
+// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
+//
+// value - Set to true to use HTTP.
+func (client *PdfToTextClient) SetUseHttp(value bool) *PdfToTextClient {
+    client.helper.setUseHttp(value)
+    return client
+}
+
+// Set a custom user agent HTTP header. It can be useful if you are behind a proxy or a firewall.
+//
+// agent - The user agent string.
+func (client *PdfToTextClient) SetUserAgent(agent string) *PdfToTextClient {
+    client.helper.setUserAgent(agent)
+    return client
+}
+
+// Specifies an HTTP proxy that the API client library will use to connect to the internet.
+//
+// host - The proxy hostname.
+// port - The proxy port.
+// userName - The username.
+// password - The password.
+func (client *PdfToTextClient) SetProxy(host string, port int, userName string, password string) *PdfToTextClient {
+    client.helper.setProxy(host, port, userName, password)
+    return client
+}
+
+// Specifies the number of automatic retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
+//
+// count - Number of retries.
+func (client *PdfToTextClient) SetRetryCount(count int) *PdfToTextClient {
+    client.helper.setRetryCount(count)
+    return client
+}
+
