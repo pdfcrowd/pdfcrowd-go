@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.10.0"
+const CLIENT_VERSION = "5.11.0"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.10.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.11.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -2560,6 +2560,126 @@ func (client *ImageToImageClient) SetRotate(rotate string) *ImageToImageClient {
     return client
 }
 
+// Set the output canvas size.
+//
+// size - Allowed values are A0, A1, A2, A3, A4, A5, A6, Letter.
+func (client *ImageToImageClient) SetCanvasSize(size string) *ImageToImageClient {
+    client.fields["canvas_size"] = size
+    return client
+}
+
+// Set the output canvas width.
+//
+// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToImageClient) SetCanvasWidth(width string) *ImageToImageClient {
+    client.fields["canvas_width"] = width
+    return client
+}
+
+// Set the output canvas height.
+//
+// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToImageClient) SetCanvasHeight(height string) *ImageToImageClient {
+    client.fields["canvas_height"] = height
+    return client
+}
+
+// Set the output canvas dimensions. If no canvas size is specified, margins are applied as a border around the image.
+//
+// width - Set the output canvas width. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// height - Set the output canvas height. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToImageClient) SetCanvasDimensions(width string, height string) *ImageToImageClient {
+    client.SetCanvasWidth(width)
+    client.SetCanvasHeight(height)
+    return client
+}
+
+// Set the output canvas orientation.
+//
+// orientation - Allowed values are landscape, portrait.
+func (client *ImageToImageClient) SetOrientation(orientation string) *ImageToImageClient {
+    client.fields["orientation"] = orientation
+    return client
+}
+
+// Set the image position on the page.
+//
+// position - Allowed values are center, top, bottom, left, right, top-left, top-right, bottom-left, bottom-right.
+func (client *ImageToImageClient) SetPosition(position string) *ImageToImageClient {
+    client.fields["position"] = position
+    return client
+}
+
+// Set the mode to print the image on the content area of the page.
+//
+// mode - Allowed values are default, fit, stretch.
+func (client *ImageToImageClient) SetPrintCanvasMode(mode string) *ImageToImageClient {
+    client.fields["print_canvas_mode"] = mode
+    return client
+}
+
+// Set the output canvas top margin.
+//
+// top - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToImageClient) SetMarginTop(top string) *ImageToImageClient {
+    client.fields["margin_top"] = top
+    return client
+}
+
+// Set the output canvas right margin.
+//
+// right - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToImageClient) SetMarginRight(right string) *ImageToImageClient {
+    client.fields["margin_right"] = right
+    return client
+}
+
+// Set the output canvas bottom margin.
+//
+// bottom - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToImageClient) SetMarginBottom(bottom string) *ImageToImageClient {
+    client.fields["margin_bottom"] = bottom
+    return client
+}
+
+// Set the output canvas left margin.
+//
+// left - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToImageClient) SetMarginLeft(left string) *ImageToImageClient {
+    client.fields["margin_left"] = left
+    return client
+}
+
+// Set the output canvas margins.
+//
+// top - Set the output canvas top margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// right - Set the output canvas right margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// bottom - Set the output canvas bottom margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// left - Set the output canvas left margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToImageClient) SetMargins(top string, right string, bottom string, left string) *ImageToImageClient {
+    client.SetMarginTop(top)
+    client.SetMarginRight(right)
+    client.SetMarginBottom(bottom)
+    client.SetMarginLeft(left)
+    return client
+}
+
+// The canvas background color in RGB or RGBA hexadecimal format. The color fills the entire canvas regardless of margins. If no canvas size is specified and the image format supports background (e.g. PDF, PNG), the background color is applied too.
+//
+// color - The value must be in RRGGBB or RRGGBBAA hexadecimal format.
+func (client *ImageToImageClient) SetCanvasBackgroundColor(color string) *ImageToImageClient {
+    client.fields["canvas_background_color"] = color
+    return client
+}
+
+// Set the DPI resolution of the input image. The DPI affects margin options specified in points too (e.g. 1 point is equal to 1 pixel in 96 DPI).
+//
+// dpi - The DPI value.
+func (client *ImageToImageClient) SetDpi(dpi int) *ImageToImageClient {
+    client.fields["dpi"] = strconv.Itoa(dpi)
+    return client
+}
+
 // Turn on the debug logging. Details about the conversion are stored in the debug log. The URL of the log can be obtained from the getDebugLogUrl method or available in conversion statistics.
 //
 // value - Set to true to enable the debug logging.
@@ -2693,7 +2813,7 @@ func NewPdfToPdfClient(userName string, apiKey string) PdfToPdfClient {
 
 // Specifies the action to be performed on the input PDFs.
 //
-// action - Allowed values are join, shuffle.
+// action - Allowed values are join, shuffle, extract, delete.
 func (client *PdfToPdfClient) SetAction(action string) *PdfToPdfClient {
     client.fields["action"] = action
     return client
@@ -2752,6 +2872,14 @@ func (client *PdfToPdfClient) AddPdfRawData(data []byte) *PdfToPdfClient {
 // password - The input PDF password.
 func (client *PdfToPdfClient) SetInputPdfPassword(password string) *PdfToPdfClient {
     client.fields["input_pdf_password"] = password
+    return client
+}
+
+// Set the page range for extract or delete action.
+//
+// pages - A comma separated list of page numbers or ranges.
+func (client *PdfToPdfClient) SetPageRange(pages string) *PdfToPdfClient {
+    client.fields["page_range"] = pages
     return client
 }
 
@@ -3332,6 +3460,126 @@ func (client *ImageToPdfClient) SetResize(resize string) *ImageToPdfClient {
 // rotate - The rotation specified in degrees.
 func (client *ImageToPdfClient) SetRotate(rotate string) *ImageToPdfClient {
     client.fields["rotate"] = rotate
+    return client
+}
+
+// Set the output page size.
+//
+// size - Allowed values are A0, A1, A2, A3, A4, A5, A6, Letter.
+func (client *ImageToPdfClient) SetPageSize(size string) *ImageToPdfClient {
+    client.fields["page_size"] = size
+    return client
+}
+
+// Set the output page width.
+//
+// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToPdfClient) SetPageWidth(width string) *ImageToPdfClient {
+    client.fields["page_width"] = width
+    return client
+}
+
+// Set the output page height.
+//
+// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToPdfClient) SetPageHeight(height string) *ImageToPdfClient {
+    client.fields["page_height"] = height
+    return client
+}
+
+// Set the output page dimensions. If no page size is specified, margins are applied as a border around the image.
+//
+// width - Set the output page width. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// height - Set the output page height. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToPdfClient) SetPageDimensions(width string, height string) *ImageToPdfClient {
+    client.SetPageWidth(width)
+    client.SetPageHeight(height)
+    return client
+}
+
+// Set the output page orientation.
+//
+// orientation - Allowed values are landscape, portrait.
+func (client *ImageToPdfClient) SetOrientation(orientation string) *ImageToPdfClient {
+    client.fields["orientation"] = orientation
+    return client
+}
+
+// Set the image position on the page.
+//
+// position - Allowed values are center, top, bottom, left, right, top-left, top-right, bottom-left, bottom-right.
+func (client *ImageToPdfClient) SetPosition(position string) *ImageToPdfClient {
+    client.fields["position"] = position
+    return client
+}
+
+// Set the mode to print the image on the content area of the page.
+//
+// mode - Allowed values are default, fit, stretch.
+func (client *ImageToPdfClient) SetPrintPageMode(mode string) *ImageToPdfClient {
+    client.fields["print_page_mode"] = mode
+    return client
+}
+
+// Set the output page top margin.
+//
+// top - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToPdfClient) SetMarginTop(top string) *ImageToPdfClient {
+    client.fields["margin_top"] = top
+    return client
+}
+
+// Set the output page right margin.
+//
+// right - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToPdfClient) SetMarginRight(right string) *ImageToPdfClient {
+    client.fields["margin_right"] = right
+    return client
+}
+
+// Set the output page bottom margin.
+//
+// bottom - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToPdfClient) SetMarginBottom(bottom string) *ImageToPdfClient {
+    client.fields["margin_bottom"] = bottom
+    return client
+}
+
+// Set the output page left margin.
+//
+// left - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToPdfClient) SetMarginLeft(left string) *ImageToPdfClient {
+    client.fields["margin_left"] = left
+    return client
+}
+
+// Set the output page margins.
+//
+// top - Set the output page top margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// right - Set the output page right margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// bottom - Set the output page bottom margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// left - Set the output page left margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+func (client *ImageToPdfClient) SetPageMargins(top string, right string, bottom string, left string) *ImageToPdfClient {
+    client.SetMarginTop(top)
+    client.SetMarginRight(right)
+    client.SetMarginBottom(bottom)
+    client.SetMarginLeft(left)
+    return client
+}
+
+// The page background color in RGB or RGBA hexadecimal format. The color fills the entire page regardless of the margins. If not page size is specified and the image format supports background (e.g. PDF, PNG), the background color is applied too.
+//
+// color - The value must be in RRGGBB or RRGGBBAA hexadecimal format.
+func (client *ImageToPdfClient) SetPageBackgroundColor(color string) *ImageToPdfClient {
+    client.fields["page_background_color"] = color
+    return client
+}
+
+// Set the DPI resolution of the input image. The DPI affects margin options specified in points too (e.g. 1 point is equal to 1 pixel in 96 DPI).
+//
+// dpi - The DPI value.
+func (client *ImageToPdfClient) SetDpi(dpi int) *ImageToPdfClient {
+    client.fields["dpi"] = strconv.Itoa(dpi)
     return client
 }
 
