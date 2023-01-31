@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.11.0"
+const CLIENT_VERSION = "5.12.0"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.11.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.12.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -581,7 +581,7 @@ func (client *HtmlToPdfClient) SetPageSize(size string) *HtmlToPdfClient {
 
 // Set the output page width. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF.
 //
-// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *HtmlToPdfClient) SetPageWidth(width string) *HtmlToPdfClient {
     client.fields["page_width"] = width
     return client
@@ -589,7 +589,7 @@ func (client *HtmlToPdfClient) SetPageWidth(width string) *HtmlToPdfClient {
 
 // Set the output page height. Use -1 for a single page PDF. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF.
 //
-// height - The value must be -1 or specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// height - The value must be -1 or specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *HtmlToPdfClient) SetPageHeight(height string) *HtmlToPdfClient {
     client.fields["page_height"] = height
     return client
@@ -597,8 +597,8 @@ func (client *HtmlToPdfClient) SetPageHeight(height string) *HtmlToPdfClient {
 
 // Set the output page dimensions.
 //
-// width - Set the output page width. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
-// height - Set the output page height. Use -1 for a single page PDF. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF. The value must be -1 or specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// width - Set the output page width. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// height - Set the output page height. Use -1 for a single page PDF. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF. The value must be -1 or specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *HtmlToPdfClient) SetPageDimensions(width string, height string) *HtmlToPdfClient {
     client.SetPageWidth(width)
     client.SetPageHeight(height)
@@ -615,7 +615,7 @@ func (client *HtmlToPdfClient) SetOrientation(orientation string) *HtmlToPdfClie
 
 // Set the output page top margin.
 //
-// top - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// top - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *HtmlToPdfClient) SetMarginTop(top string) *HtmlToPdfClient {
     client.fields["margin_top"] = top
     return client
@@ -623,7 +623,7 @@ func (client *HtmlToPdfClient) SetMarginTop(top string) *HtmlToPdfClient {
 
 // Set the output page right margin.
 //
-// right - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// right - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *HtmlToPdfClient) SetMarginRight(right string) *HtmlToPdfClient {
     client.fields["margin_right"] = right
     return client
@@ -631,7 +631,7 @@ func (client *HtmlToPdfClient) SetMarginRight(right string) *HtmlToPdfClient {
 
 // Set the output page bottom margin.
 //
-// bottom - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// bottom - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *HtmlToPdfClient) SetMarginBottom(bottom string) *HtmlToPdfClient {
     client.fields["margin_bottom"] = bottom
     return client
@@ -639,7 +639,7 @@ func (client *HtmlToPdfClient) SetMarginBottom(bottom string) *HtmlToPdfClient {
 
 // Set the output page left margin.
 //
-// left - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// left - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *HtmlToPdfClient) SetMarginLeft(left string) *HtmlToPdfClient {
     client.fields["margin_left"] = left
     return client
@@ -655,10 +655,10 @@ func (client *HtmlToPdfClient) SetNoMargins(value bool) *HtmlToPdfClient {
 
 // Set the output page margins.
 //
-// top - Set the output page top margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
-// right - Set the output page right margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
-// bottom - Set the output page bottom margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
-// left - Set the output page left margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// top - Set the output page top margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// right - Set the output page right margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// bottom - Set the output page bottom margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// left - Set the output page left margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *HtmlToPdfClient) SetPageMargins(top string, right string, bottom string, left string) *HtmlToPdfClient {
     client.SetMarginTop(top)
     client.SetMarginRight(right)
@@ -685,7 +685,7 @@ func (client *HtmlToPdfClient) SetPageNumberingOffset(offset int) *HtmlToPdfClie
 
 // Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area.
 //
-// x - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt". It may contain a negative value.
+// x - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
 func (client *HtmlToPdfClient) SetContentAreaX(x string) *HtmlToPdfClient {
     client.fields["content_area_x"] = x
     return client
@@ -693,7 +693,7 @@ func (client *HtmlToPdfClient) SetContentAreaX(x string) *HtmlToPdfClient {
 
 // Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area.
 //
-// y - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt". It may contain a negative value.
+// y - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
 func (client *HtmlToPdfClient) SetContentAreaY(y string) *HtmlToPdfClient {
     client.fields["content_area_y"] = y
     return client
@@ -701,7 +701,7 @@ func (client *HtmlToPdfClient) SetContentAreaY(y string) *HtmlToPdfClient {
 
 // Set the width of the content area. It should be at least 1 inch.
 //
-// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *HtmlToPdfClient) SetContentAreaWidth(width string) *HtmlToPdfClient {
     client.fields["content_area_width"] = width
     return client
@@ -709,7 +709,7 @@ func (client *HtmlToPdfClient) SetContentAreaWidth(width string) *HtmlToPdfClien
 
 // Set the height of the content area. It should be at least 1 inch.
 //
-// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *HtmlToPdfClient) SetContentAreaHeight(height string) *HtmlToPdfClient {
     client.fields["content_area_height"] = height
     return client
@@ -717,10 +717,10 @@ func (client *HtmlToPdfClient) SetContentAreaHeight(height string) *HtmlToPdfCli
 
 // Set the content area position and size. The content area enables to specify a web page area to be converted.
 //
-// x - Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt". It may contain a negative value.
-// y - Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt". It may contain a negative value.
-// width - Set the width of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
-// height - Set the height of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// x - Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
+// y - Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
+// width - Set the width of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// height - Set the height of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *HtmlToPdfClient) SetContentArea(x string, y string, width string, height string) *HtmlToPdfClient {
     client.SetContentAreaX(x)
     client.SetContentAreaY(y)
@@ -755,7 +755,7 @@ func (client *HtmlToPdfClient) SetHeaderHtml(html string) *HtmlToPdfClient {
 
 // Set the header height.
 //
-// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *HtmlToPdfClient) SetHeaderHeight(height string) *HtmlToPdfClient {
     client.fields["header_height"] = height
     return client
@@ -787,7 +787,7 @@ func (client *HtmlToPdfClient) SetFooterHtml(html string) *HtmlToPdfClient {
 
 // Set the footer height.
 //
-// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *HtmlToPdfClient) SetFooterHeight(height string) *HtmlToPdfClient {
     client.fields["footer_height"] = height
     return client
@@ -2560,6 +2560,60 @@ func (client *ImageToImageClient) SetRotate(rotate string) *ImageToImageClient {
     return client
 }
 
+// Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area.
+//
+// x - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+func (client *ImageToImageClient) SetCropAreaX(x string) *ImageToImageClient {
+    client.fields["crop_area_x"] = x
+    return client
+}
+
+// Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area.
+//
+// y - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+func (client *ImageToImageClient) SetCropAreaY(y string) *ImageToImageClient {
+    client.fields["crop_area_y"] = y
+    return client
+}
+
+// Set the width of the content area. It should be at least 1 inch.
+//
+// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+func (client *ImageToImageClient) SetCropAreaWidth(width string) *ImageToImageClient {
+    client.fields["crop_area_width"] = width
+    return client
+}
+
+// Set the height of the content area. It should be at least 1 inch.
+//
+// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+func (client *ImageToImageClient) SetCropAreaHeight(height string) *ImageToImageClient {
+    client.fields["crop_area_height"] = height
+    return client
+}
+
+// Set the content area position and size. The content area enables to specify the part to be converted.
+//
+// x - Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// y - Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// width - Set the width of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// height - Set the height of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+func (client *ImageToImageClient) SetCropArea(x string, y string, width string, height string) *ImageToImageClient {
+    client.SetCropAreaX(x)
+    client.SetCropAreaY(y)
+    client.SetCropAreaWidth(width)
+    client.SetCropAreaHeight(height)
+    return client
+}
+
+// Remove borders of an image which does not change in color.
+//
+// value - Set to true to remove borders.
+func (client *ImageToImageClient) SetRemoveBorders(value bool) *ImageToImageClient {
+    client.fields["remove_borders"] = strconv.FormatBool(value)
+    return client
+}
+
 // Set the output canvas size.
 //
 // size - Allowed values are A0, A1, A2, A3, A4, A5, A6, Letter.
@@ -2570,7 +2624,7 @@ func (client *ImageToImageClient) SetCanvasSize(size string) *ImageToImageClient
 
 // Set the output canvas width.
 //
-// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToImageClient) SetCanvasWidth(width string) *ImageToImageClient {
     client.fields["canvas_width"] = width
     return client
@@ -2578,7 +2632,7 @@ func (client *ImageToImageClient) SetCanvasWidth(width string) *ImageToImageClie
 
 // Set the output canvas height.
 //
-// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToImageClient) SetCanvasHeight(height string) *ImageToImageClient {
     client.fields["canvas_height"] = height
     return client
@@ -2586,8 +2640,8 @@ func (client *ImageToImageClient) SetCanvasHeight(height string) *ImageToImageCl
 
 // Set the output canvas dimensions. If no canvas size is specified, margins are applied as a border around the image.
 //
-// width - Set the output canvas width. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
-// height - Set the output canvas height. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// width - Set the output canvas width. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// height - Set the output canvas height. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToImageClient) SetCanvasDimensions(width string, height string) *ImageToImageClient {
     client.SetCanvasWidth(width)
     client.SetCanvasHeight(height)
@@ -2602,7 +2656,7 @@ func (client *ImageToImageClient) SetOrientation(orientation string) *ImageToIma
     return client
 }
 
-// Set the image position on the page.
+// Set the image position on the canvas.
 //
 // position - Allowed values are center, top, bottom, left, right, top-left, top-right, bottom-left, bottom-right.
 func (client *ImageToImageClient) SetPosition(position string) *ImageToImageClient {
@@ -2610,7 +2664,7 @@ func (client *ImageToImageClient) SetPosition(position string) *ImageToImageClie
     return client
 }
 
-// Set the mode to print the image on the content area of the page.
+// Set the mode to print the image on the canvas.
 //
 // mode - Allowed values are default, fit, stretch.
 func (client *ImageToImageClient) SetPrintCanvasMode(mode string) *ImageToImageClient {
@@ -2620,7 +2674,7 @@ func (client *ImageToImageClient) SetPrintCanvasMode(mode string) *ImageToImageC
 
 // Set the output canvas top margin.
 //
-// top - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// top - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToImageClient) SetMarginTop(top string) *ImageToImageClient {
     client.fields["margin_top"] = top
     return client
@@ -2628,7 +2682,7 @@ func (client *ImageToImageClient) SetMarginTop(top string) *ImageToImageClient {
 
 // Set the output canvas right margin.
 //
-// right - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// right - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToImageClient) SetMarginRight(right string) *ImageToImageClient {
     client.fields["margin_right"] = right
     return client
@@ -2636,7 +2690,7 @@ func (client *ImageToImageClient) SetMarginRight(right string) *ImageToImageClie
 
 // Set the output canvas bottom margin.
 //
-// bottom - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// bottom - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToImageClient) SetMarginBottom(bottom string) *ImageToImageClient {
     client.fields["margin_bottom"] = bottom
     return client
@@ -2644,7 +2698,7 @@ func (client *ImageToImageClient) SetMarginBottom(bottom string) *ImageToImageCl
 
 // Set the output canvas left margin.
 //
-// left - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// left - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToImageClient) SetMarginLeft(left string) *ImageToImageClient {
     client.fields["margin_left"] = left
     return client
@@ -2652,10 +2706,10 @@ func (client *ImageToImageClient) SetMarginLeft(left string) *ImageToImageClient
 
 // Set the output canvas margins.
 //
-// top - Set the output canvas top margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
-// right - Set the output canvas right margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
-// bottom - Set the output canvas bottom margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
-// left - Set the output canvas left margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// top - Set the output canvas top margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// right - Set the output canvas right margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// bottom - Set the output canvas bottom margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// left - Set the output canvas left margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToImageClient) SetMargins(top string, right string, bottom string, left string) *ImageToImageClient {
     client.SetMarginTop(top)
     client.SetMarginRight(right)
@@ -3463,6 +3517,60 @@ func (client *ImageToPdfClient) SetRotate(rotate string) *ImageToPdfClient {
     return client
 }
 
+// Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area.
+//
+// x - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+func (client *ImageToPdfClient) SetCropAreaX(x string) *ImageToPdfClient {
+    client.fields["crop_area_x"] = x
+    return client
+}
+
+// Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area.
+//
+// y - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+func (client *ImageToPdfClient) SetCropAreaY(y string) *ImageToPdfClient {
+    client.fields["crop_area_y"] = y
+    return client
+}
+
+// Set the width of the content area. It should be at least 1 inch.
+//
+// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+func (client *ImageToPdfClient) SetCropAreaWidth(width string) *ImageToPdfClient {
+    client.fields["crop_area_width"] = width
+    return client
+}
+
+// Set the height of the content area. It should be at least 1 inch.
+//
+// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+func (client *ImageToPdfClient) SetCropAreaHeight(height string) *ImageToPdfClient {
+    client.fields["crop_area_height"] = height
+    return client
+}
+
+// Set the content area position and size. The content area enables to specify the part to be converted.
+//
+// x - Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// y - Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// width - Set the width of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// height - Set the height of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+func (client *ImageToPdfClient) SetCropArea(x string, y string, width string, height string) *ImageToPdfClient {
+    client.SetCropAreaX(x)
+    client.SetCropAreaY(y)
+    client.SetCropAreaWidth(width)
+    client.SetCropAreaHeight(height)
+    return client
+}
+
+// Remove borders of an image which does not change in color.
+//
+// value - Set to true to remove borders.
+func (client *ImageToPdfClient) SetRemoveBorders(value bool) *ImageToPdfClient {
+    client.fields["remove_borders"] = strconv.FormatBool(value)
+    return client
+}
+
 // Set the output page size.
 //
 // size - Allowed values are A0, A1, A2, A3, A4, A5, A6, Letter.
@@ -3473,7 +3581,7 @@ func (client *ImageToPdfClient) SetPageSize(size string) *ImageToPdfClient {
 
 // Set the output page width.
 //
-// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToPdfClient) SetPageWidth(width string) *ImageToPdfClient {
     client.fields["page_width"] = width
     return client
@@ -3481,7 +3589,7 @@ func (client *ImageToPdfClient) SetPageWidth(width string) *ImageToPdfClient {
 
 // Set the output page height.
 //
-// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToPdfClient) SetPageHeight(height string) *ImageToPdfClient {
     client.fields["page_height"] = height
     return client
@@ -3489,8 +3597,8 @@ func (client *ImageToPdfClient) SetPageHeight(height string) *ImageToPdfClient {
 
 // Set the output page dimensions. If no page size is specified, margins are applied as a border around the image.
 //
-// width - Set the output page width. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
-// height - Set the output page height. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// width - Set the output page width. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// height - Set the output page height. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToPdfClient) SetPageDimensions(width string, height string) *ImageToPdfClient {
     client.SetPageWidth(width)
     client.SetPageHeight(height)
@@ -3523,7 +3631,7 @@ func (client *ImageToPdfClient) SetPrintPageMode(mode string) *ImageToPdfClient 
 
 // Set the output page top margin.
 //
-// top - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// top - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToPdfClient) SetMarginTop(top string) *ImageToPdfClient {
     client.fields["margin_top"] = top
     return client
@@ -3531,7 +3639,7 @@ func (client *ImageToPdfClient) SetMarginTop(top string) *ImageToPdfClient {
 
 // Set the output page right margin.
 //
-// right - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// right - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToPdfClient) SetMarginRight(right string) *ImageToPdfClient {
     client.fields["margin_right"] = right
     return client
@@ -3539,7 +3647,7 @@ func (client *ImageToPdfClient) SetMarginRight(right string) *ImageToPdfClient {
 
 // Set the output page bottom margin.
 //
-// bottom - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// bottom - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToPdfClient) SetMarginBottom(bottom string) *ImageToPdfClient {
     client.fields["margin_bottom"] = bottom
     return client
@@ -3547,7 +3655,7 @@ func (client *ImageToPdfClient) SetMarginBottom(bottom string) *ImageToPdfClient
 
 // Set the output page left margin.
 //
-// left - The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// left - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToPdfClient) SetMarginLeft(left string) *ImageToPdfClient {
     client.fields["margin_left"] = left
     return client
@@ -3555,10 +3663,10 @@ func (client *ImageToPdfClient) SetMarginLeft(left string) *ImageToPdfClient {
 
 // Set the output page margins.
 //
-// top - Set the output page top margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
-// right - Set the output page right margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
-// bottom - Set the output page bottom margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
-// left - Set the output page left margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", or points "pt".
+// top - Set the output page top margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// right - Set the output page right margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// bottom - Set the output page bottom margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// left - Set the output page left margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 func (client *ImageToPdfClient) SetPageMargins(top string, right string, bottom string, left string) *ImageToPdfClient {
     client.SetMarginTop(top)
     client.SetMarginRight(right)
