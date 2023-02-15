@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.12.0"
+const CLIENT_VERSION = "5.12.1"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.12.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.12.1 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -319,7 +319,7 @@ func (helper* connectionHelper) post(fields, files map[string]string, rawData ma
         helper.totalPageCount = getIntHeader(response, "X-Pdfcrowd-Total-Pages", -1)
         helper.outputSize = getIntHeader(response, "X-Pdfcrowd-Output-Size", -1)
 
-        if (response.StatusCode == 502 || len(os.Getenv("PDFCROWD_UNIT_TEST_MODE")) > 0) && helper.retryCount > helper.retry {
+        if (response.StatusCode == 502 || response.StatusCode == 503) && helper.retryCount > helper.retry {
             helper.retry++
             time.Sleep(time.Duration(helper.retry * 100) * time.Millisecond)
         } else {
@@ -1645,7 +1645,7 @@ func (client *HtmlToPdfClient) SetProxy(host string, port int, userName string, 
     return client
 }
 
-// Specifies the number of automatic retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
+// Specifies the number of automatic retries when the 502 or 503 HTTP status code is received. The status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
 // count - Number of retries.
 func (client *HtmlToPdfClient) SetRetryCount(count int) *HtmlToPdfClient {
@@ -2318,7 +2318,7 @@ func (client *HtmlToImageClient) SetProxy(host string, port int, userName string
     return client
 }
 
-// Specifies the number of automatic retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
+// Specifies the number of automatic retries when the 502 or 503 HTTP status code is received. The status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
 // count - Number of retries.
 func (client *HtmlToImageClient) SetRetryCount(count int) *HtmlToImageClient {
@@ -2835,7 +2835,7 @@ func (client *ImageToImageClient) SetProxy(host string, port int, userName strin
     return client
 }
 
-// Specifies the number of automatic retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
+// Specifies the number of automatic retries when the 502 or 503 HTTP status code is received. The status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
 // count - Number of retries.
 func (client *ImageToImageClient) SetRetryCount(count int) *ImageToImageClient {
@@ -3283,7 +3283,7 @@ func (client *PdfToPdfClient) SetProxy(host string, port int, userName string, p
     return client
 }
 
-// Specifies the number of automatic retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
+// Specifies the number of automatic retries when the 502 or 503 HTTP status code is received. The status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
 // count - Number of retries.
 func (client *PdfToPdfClient) SetRetryCount(count int) *PdfToPdfClient {
@@ -4032,7 +4032,7 @@ func (client *ImageToPdfClient) SetProxy(host string, port int, userName string,
     return client
 }
 
-// Specifies the number of automatic retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
+// Specifies the number of automatic retries when the 502 or 503 HTTP status code is received. The status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
 // count - Number of retries.
 func (client *ImageToPdfClient) SetRetryCount(count int) *ImageToPdfClient {
@@ -4457,7 +4457,7 @@ func (client *PdfToHtmlClient) SetProxy(host string, port int, userName string, 
     return client
 }
 
-// Specifies the number of automatic retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
+// Specifies the number of automatic retries when the 502 or 503 HTTP status code is received. The status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
 // count - Number of retries.
 func (client *PdfToHtmlClient) SetRetryCount(count int) *PdfToHtmlClient {
@@ -4903,7 +4903,7 @@ func (client *PdfToTextClient) SetProxy(host string, port int, userName string, 
     return client
 }
 
-// Specifies the number of automatic retries when the 502 HTTP status code is received. The 502 status code indicates a temporary network issue. This feature can be disabled by setting to 0.
+// Specifies the number of automatic retries when the 502 or 503 HTTP status code is received. The status code indicates a temporary network issue. This feature can be disabled by setting to 0.
 //
 // count - Number of retries.
 func (client *PdfToTextClient) SetRetryCount(count int) *PdfToTextClient {
