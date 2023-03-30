@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.12.1"
+const CLIENT_VERSION = "5.13.0"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.12.1 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.13.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -734,6 +734,14 @@ func (client *HtmlToPdfClient) SetContentArea(x string, y string, width string, 
 // mode - The page rule mode. Allowed values are default, mode1, mode2.
 func (client *HtmlToPdfClient) SetCssPageRuleMode(mode string) *HtmlToPdfClient {
     client.fields["css_page_rule_mode"] = mode
+    return client
+}
+
+// Specifies which blank pages to exclude from the output document.
+//
+// pages - The empty page behavior. Allowed values are trailing, none.
+func (client *HtmlToPdfClient) SetRemoveBlankPages(pages string) *HtmlToPdfClient {
+    client.fields["remove_blank_pages"] = pages
     return client
 }
 
