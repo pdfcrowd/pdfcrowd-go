@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.13.0"
+const CLIENT_VERSION = "5.14.0"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.13.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.14.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -1056,6 +1056,14 @@ func (client *HtmlToPdfClient) SetFailOnAnyUrlError(failOnError bool) *HtmlToPdf
 // value - Set to true to disable sending X-Pdfcrowd HTTP header.
 func (client *HtmlToPdfClient) SetNoXpdfcrowdHeader(value bool) *HtmlToPdfClient {
     client.fields["no_xpdfcrowd_header"] = strconv.FormatBool(value)
+    return client
+}
+
+// Apply custom CSS to the input HTML document. It allows you to modify the visual appearance and layout of your HTML content dynamically. Tip: Using !important in custom CSS provides a way to prioritize and override conflicting styles.
+//
+// css - A string containing valid CSS. The string must not be empty.
+func (client *HtmlToPdfClient) SetCustomCss(css string) *HtmlToPdfClient {
+    client.fields["custom_css"] = css
     return client
 }
 
@@ -2038,6 +2046,14 @@ func (client *HtmlToImageClient) SetFailOnAnyUrlError(failOnError bool) *HtmlToI
 // value - Set to true to disable sending X-Pdfcrowd HTTP header.
 func (client *HtmlToImageClient) SetNoXpdfcrowdHeader(value bool) *HtmlToImageClient {
     client.fields["no_xpdfcrowd_header"] = strconv.FormatBool(value)
+    return client
+}
+
+// Apply custom CSS to the input HTML document. It allows you to modify the visual appearance and layout of your HTML content dynamically. Tip: Using !important in custom CSS provides a way to prioritize and override conflicting styles.
+//
+// css - A string containing valid CSS. The string must not be empty.
+func (client *HtmlToImageClient) SetCustomCss(css string) *HtmlToImageClient {
+    client.fields["custom_css"] = css
     return client
 }
 
