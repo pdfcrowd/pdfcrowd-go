@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.14.0"
+const CLIENT_VERSION = "5.15.0"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.14.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.15.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -1625,6 +1625,14 @@ func (client *HtmlToPdfClient) SetHeaderFooterCssAnnotation(value bool) *HtmlToP
     return client
 }
 
+// Set the maximum time to load the page and its resources. After this time, all requests will be considered successful. This can be useful to ensure that the conversion does not timeout. Use this method if there is no other way to fix page loading.
+//
+// maxTime - The number of seconds to wait. The value must be in the range 10-30.
+func (client *HtmlToPdfClient) SetMaxLoadingTime(maxTime int) *HtmlToPdfClient {
+    client.fields["max_loading_time"] = strconv.Itoa(maxTime)
+    return client
+}
+
 // Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
 //
 // version - The version identifier. Allowed values are latest, 20.10, 18.10.
@@ -1903,6 +1911,38 @@ func (client *HtmlToImageClient) SetZipMainFilename(filename string) *HtmlToImag
     return client
 }
 
+// Set the output image width in pixels.
+//
+// width - The value must be in the range 96-65000.
+func (client *HtmlToImageClient) SetScreenshotWidth(width int) *HtmlToImageClient {
+    client.fields["screenshot_width"] = strconv.Itoa(width)
+    return client
+}
+
+// Set the output image height in pixels. If it is not specified, actual document height is used.
+//
+// height - Must be a positive integer number.
+func (client *HtmlToImageClient) SetScreenshotHeight(height int) *HtmlToImageClient {
+    client.fields["screenshot_height"] = strconv.Itoa(height)
+    return client
+}
+
+// Set the scaling factor (zoom) for the output image.
+//
+// factor - The percentage value. Must be a positive integer number.
+func (client *HtmlToImageClient) SetScaleFactor(factor int) *HtmlToImageClient {
+    client.fields["scale_factor"] = strconv.Itoa(factor)
+    return client
+}
+
+// The output image background color.
+//
+// color - The value must be in RRGGBB or RRGGBBAA hexadecimal format.
+func (client *HtmlToImageClient) SetBackgroundColor(color string) *HtmlToImageClient {
+    client.fields["background_color"] = color
+    return client
+}
+
 // Use the print version of the page if available (@media print).
 //
 // value - Set to true to use the print version of the page.
@@ -2129,38 +2169,6 @@ func (client *HtmlToImageClient) SetReadabilityEnhancements(enhancements string)
     return client
 }
 
-// Set the output image width in pixels.
-//
-// width - The value must be in the range 96-65000.
-func (client *HtmlToImageClient) SetScreenshotWidth(width int) *HtmlToImageClient {
-    client.fields["screenshot_width"] = strconv.Itoa(width)
-    return client
-}
-
-// Set the output image height in pixels. If it is not specified, actual document height is used.
-//
-// height - Must be a positive integer number.
-func (client *HtmlToImageClient) SetScreenshotHeight(height int) *HtmlToImageClient {
-    client.fields["screenshot_height"] = strconv.Itoa(height)
-    return client
-}
-
-// Set the scaling factor (zoom) for the output image.
-//
-// factor - The percentage value. Must be a positive integer number.
-func (client *HtmlToImageClient) SetScaleFactor(factor int) *HtmlToImageClient {
-    client.fields["scale_factor"] = strconv.Itoa(factor)
-    return client
-}
-
-// The output image background color.
-//
-// color - The value must be in RRGGBB or RRGGBBAA hexadecimal format.
-func (client *HtmlToImageClient) SetBackgroundColor(color string) *HtmlToImageClient {
-    client.fields["background_color"] = color
-    return client
-}
-
 // Set the input data for template rendering. The data format can be JSON, XML, YAML or CSV.
 //
 // dataString - The input data string.
@@ -2303,6 +2311,14 @@ func (client *HtmlToImageClient) SetClientCertificate(certificate string) *HtmlT
 // password -
 func (client *HtmlToImageClient) SetClientCertificatePassword(password string) *HtmlToImageClient {
     client.fields["client_certificate_password"] = password
+    return client
+}
+
+// Set the maximum time to load the page and its resources. After this time, all requests will be considered successful. This can be useful to ensure that the conversion does not timeout. Use this method if there is no other way to fix page loading.
+//
+// maxTime - The number of seconds to wait. The value must be in the range 10-30.
+func (client *HtmlToImageClient) SetMaxLoadingTime(maxTime int) *HtmlToImageClient {
+    client.fields["max_loading_time"] = strconv.Itoa(maxTime)
     return client
 }
 
