@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.15.0"
+const CLIENT_VERSION = "5.16.0"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.15.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.16.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -4327,6 +4327,14 @@ func (client *PdfToHtmlClient) SetScaleFactor(factor int) *PdfToHtmlClient {
 // pages - A comma separated list of page numbers or ranges.
 func (client *PdfToHtmlClient) SetPrintPageRange(pages string) *PdfToHtmlClient {
     client.fields["print_page_range"] = pages
+    return client
+}
+
+// Set the output graphics DPI.
+//
+// dpi - The DPI value.
+func (client *PdfToHtmlClient) SetDpi(dpi int) *PdfToHtmlClient {
+    client.fields["dpi"] = strconv.Itoa(dpi)
     return client
 }
 
