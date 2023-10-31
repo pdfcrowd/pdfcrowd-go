@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.16.0"
+const CLIENT_VERSION = "5.17.0"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.16.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.17.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -4340,9 +4340,17 @@ func (client *PdfToHtmlClient) SetDpi(dpi int) *PdfToHtmlClient {
 
 // Specifies where the images are stored.
 //
-// mode - The image storage mode. Allowed values are embed, separate.
+// mode - The image storage mode. Allowed values are embed, separate, none.
 func (client *PdfToHtmlClient) SetImageMode(mode string) *PdfToHtmlClient {
     client.fields["image_mode"] = mode
+    return client
+}
+
+// Specifies a format for the output images.
+//
+// imageFormat - The image format. Allowed values are png, jpg, svg.
+func (client *PdfToHtmlClient) SetImageFormat(imageFormat string) *PdfToHtmlClient {
+    client.fields["image_format"] = imageFormat
     return client
 }
 
