@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.17.0"
+const CLIENT_VERSION = "5.18.0"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.17.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.18.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -4346,7 +4346,7 @@ func (client *PdfToHtmlClient) SetImageMode(mode string) *PdfToHtmlClient {
     return client
 }
 
-// Specifies a format for the output images.
+// Specifies the format for the output images.
 //
 // imageFormat - The image format. Allowed values are png, jpg, svg.
 func (client *PdfToHtmlClient) SetImageFormat(imageFormat string) *PdfToHtmlClient {
@@ -4367,6 +4367,14 @@ func (client *PdfToHtmlClient) SetCssMode(mode string) *PdfToHtmlClient {
 // mode - The font storage mode. Allowed values are embed, separate.
 func (client *PdfToHtmlClient) SetFontMode(mode string) *PdfToHtmlClient {
     client.fields["font_mode"] = mode
+    return client
+}
+
+// Converts ligatures — two or more letters combined into a single glyph—back into their individual ASCII characters.
+//
+// value - Set to true to split ligatures.
+func (client *PdfToHtmlClient) SetSplitLigatures(value bool) *PdfToHtmlClient {
+    client.fields["split_ligatures"] = strconv.FormatBool(value)
     return client
 }
 
