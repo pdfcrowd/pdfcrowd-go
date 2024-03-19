@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.18.0"
+const CLIENT_VERSION = "5.18.1"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.18.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.18.1 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -4370,7 +4370,7 @@ func (client *PdfToHtmlClient) SetFontMode(mode string) *PdfToHtmlClient {
     return client
 }
 
-// Converts ligatures — two or more letters combined into a single glyph—back into their individual ASCII characters.
+// Converts ligatures, two or more letters combined into a single glyph, back into their individual ASCII characters.
 //
 // value - Set to true to split ligatures.
 func (client *PdfToHtmlClient) SetSplitLigatures(value bool) *PdfToHtmlClient {
