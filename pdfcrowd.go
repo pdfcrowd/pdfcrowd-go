@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.18.1"
+const CLIENT_VERSION = "5.19.0"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.18.1 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.19.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -1165,7 +1165,7 @@ func (client *HtmlToPdfClient) SetViewport(width int, height int) *HtmlToPdfClie
     return client
 }
 
-// Set the rendering mode.
+// Set the rendering mode of the page, allowing control over how content is displayed.
 //
 // mode - The rendering mode. Allowed values are default, viewport.
 func (client *HtmlToPdfClient) SetRenderingMode(mode string) *HtmlToPdfClient {
@@ -1635,7 +1635,7 @@ func (client *HtmlToPdfClient) SetMaxLoadingTime(maxTime int) *HtmlToPdfClient {
 
 // Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
 //
-// version - The version identifier. Allowed values are latest, 20.10, 18.10.
+// version - The version identifier. Allowed values are latest, 24.04, 20.10, 18.10.
 func (client *HtmlToPdfClient) SetConverterVersion(version string) *HtmlToPdfClient {
     client.helper.setConverterVersion(version)
     return client
@@ -2324,7 +2324,7 @@ func (client *HtmlToImageClient) SetMaxLoadingTime(maxTime int) *HtmlToImageClie
 
 // Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
 //
-// version - The version identifier. Allowed values are latest, 20.10, 18.10.
+// version - The version identifier. Allowed values are latest, 24.04, 20.10, 18.10.
 func (client *HtmlToImageClient) SetConverterVersion(version string) *HtmlToImageClient {
     client.helper.setConverterVersion(version)
     return client
@@ -2841,7 +2841,7 @@ func (client *ImageToImageClient) SetHttpsProxy(proxy string) *ImageToImageClien
 
 // Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
 //
-// version - The version identifier. Allowed values are latest, 20.10, 18.10.
+// version - The version identifier. Allowed values are latest, 24.04, 20.10, 18.10.
 func (client *ImageToImageClient) SetConverterVersion(version string) *ImageToImageClient {
     client.helper.setConverterVersion(version)
     return client
@@ -3289,7 +3289,7 @@ func (client *PdfToPdfClient) SetTag(tag string) *PdfToPdfClient {
 
 // Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
 //
-// version - The version identifier. Allowed values are latest, 20.10, 18.10.
+// version - The version identifier. Allowed values are latest, 24.04, 20.10, 18.10.
 func (client *PdfToPdfClient) SetConverterVersion(version string) *PdfToPdfClient {
     client.helper.setConverterVersion(version)
     return client
@@ -4038,7 +4038,7 @@ func (client *ImageToPdfClient) SetHttpsProxy(proxy string) *ImageToPdfClient {
 
 // Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
 //
-// version - The version identifier. Allowed values are latest, 20.10, 18.10.
+// version - The version identifier. Allowed values are latest, 24.04, 20.10, 18.10.
 func (client *ImageToPdfClient) SetConverterVersion(version string) *ImageToPdfClient {
     client.helper.setConverterVersion(version)
     return client
