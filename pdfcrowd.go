@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.19.0"
+const CLIENT_VERSION = "5.20.0"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.19.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/5.20.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "20.10"
     return helper
@@ -4971,6 +4971,429 @@ func (client *PdfToTextClient) SetProxy(host string, port int, userName string, 
 //
 // count - Number of retries.
 func (client *PdfToTextClient) SetRetryCount(count int) *PdfToTextClient {
+    client.helper.setRetryCount(count)
+    return client
+}
+
+// Conversion from PDF to image.
+type PdfToImageClient struct {
+    helper connectionHelper
+    fields map[string]string
+    files map[string]string
+    rawData map[string][]byte
+    fileId int
+}
+
+// Constructor for the Pdfcrowd API client.
+//
+// userName - Your username at Pdfcrowd.
+// apiKey - Your API key.
+func NewPdfToImageClient(userName string, apiKey string) PdfToImageClient {
+    helper := newConnectionHelper(userName, apiKey)
+    fields := map[string]string{
+        "input_format": "pdf",
+        "output_format": "png",
+    }
+    return PdfToImageClient{ helper, fields, make(map[string]string), make(map[string][]byte), 1}
+}
+
+// Convert an image.
+//
+// url - The address of the image to convert. The supported protocols are http:// and https://.
+func (client *PdfToImageClient) ConvertUrl(url string) ([]byte, error) {
+    re, _ := regexp.Compile("(?i)^https?://.*$")
+    if !re.MatchString(url) {
+        return nil, Error{createInvalidValueMessage(url, "ConvertUrl", "pdf-to-image", "The supported protocols are http:// and https://.", "convert_url"), 470}
+    }
+    
+    client.fields["url"] = url
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert an image and write the result to an output stream.
+//
+// url - The address of the image to convert. The supported protocols are http:// and https://.
+// outStream - The output stream that will contain the conversion output.
+func (client *PdfToImageClient) ConvertUrlToStream(url string, outStream io.Writer) error {
+    re, _ := regexp.Compile("(?i)^https?://.*$")
+    if !re.MatchString(url) {
+        return Error{createInvalidValueMessage(url, "ConvertUrlToStream::url", "pdf-to-image", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
+    }
+    
+    client.fields["url"] = url
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert an image and write the result to a local file.
+//
+// url - The address of the image to convert. The supported protocols are http:// and https://.
+// filePath - The output file path. The string must not be empty.
+func (client *PdfToImageClient) ConvertUrlToFile(url string, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "pdf-to-image", "The string must not be empty.", "convert_url_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertUrlToStream(url, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
+// Convert a local file.
+//
+// file - The path to a local file to convert. The file must exist and not be empty.
+func (client *PdfToImageClient) ConvertFile(file string) ([]byte, error) {
+    if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
+        return nil, Error{createInvalidValueMessage(file, "ConvertFile", "pdf-to-image", "The file must exist and not be empty.", "convert_file"), 470}
+    }
+    
+    client.files["file"] = file
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert a local file and write the result to an output stream.
+//
+// file - The path to a local file to convert. The file must exist and not be empty.
+// outStream - The output stream that will contain the conversion output.
+func (client *PdfToImageClient) ConvertFileToStream(file string, outStream io.Writer) error {
+    if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
+        return Error{createInvalidValueMessage(file, "ConvertFileToStream::file", "pdf-to-image", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
+    }
+    
+    client.files["file"] = file
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert a local file and write the result to a local file.
+//
+// file - The path to a local file to convert. The file must exist and not be empty.
+// filePath - The output file path. The string must not be empty.
+func (client *PdfToImageClient) ConvertFileToFile(file string, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "pdf-to-image", "The string must not be empty.", "convert_file_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertFileToStream(file, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
+// Convert raw data.
+//
+// data - The raw content to be converted.
+func (client *PdfToImageClient) ConvertRawData(data []byte) ([]byte, error) {
+    client.rawData["file"] = data
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert raw data and write the result to an output stream.
+//
+// data - The raw content to be converted.
+// outStream - The output stream that will contain the conversion output.
+func (client *PdfToImageClient) ConvertRawDataToStream(data []byte, outStream io.Writer) error {
+    client.rawData["file"] = data
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert raw data to a file.
+//
+// data - The raw content to be converted.
+// filePath - The output file path. The string must not be empty.
+func (client *PdfToImageClient) ConvertRawDataToFile(data []byte, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "pdf-to-image", "The string must not be empty.", "convert_raw_data_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertRawDataToStream(data, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
+// Convert the contents of an input stream.
+//
+// inStream - The input stream with source data.
+func (client *PdfToImageClient) ConvertStream(inStream io.Reader) ([]byte, error) {
+    data, errRead := ioutil.ReadAll(inStream)
+    if errRead != nil {
+        return nil, errRead
+    }
+
+    client.rawData["stream"] = data
+    return client.helper.post(client.fields, client.files, client.rawData, nil)
+}
+
+// Convert the contents of an input stream and write the result to an output stream.
+//
+// inStream - The input stream with source data.
+// outStream - The output stream that will contain the conversion output.
+func (client *PdfToImageClient) ConvertStreamToStream(inStream io.Reader, outStream io.Writer) error {
+    data, errRead := ioutil.ReadAll(inStream)
+    if errRead != nil {
+        return errRead
+    }
+
+    client.rawData["stream"] = data
+    _, err := client.helper.post(client.fields, client.files, client.rawData, outStream)
+    return err
+}
+
+// Convert the contents of an input stream and write the result to a local file.
+//
+// inStream - The input stream with source data.
+// filePath - The output file path. The string must not be empty.
+func (client *PdfToImageClient) ConvertStreamToFile(inStream io.Reader, filePath string) error {
+    if len(filePath) == 0 {
+        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "pdf-to-image", "The string must not be empty.", "convert_stream_to_file"), 470}
+    }
+    
+    outputFile, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    err = client.ConvertStreamToStream(inStream, outputFile)
+    outputFile.Close()
+    if err != nil {
+        os.Remove(filePath)
+        return err
+    }
+    return nil
+}
+
+// The format of the output file.
+//
+// outputFormat - Allowed values are png, jpg, gif, tiff, bmp, ico, ppm, pgm, pbm, pnm, psb, pct, ras, tga, sgi, sun, webp.
+func (client *PdfToImageClient) SetOutputFormat(outputFormat string) *PdfToImageClient {
+    client.fields["output_format"] = outputFormat
+    return client
+}
+
+// Password to open the encrypted PDF file.
+//
+// password - The input PDF password.
+func (client *PdfToImageClient) SetPdfPassword(password string) *PdfToImageClient {
+    client.fields["pdf_password"] = password
+    return client
+}
+
+// Set the page range to print.
+//
+// pages - A comma separated list of page numbers or ranges.
+func (client *PdfToImageClient) SetPrintPageRange(pages string) *PdfToImageClient {
+    client.fields["print_page_range"] = pages
+    return client
+}
+
+// Set the output graphics DPI.
+//
+// dpi - The DPI value.
+func (client *PdfToImageClient) SetDpi(dpi int) *PdfToImageClient {
+    client.fields["dpi"] = strconv.Itoa(dpi)
+    return client
+}
+
+// A helper method to determine if the output file from a conversion process is a zip archive. The conversion output can be either a single image file or a zip file containing one or more image files. This method should be called after the conversion has been successfully completed.
+func (client *PdfToImageClient) IsZippedOutput() bool {
+    return client.fields["force_zip"] == "true" || client.GetPageCount() > 1
+}
+
+// Enforces the zip output format.
+//
+// value - Set to true to get the output as a zip archive.
+func (client *PdfToImageClient) SetForceZip(value bool) *PdfToImageClient {
+    client.fields["force_zip"] = strconv.FormatBool(value)
+    return client
+}
+
+// Use the crop box rather than media box.
+//
+// value - Set to true to use crop box.
+func (client *PdfToImageClient) SetUseCropbox(value bool) *PdfToImageClient {
+    client.fields["use_cropbox"] = strconv.FormatBool(value)
+    return client
+}
+
+// Set the top left X coordinate of the crop area in points.
+//
+// x - Must be a positive integer number or 0.
+func (client *PdfToImageClient) SetCropAreaX(x int) *PdfToImageClient {
+    client.fields["crop_area_x"] = strconv.Itoa(x)
+    return client
+}
+
+// Set the top left Y coordinate of the crop area in points.
+//
+// y - Must be a positive integer number or 0.
+func (client *PdfToImageClient) SetCropAreaY(y int) *PdfToImageClient {
+    client.fields["crop_area_y"] = strconv.Itoa(y)
+    return client
+}
+
+// Set the width of the crop area in points.
+//
+// width - Must be a positive integer number or 0.
+func (client *PdfToImageClient) SetCropAreaWidth(width int) *PdfToImageClient {
+    client.fields["crop_area_width"] = strconv.Itoa(width)
+    return client
+}
+
+// Set the height of the crop area in points.
+//
+// height - Must be a positive integer number or 0.
+func (client *PdfToImageClient) SetCropAreaHeight(height int) *PdfToImageClient {
+    client.fields["crop_area_height"] = strconv.Itoa(height)
+    return client
+}
+
+// Set the crop area. It allows to extract just a part of a PDF page.
+//
+// x - Set the top left X coordinate of the crop area in points. Must be a positive integer number or 0.
+// y - Set the top left Y coordinate of the crop area in points. Must be a positive integer number or 0.
+// width - Set the width of the crop area in points. Must be a positive integer number or 0.
+// height - Set the height of the crop area in points. Must be a positive integer number or 0.
+func (client *PdfToImageClient) SetCropArea(x int, y int, width int, height int) *PdfToImageClient {
+    client.SetCropAreaX(x)
+    client.SetCropAreaY(y)
+    client.SetCropAreaWidth(width)
+    client.SetCropAreaHeight(height)
+    return client
+}
+
+// Generate a grayscale image.
+//
+// value - Set to true to generate a grayscale image.
+func (client *PdfToImageClient) SetUseGrayscale(value bool) *PdfToImageClient {
+    client.fields["use_grayscale"] = strconv.FormatBool(value)
+    return client
+}
+
+// Turn on the debug logging. Details about the conversion are stored in the debug log. The URL of the log can be obtained from the getDebugLogUrl method or available in conversion statistics.
+//
+// value - Set to true to enable the debug logging.
+func (client *PdfToImageClient) SetDebugLog(value bool) *PdfToImageClient {
+    client.fields["debug_log"] = strconv.FormatBool(value)
+    return client
+}
+
+// Get the URL of the debug log for the last conversion.
+func (client *PdfToImageClient) GetDebugLogUrl() string {
+    return client.helper.getDebugLogUrl()
+}
+
+// Get the number of conversion credits available in your account.
+// This method can only be called after a call to one of the convertXtoY methods.
+// The returned value can differ from the actual count if you run parallel conversions.
+// The special value 999999 is returned if the information is not available.
+func (client *PdfToImageClient) GetRemainingCreditCount() int {
+    return client.helper.getRemainingCreditCount()
+}
+
+// Get the number of credits consumed by the last conversion.
+func (client *PdfToImageClient) GetConsumedCreditCount() int {
+    return client.helper.getConsumedCreditCount()
+}
+
+// Get the job id.
+func (client *PdfToImageClient) GetJobId() string {
+    return client.helper.getJobId()
+}
+
+// Get the number of pages in the output document.
+func (client *PdfToImageClient) GetPageCount() int {
+    return client.helper.getPageCount()
+}
+
+// Get the size of the output in bytes.
+func (client *PdfToImageClient) GetOutputSize() int {
+    return client.helper.getOutputSize()
+}
+
+// Get the version details.
+func (client *PdfToImageClient) GetVersion() string {
+    return fmt.Sprintf("client %s, API v2, converter %s", CLIENT_VERSION, client.helper.getConverterVersion())
+}
+
+// Tag the conversion with a custom value. The tag is used in conversion statistics. A value longer than 32 characters is cut off.
+//
+// tag - A string with the custom tag.
+func (client *PdfToImageClient) SetTag(tag string) *PdfToImageClient {
+    client.fields["tag"] = tag
+    return client
+}
+
+// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+//
+// proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *PdfToImageClient) SetHttpProxy(proxy string) *PdfToImageClient {
+    client.fields["http_proxy"] = proxy
+    return client
+}
+
+// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+//
+// proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
+func (client *PdfToImageClient) SetHttpsProxy(proxy string) *PdfToImageClient {
+    client.fields["https_proxy"] = proxy
+    return client
+}
+
+// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
+//
+// value - Set to true to use HTTP.
+func (client *PdfToImageClient) SetUseHttp(value bool) *PdfToImageClient {
+    client.helper.setUseHttp(value)
+    return client
+}
+
+// Set a custom user agent HTTP header. It can be useful if you are behind a proxy or a firewall.
+//
+// agent - The user agent string.
+func (client *PdfToImageClient) SetUserAgent(agent string) *PdfToImageClient {
+    client.helper.setUserAgent(agent)
+    return client
+}
+
+// Specifies an HTTP proxy that the API client library will use to connect to the internet.
+//
+// host - The proxy hostname.
+// port - The proxy port.
+// userName - The username.
+// password - The password.
+func (client *PdfToImageClient) SetProxy(host string, port int, userName string, password string) *PdfToImageClient {
+    client.helper.setProxy(host, port, userName, password)
+    return client
+}
+
+// Specifies the number of automatic retries when the 502 or 503 HTTP status code is received. The status code indicates a temporary network issue. This feature can be disabled by setting to 0.
+//
+// count - Number of retries.
+func (client *PdfToImageClient) SetRetryCount(count int) *PdfToImageClient {
     client.helper.setRetryCount(count)
     return client
 }
