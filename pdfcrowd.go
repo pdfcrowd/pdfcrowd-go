@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "5.20.0"
+const CLIENT_VERSION = "6.0.0"
 
 type Error struct {
     message string
@@ -91,9 +91,9 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/5.20.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/6.0.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
-    helper.converterVersion = "20.10"
+    helper.converterVersion = "24.04"
     return helper
 }
 
@@ -683,6 +683,30 @@ func (client *HtmlToPdfClient) SetPageNumberingOffset(offset int) *HtmlToPdfClie
     return client
 }
 
+// Set the viewport width for formatting the HTML content when generating a PDF. By specifying a viewport width, you can control how the content is rendered, ensuring it mimics the appearance on various devices or matches specific design requirements.
+//
+// width - The width of the viewport. The value must be "balanced", "small", "medium", "large", "extra-large", or a number in the range 96-65000.
+func (client *HtmlToPdfClient) SetContentViewportWidth(width string) *HtmlToPdfClient {
+    client.fields["content_viewport_width"] = width
+    return client
+}
+
+// Set the viewport height for formatting the HTML content when generating a PDF. By specifying a viewport height, you can enforce loading of lazy-loaded images and also affect vertical positioning of absolutely positioned elements within the content.
+//
+// height - The viewport height. The value must be "auto", "large", or a number.
+func (client *HtmlToPdfClient) SetContentViewportHeight(height string) *HtmlToPdfClient {
+    client.fields["content_viewport_height"] = height
+    return client
+}
+
+// Specifies the mode for fitting the HTML content to the print area by upscaling or downscaling it.
+//
+// mode - The fitting mode. Allowed values are auto, smart-scaling, no-scaling, viewport-width, content-width, single-page, single-page-ratio.
+func (client *HtmlToPdfClient) SetContentFitMode(mode string) *HtmlToPdfClient {
+    client.fields["content_fit_mode"] = mode
+    return client
+}
+
 // Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area.
 //
 // x - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
@@ -739,7 +763,7 @@ func (client *HtmlToPdfClient) SetCssPageRuleMode(mode string) *HtmlToPdfClient 
 
 // Specifies which blank pages to exclude from the output document.
 //
-// pages - The empty page behavior. Allowed values are trailing, none.
+// pages - The empty page behavior. Allowed values are trailing, all, none.
 func (client *HtmlToPdfClient) SetRemoveBlankPages(pages string) *HtmlToPdfClient {
     client.fields["remove_blank_pages"] = pages
     return client
@@ -1635,7 +1659,7 @@ func (client *HtmlToPdfClient) SetMaxLoadingTime(maxTime int) *HtmlToPdfClient {
 
 // Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
 //
-// version - The version identifier. Allowed values are latest, 24.04, 20.10, 18.10.
+// version - The version identifier. Allowed values are 24.04, 20.10, 18.10, latest.
 func (client *HtmlToPdfClient) SetConverterVersion(version string) *HtmlToPdfClient {
     client.helper.setConverterVersion(version)
     return client
@@ -2324,7 +2348,7 @@ func (client *HtmlToImageClient) SetMaxLoadingTime(maxTime int) *HtmlToImageClie
 
 // Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
 //
-// version - The version identifier. Allowed values are latest, 24.04, 20.10, 18.10.
+// version - The version identifier. Allowed values are 24.04, 20.10, 18.10, latest.
 func (client *HtmlToImageClient) SetConverterVersion(version string) *HtmlToImageClient {
     client.helper.setConverterVersion(version)
     return client
@@ -2841,7 +2865,7 @@ func (client *ImageToImageClient) SetHttpsProxy(proxy string) *ImageToImageClien
 
 // Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
 //
-// version - The version identifier. Allowed values are latest, 24.04, 20.10, 18.10.
+// version - The version identifier. Allowed values are 24.04, 20.10, 18.10, latest.
 func (client *ImageToImageClient) SetConverterVersion(version string) *ImageToImageClient {
     client.helper.setConverterVersion(version)
     return client
@@ -3289,7 +3313,7 @@ func (client *PdfToPdfClient) SetTag(tag string) *PdfToPdfClient {
 
 // Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
 //
-// version - The version identifier. Allowed values are latest, 24.04, 20.10, 18.10.
+// version - The version identifier. Allowed values are 24.04, 20.10, 18.10, latest.
 func (client *PdfToPdfClient) SetConverterVersion(version string) *PdfToPdfClient {
     client.helper.setConverterVersion(version)
     return client
@@ -4038,7 +4062,7 @@ func (client *ImageToPdfClient) SetHttpsProxy(proxy string) *ImageToPdfClient {
 
 // Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
 //
-// version - The version identifier. Allowed values are latest, 24.04, 20.10, 18.10.
+// version - The version identifier. Allowed values are 24.04, 20.10, 18.10, latest.
 func (client *ImageToPdfClient) SetConverterVersion(version string) *ImageToPdfClient {
     client.helper.setConverterVersion(version)
     return client
