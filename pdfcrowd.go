@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "6.0.0"
+const CLIENT_VERSION = "6.0.1"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/6.0.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/6.0.1 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "24.04"
     return helper
@@ -707,60 +707,6 @@ func (client *HtmlToPdfClient) SetContentFitMode(mode string) *HtmlToPdfClient {
     return client
 }
 
-// Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area.
-//
-// x - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
-func (client *HtmlToPdfClient) SetContentAreaX(x string) *HtmlToPdfClient {
-    client.fields["content_area_x"] = x
-    return client
-}
-
-// Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area.
-//
-// y - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
-func (client *HtmlToPdfClient) SetContentAreaY(y string) *HtmlToPdfClient {
-    client.fields["content_area_y"] = y
-    return client
-}
-
-// Set the width of the content area. It should be at least 1 inch.
-//
-// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-func (client *HtmlToPdfClient) SetContentAreaWidth(width string) *HtmlToPdfClient {
-    client.fields["content_area_width"] = width
-    return client
-}
-
-// Set the height of the content area. It should be at least 1 inch.
-//
-// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-func (client *HtmlToPdfClient) SetContentAreaHeight(height string) *HtmlToPdfClient {
-    client.fields["content_area_height"] = height
-    return client
-}
-
-// Set the content area position and size. The content area enables to specify a web page area to be converted.
-//
-// x - Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
-// y - Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
-// width - Set the width of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// height - Set the height of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-func (client *HtmlToPdfClient) SetContentArea(x string, y string, width string, height string) *HtmlToPdfClient {
-    client.SetContentAreaX(x)
-    client.SetContentAreaY(y)
-    client.SetContentAreaWidth(width)
-    client.SetContentAreaHeight(height)
-    return client
-}
-
-// Specifies behavior in presence of CSS @page rules. It may affect the page size, margins and orientation.
-//
-// mode - The page rule mode. Allowed values are default, mode1, mode2.
-func (client *HtmlToPdfClient) SetCssPageRuleMode(mode string) *HtmlToPdfClient {
-    client.fields["css_page_rule_mode"] = mode
-    return client
-}
-
 // Specifies which blank pages to exclude from the output document.
 //
 // pages - The empty page behavior. Allowed values are trailing, all, none.
@@ -1080,6 +1026,14 @@ func (client *HtmlToPdfClient) SetFailOnAnyUrlError(failOnError bool) *HtmlToPdf
 // value - Set to true to disable sending X-Pdfcrowd HTTP header.
 func (client *HtmlToPdfClient) SetNoXpdfcrowdHeader(value bool) *HtmlToPdfClient {
     client.fields["no_xpdfcrowd_header"] = strconv.FormatBool(value)
+    return client
+}
+
+// Specifies behavior in presence of CSS @page rules. It may affect the page size, margins and orientation.
+//
+// mode - The page rule mode. Allowed values are default, mode1, mode2.
+func (client *HtmlToPdfClient) SetCssPageRuleMode(mode string) *HtmlToPdfClient {
+    client.fields["css_page_rule_mode"] = mode
     return client
 }
 
@@ -1597,6 +1551,52 @@ func (client *HtmlToPdfClient) SetClientCertificatePassword(password string) *Ht
 // dpi - The DPI value. The value must be in the range of 72-600.
 func (client *HtmlToPdfClient) SetLayoutDpi(dpi int) *HtmlToPdfClient {
     client.fields["layout_dpi"] = strconv.Itoa(dpi)
+    return client
+}
+
+// Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area.
+//
+// x - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
+func (client *HtmlToPdfClient) SetContentAreaX(x string) *HtmlToPdfClient {
+    client.fields["content_area_x"] = x
+    return client
+}
+
+// Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area.
+//
+// y - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
+func (client *HtmlToPdfClient) SetContentAreaY(y string) *HtmlToPdfClient {
+    client.fields["content_area_y"] = y
+    return client
+}
+
+// Set the width of the content area. It should be at least 1 inch.
+//
+// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+func (client *HtmlToPdfClient) SetContentAreaWidth(width string) *HtmlToPdfClient {
+    client.fields["content_area_width"] = width
+    return client
+}
+
+// Set the height of the content area. It should be at least 1 inch.
+//
+// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+func (client *HtmlToPdfClient) SetContentAreaHeight(height string) *HtmlToPdfClient {
+    client.fields["content_area_height"] = height
+    return client
+}
+
+// Set the content area position and size. The content area enables to specify a web page area to be converted.
+//
+// x - Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
+// y - Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
+// width - Set the width of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// height - Set the height of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+func (client *HtmlToPdfClient) SetContentArea(x string, y string, width string, height string) *HtmlToPdfClient {
+    client.SetContentAreaX(x)
+    client.SetContentAreaY(y)
+    client.SetContentAreaWidth(width)
+    client.SetContentAreaHeight(height)
     return client
 }
 
