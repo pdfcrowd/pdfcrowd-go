@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "6.0.1"
+const CLIENT_VERSION = "6.1.0"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/6.0.1 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/6.1.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "24.04"
     return helper
@@ -675,14 +675,6 @@ func (client *HtmlToPdfClient) SetPrintPageRange(pages string) *HtmlToPdfClient 
     return client
 }
 
-// Set an offset between physical and logical page numbers.
-//
-// offset - Integer specifying page offset.
-func (client *HtmlToPdfClient) SetPageNumberingOffset(offset int) *HtmlToPdfClient {
-    client.fields["page_numbering_offset"] = strconv.Itoa(offset)
-    return client
-}
-
 // Set the viewport width for formatting the HTML content when generating a PDF. By specifying a viewport width, you can control how the content is rendered, ensuring it mimics the appearance on various devices or matches specific design requirements.
 //
 // width - The width of the viewport. The value must be "balanced", "small", "medium", "large", "extra-large", or a number in the range 96-65000.
@@ -808,6 +800,14 @@ func (client *HtmlToPdfClient) SetExcludeFooterOnPages(pages string) *HtmlToPdfC
 // factor - The percentage value. The value must be in the range 10-500.
 func (client *HtmlToPdfClient) SetHeaderFooterScaleFactor(factor int) *HtmlToPdfClient {
     client.fields["header_footer_scale_factor"] = strconv.Itoa(factor)
+    return client
+}
+
+// Set an offset between physical and logical page numbers.
+//
+// offset - Integer specifying page offset.
+func (client *HtmlToPdfClient) SetPageNumberingOffset(offset int) *HtmlToPdfClient {
+    client.fields["page_numbering_offset"] = strconv.Itoa(offset)
     return client
 }
 
@@ -1654,6 +1654,22 @@ func (client *HtmlToPdfClient) SetHeaderFooterCssAnnotation(value bool) *HtmlToP
 // maxTime - The number of seconds to wait. The value must be in the range 10-30.
 func (client *HtmlToPdfClient) SetMaxLoadingTime(maxTime int) *HtmlToPdfClient {
     client.fields["max_loading_time"] = strconv.Itoa(maxTime)
+    return client
+}
+
+// Allows to configure conversion via JSON. The configuration defines various page settings for individual PDF pages or ranges of pages. It provides flexibility in designing each page of the PDF, giving control over each page's size, header, footer etc. If a page or parameter is not explicitly specified, the system will use the default settings for that page or attribute. If a JSON configuration is provided, the settings in the JSON will take precedence over the global options. The structure of the JSON must be: pageSetup: An array of objects where each object defines the configuration for a specific page or range of pages. The following properties can be set for each page object: pages: A comma-separated list of page numbers or ranges. For example: 1-: from page 1 to the end of the document 2: only the 2nd page 2, 4, 6: pages 2, 4, and 6 2-5: pages 2 through 5 pageSize: The page size (optional). Possible values: A0, A1, A2, A3, A4, A5, A6, Letter. pageWidth: The width of the page (optional). pageHeight: The height of the page (optional). marginLeft: Left margin (optional). marginRight: Right margin (optional). marginTop: Top margin (optional). marginBottom: Bottom margin (optional). displayHeader: Header appearance (optional). Possible values: none: completely excluded space: only the content is excluded, the space is used content: the content is printed (default) displayFooter: Footer appearance (optional). Possible values: none: completely excluded space: only the content is excluded, the space is used content: the content is printed (default) headerHeight: Height of the header (optional). footerHeight: Height of the footer (optional). orientation: Page orientation, such as "portrait" or "landscape" (optional). Dimensions may be empty, 0 or specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+//
+// jsonString - The JSON string.
+func (client *HtmlToPdfClient) SetConversionConfig(jsonString string) *HtmlToPdfClient {
+    client.fields["conversion_config"] = jsonString
+    return client
+}
+
+// Allows to configure the conversion process via JSON file. See details of the JSON string.
+//
+// filepath - The file path to a local file. The file must exist and not be empty.
+func (client *HtmlToPdfClient) SetConversionConfigFile(filepath string) *HtmlToPdfClient {
+    client.files["conversion_config_file"] = filepath
     return client
 }
 
