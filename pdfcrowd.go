@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "6.2.0"
+const CLIENT_VERSION = "6.2.1"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/6.2.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/6.2.1 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "24.04"
     return helper
@@ -677,7 +677,7 @@ func (client *HtmlToPdfClient) SetPrintPageRange(pages string) *HtmlToPdfClient 
 
 // Set the viewport width for formatting the HTML content when generating a PDF. By specifying a viewport width, you can control how the content is rendered, ensuring it mimics the appearance on various devices or matches specific design requirements.
 //
-// width - The width of the viewport. The value must be "balanced", "small", "medium", "large", "extra-large", or a number in the range 96-65000.
+// width - The width of the viewport. The value must be "balanced", "small", "medium", "large", "extra-large", or a number in the range 96-65000px.
 func (client *HtmlToPdfClient) SetContentViewportWidth(width string) *HtmlToPdfClient {
     client.fields["content_viewport_width"] = width
     return client
