@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "6.2.1"
+const CLIENT_VERSION = "6.3.0"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/6.2.1 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/6.3.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "24.04"
     return helper
@@ -4434,6 +4434,14 @@ func (client *PdfToHtmlClient) SetCustomCss(css string) *PdfToHtmlClient {
     return client
 }
 
+// Add a specified prefix to all id and class attributes in the HTML content, creating a namespace for safe integration into another HTML document. This process ensures unique identifiers, preventing conflicts when merging with other HTML.
+//
+// prefix - The prefix to add before each id and class attribute name. Start with a letter or underscore, and use only letters, numbers, hyphens, underscores, or colons.
+func (client *PdfToHtmlClient) SetHtmlNamespace(prefix string) *PdfToHtmlClient {
+    client.fields["html_namespace"] = prefix
+    return client
+}
+
 // A helper method to determine if the output file is a zip archive. The output of the conversion may be either an HTML file or a zip file containing the HTML and its external assets.
 func (client *PdfToHtmlClient) IsZippedOutput() bool {
     return client.fields["image_mode"] == "separate" || client.fields["css_mode"] == "separate" || client.fields["font_mode"] == "separate" || client.fields["force_zip"] == "true"
@@ -4546,6 +4554,14 @@ func (client *PdfToHtmlClient) SetHttpProxy(proxy string) *PdfToHtmlClient {
 // proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
 func (client *PdfToHtmlClient) SetHttpsProxy(proxy string) *PdfToHtmlClient {
     client.fields["https_proxy"] = proxy
+    return client
+}
+
+// Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
+//
+// version - The version identifier. Allowed values are 24.04, 20.10, 18.10, latest.
+func (client *PdfToHtmlClient) SetConverterVersion(version string) *PdfToHtmlClient {
+    client.helper.setConverterVersion(version)
     return client
 }
 
