@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "6.3.0"
+const CLIENT_VERSION = "6.4.0"
 
 type Error struct {
     message string
@@ -91,7 +91,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/6.3.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/6.4.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "24.04"
     return helper
@@ -963,17 +963,13 @@ func (client *HtmlToPdfClient) SetLocale(locale string) *HtmlToPdfClient {
     return client
 }
 
-// Set the HTTP authentication user name.
-//
-// userName - The user name.
+
 func (client *HtmlToPdfClient) SetHttpAuthUserName(userName string) *HtmlToPdfClient {
     client.fields["http_auth_user_name"] = userName
     return client
 }
 
-// Set the HTTP authentication password.
-//
-// password - The password.
+
 func (client *HtmlToPdfClient) SetHttpAuthPassword(password string) *HtmlToPdfClient {
     client.fields["http_auth_password"] = password
     return client
@@ -1657,7 +1653,7 @@ func (client *HtmlToPdfClient) SetMaxLoadingTime(maxTime int) *HtmlToPdfClient {
     return client
 }
 
-// Allows to configure conversion via JSON. The configuration defines various page settings for individual PDF pages or ranges of pages. It provides flexibility in designing each page of the PDF, giving control over each page's size, header, footer etc. If a page or parameter is not explicitly specified, the system will use the default settings for that page or attribute. If a JSON configuration is provided, the settings in the JSON will take precedence over the global options. The structure of the JSON must be: pageSetup: An array of objects where each object defines the configuration for a specific page or range of pages. The following properties can be set for each page object: pages: A comma-separated list of page numbers or ranges. Special strings may be used, such as `odd`, `even` and `last`. For example: 1-: from page 1 to the end of the document 2: only the 2nd page 2,4,6: pages 2, 4, and 6 2-5: pages 2 through 5 odd,2: the 2nd page and all odd pages pageSize: The page size (optional). Possible values: A0, A1, A2, A3, A4, A5, A6, Letter. pageWidth: The width of the page (optional). pageHeight: The height of the page (optional). marginLeft: Left margin (optional). marginRight: Right margin (optional). marginTop: Top margin (optional). marginBottom: Bottom margin (optional). displayHeader: Header appearance (optional). Possible values: none: completely excluded space: only the content is excluded, the space is used content: the content is printed (default) displayFooter: Footer appearance (optional). Possible values: none: completely excluded space: only the content is excluded, the space is used content: the content is printed (default) headerHeight: Height of the header (optional). footerHeight: Height of the footer (optional). orientation: Page orientation, such as "portrait" or "landscape" (optional). Dimensions may be empty, 0 or specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// Allows to configure conversion via JSON. The configuration defines various page settings for individual PDF pages or ranges of pages. It provides flexibility in designing each page of the PDF, giving control over each page's size, header, footer etc. If a page or parameter is not explicitly specified, the system will use the default settings for that page or attribute. If a JSON configuration is provided, the settings in the JSON will take precedence over the global options. The structure of the JSON must be: pageSetup: An array of objects where each object defines the configuration for a specific page or range of pages. The following properties can be set for each page object: pages: A comma-separated list of page numbers or ranges. Special strings may be used, such as `odd`, `even` and `last`. For example: 1-: from page 1 to the end of the document 2: only the 2nd page 2,4,6: pages 2, 4, and 6 2-5: pages 2 through 5 odd,2: the 2nd page and all odd pages pageSize: The page size (optional). Possible values: A0, A1, A2, A3, A4, A5, A6, Letter. pageWidth: The width of the page (optional). pageHeight: The height of the page (optional). marginLeft: Left margin (optional). marginRight: Right margin (optional). marginTop: Top margin (optional). marginBottom: Bottom margin (optional). displayHeader: Header appearance (optional). Possible values: none: completely excluded space: only the content is excluded, the space is used content: the content is printed (default) displayFooter: Footer appearance (optional). Possible values: none: completely excluded space: only the content is excluded, the space is used content: the content is printed (default) headerHeight: Height of the header (optional). footerHeight: Height of the footer (optional). orientation: Page orientation, such as "portrait" or "landscape" (optional). backgroundColor: Page background color in RRGGBB or RRGGBBAA hexadecimal format (optional). Dimensions may be empty, 0 or specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
 //
 // jsonString - The JSON string.
 func (client *HtmlToPdfClient) SetConversionConfig(jsonString string) *HtmlToPdfClient {
@@ -1670,6 +1666,20 @@ func (client *HtmlToPdfClient) SetConversionConfig(jsonString string) *HtmlToPdf
 // filepath - The file path to a local file. The file must exist and not be empty.
 func (client *HtmlToPdfClient) SetConversionConfigFile(filepath string) *HtmlToPdfClient {
     client.files["conversion_config_file"] = filepath
+    return client
+}
+
+
+func (client *HtmlToPdfClient) SetSubprocessReferrer(referrer string) *HtmlToPdfClient {
+    client.fields["subprocess_referrer"] = referrer
+    return client
+}
+
+// Specifies the User-Agent HTTP header that will be used by the converter when a request is made to the converted web page.
+//
+// agent - The user agent.
+func (client *HtmlToPdfClient) SetConverterUserAgent(agent string) *HtmlToPdfClient {
+    client.fields["converter_user_agent"] = agent
     return client
 }
 
@@ -1687,6 +1697,14 @@ func (client *HtmlToPdfClient) SetConverterVersion(version string) *HtmlToPdfCli
 // value - Set to true to use HTTP.
 func (client *HtmlToPdfClient) SetUseHttp(value bool) *HtmlToPdfClient {
     client.helper.setUseHttp(value)
+    return client
+}
+
+// Specifies the User-Agent HTTP header that the client library will use when interacting with the API.
+//
+// agent - The user agent string.
+func (client *HtmlToPdfClient) SetClientUserAgent(agent string) *HtmlToPdfClient {
+    client.helper.setUserAgent(agent)
     return client
 }
 
@@ -2063,17 +2081,13 @@ func (client *HtmlToImageClient) SetLocale(locale string) *HtmlToImageClient {
     return client
 }
 
-// Set the HTTP authentication user name.
-//
-// userName - The user name.
+
 func (client *HtmlToImageClient) SetHttpAuthUserName(userName string) *HtmlToImageClient {
     client.fields["http_auth_user_name"] = userName
     return client
 }
 
-// Set the HTTP authentication password.
-//
-// password - The password.
+
 func (client *HtmlToImageClient) SetHttpAuthPassword(password string) *HtmlToImageClient {
     client.fields["http_auth_password"] = password
     return client
@@ -2362,6 +2376,20 @@ func (client *HtmlToImageClient) SetMaxLoadingTime(maxTime int) *HtmlToImageClie
     return client
 }
 
+
+func (client *HtmlToImageClient) SetSubprocessReferrer(referrer string) *HtmlToImageClient {
+    client.fields["subprocess_referrer"] = referrer
+    return client
+}
+
+// Specifies the User-Agent HTTP header that will be used by the converter when a request is made to the converted web page.
+//
+// agent - The user agent.
+func (client *HtmlToImageClient) SetConverterUserAgent(agent string) *HtmlToImageClient {
+    client.fields["converter_user_agent"] = agent
+    return client
+}
+
 // Set the converter version. Different versions may produce different output. Choose which one provides the best output for your case.
 //
 // version - The version identifier. Allowed values are 24.04, 20.10, 18.10, latest.
@@ -2376,6 +2404,14 @@ func (client *HtmlToImageClient) SetConverterVersion(version string) *HtmlToImag
 // value - Set to true to use HTTP.
 func (client *HtmlToImageClient) SetUseHttp(value bool) *HtmlToImageClient {
     client.helper.setUseHttp(value)
+    return client
+}
+
+// Specifies the User-Agent HTTP header that the client library will use when interacting with the API.
+//
+// agent - The user agent string.
+func (client *HtmlToImageClient) SetClientUserAgent(agent string) *HtmlToImageClient {
+    client.helper.setUserAgent(agent)
     return client
 }
 
@@ -2896,6 +2932,14 @@ func (client *ImageToImageClient) SetUseHttp(value bool) *ImageToImageClient {
     return client
 }
 
+// Specifies the User-Agent HTTP header that the client library will use when interacting with the API.
+//
+// agent - The user agent string.
+func (client *ImageToImageClient) SetClientUserAgent(agent string) *ImageToImageClient {
+    client.helper.setUserAgent(agent)
+    return client
+}
+
 // Set a custom user agent HTTP header. It can be useful if you are behind a proxy or a firewall.
 //
 // agent - The user agent string.
@@ -3341,6 +3385,14 @@ func (client *PdfToPdfClient) SetConverterVersion(version string) *PdfToPdfClien
 // value - Set to true to use HTTP.
 func (client *PdfToPdfClient) SetUseHttp(value bool) *PdfToPdfClient {
     client.helper.setUseHttp(value)
+    return client
+}
+
+// Specifies the User-Agent HTTP header that the client library will use when interacting with the API.
+//
+// agent - The user agent string.
+func (client *PdfToPdfClient) SetClientUserAgent(agent string) *PdfToPdfClient {
+    client.helper.setUserAgent(agent)
     return client
 }
 
@@ -4093,6 +4145,14 @@ func (client *ImageToPdfClient) SetUseHttp(value bool) *ImageToPdfClient {
     return client
 }
 
+// Specifies the User-Agent HTTP header that the client library will use when interacting with the API.
+//
+// agent - The user agent string.
+func (client *ImageToPdfClient) SetClientUserAgent(agent string) *ImageToPdfClient {
+    client.helper.setUserAgent(agent)
+    return client
+}
+
 // Set a custom user agent HTTP header. It can be useful if you are behind a proxy or a firewall.
 //
 // agent - The user agent string.
@@ -4434,7 +4494,7 @@ func (client *PdfToHtmlClient) SetCustomCss(css string) *PdfToHtmlClient {
     return client
 }
 
-// Add a specified prefix to all id and class attributes in the HTML content, creating a namespace for safe integration into another HTML document. This process ensures unique identifiers, preventing conflicts when merging with other HTML.
+// Add the specified prefix to all id and class attributes in the HTML content, creating a namespace for safe integration into another HTML document. This ensures unique identifiers, preventing conflicts when merging with other HTML.
 //
 // prefix - The prefix to add before each id and class attribute name. Start with a letter or underscore, and use only letters, numbers, hyphens, underscores, or colons.
 func (client *PdfToHtmlClient) SetHtmlNamespace(prefix string) *PdfToHtmlClient {
@@ -4571,6 +4631,14 @@ func (client *PdfToHtmlClient) SetConverterVersion(version string) *PdfToHtmlCli
 // value - Set to true to use HTTP.
 func (client *PdfToHtmlClient) SetUseHttp(value bool) *PdfToHtmlClient {
     client.helper.setUseHttp(value)
+    return client
+}
+
+// Specifies the User-Agent HTTP header that the client library will use when interacting with the API.
+//
+// agent - The user agent string.
+func (client *PdfToHtmlClient) SetClientUserAgent(agent string) *PdfToHtmlClient {
+    client.helper.setUserAgent(agent)
     return client
 }
 
@@ -5020,6 +5088,14 @@ func (client *PdfToTextClient) SetUseHttp(value bool) *PdfToTextClient {
     return client
 }
 
+// Specifies the User-Agent HTTP header that the client library will use when interacting with the API.
+//
+// agent - The user agent string.
+func (client *PdfToTextClient) SetClientUserAgent(agent string) *PdfToTextClient {
+    client.helper.setUserAgent(agent)
+    return client
+}
+
 // Set a custom user agent HTTP header. It can be useful if you are behind a proxy or a firewall.
 //
 // agent - The user agent string.
@@ -5440,6 +5516,14 @@ func (client *PdfToImageClient) SetHttpsProxy(proxy string) *PdfToImageClient {
 // value - Set to true to use HTTP.
 func (client *PdfToImageClient) SetUseHttp(value bool) *PdfToImageClient {
     client.helper.setUseHttp(value)
+    return client
+}
+
+// Specifies the User-Agent HTTP header that the client library will use when interacting with the API.
+//
+// agent - The user agent string.
+func (client *PdfToImageClient) SetClientUserAgent(agent string) *PdfToImageClient {
+    client.helper.setUserAgent(agent)
     return client
 }
 
