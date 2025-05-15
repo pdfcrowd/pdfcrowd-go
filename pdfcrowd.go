@@ -39,26 +39,69 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "6.4.0"
+const CLIENT_VERSION = "6.5.0"
 
 type Error struct {
     message string
     code int
+    reasonCode int
+    docLink string
+    error string
+}
+
+func NewError(errorStr string, httpCode int) Error {
+    re := regexp.MustCompile(`(?s)^(\d+)\.(\d+)\s+-\s+(.*?)(?:\s+Documentation link:\s+(.*))?$`)
+    match := re.FindStringSubmatch(errorStr)
+
+    ce := Error{}
+    if match != nil {
+        ce.message = match[3]
+        ce.docLink = match[4]
+        ce.error = errorStr
+
+        if code, err := strconv.Atoi(match[1]); err == nil {
+            ce.code = code
+        }
+        if reason, err := strconv.Atoi(match[2]); err == nil {
+            ce.reasonCode = reason
+        }
+    } else {
+        ce.code = httpCode
+        ce.reasonCode = -1
+        ce.message = errorStr
+        if httpCode != 0 {
+            ce.error = fmt.Sprintf("%d - %s", httpCode, errorStr)
+        } else {
+            ce.error = errorStr
+        }
+        ce.docLink = ""
+    }
+    return ce
+}
+
+func (e Error) GetCode() int {
+    os.Stderr.WriteString("[DEPRECATION] `GetCode` is obsolete and will be removed in future versions. Use `GetStatusCode` instead.\n")
+    return e.code
+}
+
+func (e Error) GetStatusCode() int {
+    return e.code
+}
+
+func (e Error) GetReasonCode() int {
+    return e.reasonCode
 }
 
 func (e Error) GetMessage() string {
     return e.message
 }
 
-func (e Error) GetCode() int {
-    return e.code
+func (e Error) GetDocumentationLink() string {
+    return e.docLink
 }
 
 func (e Error) Error() string {
-    if e.code == 0 {
-        return e.message
-    }
-    return fmt.Sprintf("%d - %s", e.code, e.message)
+    return e.error
 }
 
 type connectionHelper struct {
@@ -91,7 +134,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/6.4.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/6.5.0 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "24.04"
     return helper
@@ -180,11 +223,11 @@ func (helper *connectionHelper) getConverterVersion() string {
 }
 
 func createInvalidValueMessage(value interface{}, field string, converter string, hint string, id string) string {
-    message := fmt.Sprintf("Invalid value '%s' for %s.", value, field)
+    message := fmt.Sprintf("400.311 - Invalid value '%s' for the '%s' option.", value, field)
     if len(hint) > 0 {
         message += " " + hint
     }
-    return message + " " + fmt.Sprintf("Details: https://www.pdfcrowd.com/api/%s-go/ref/#%s", converter, id)
+    return message + " " + fmt.Sprintf("Documentation link: https://www.pdfcrowd.com/api/%s-go/ref/#%s", converter, id)
 }
 
 func encodeMultipartPostData(fields, files map[string]string, rawData map[string][]byte) (io.Reader, string, error) {
@@ -258,7 +301,7 @@ func getStringHeader(response *http.Response, key string) string {
 
 func (helper* connectionHelper) post(fields, files map[string]string, rawData map[string][]byte, outStream io.Writer) ([]byte, error) {
     if !helper.useHttp && len(helper.proxyHost) > 0 {
-        return nil, Error{message:"HTTPS over a proxy is not supported."}
+        return nil, NewError("HTTPS over a proxy is not supported.", 0)
     }
 
     helper.resetResponseData()
@@ -302,9 +345,9 @@ func (helper* connectionHelper) post(fields, files map[string]string, rawData ma
         if err != nil {
             match, _ := regexp.MatchString("(?:x509|certificate)", err.Error())
             if match {
-                return nil, Error{
-                    fmt.Sprintf("There was a problem connecting to Pdfcrowd servers over HTTPS:\n%s\nYou can still use the API over HTTP, you just need to add the following line right after Pdfcrowd client initialization:\nclient.setUseHttp(true)", err),
-                    481 }
+                return nil, NewError(
+                    fmt.Sprintf("400.356 - There was a problem connecting to PDFCrowd servers over HTTPS:\n%s\nYou can still use the API over HTTP, you just need to add the following line right after PDFCrowd client initialization:\nclient.setUseHttp(true)", err),
+                    0)
             }
             return nil, err
         }
@@ -330,7 +373,7 @@ func (helper* connectionHelper) post(fields, files map[string]string, rawData ma
             }
 
             if response.StatusCode > 299 {
-                return nil, Error{string(respBody), response.StatusCode}
+                return nil, NewError(string(respBody), response.StatusCode)
             }
 
             if outStream != nil {
@@ -369,11 +412,11 @@ func NewHtmlToPdfClient(userName string, apiKey string) HtmlToPdfClient {
 
 // Convert a web page.
 //
-// url - The address of the web page to convert. The supported protocols are http:// and https://.
+// url - The address of the web page to convert. Supported protocols are http:// and https://.
 func (client *HtmlToPdfClient) ConvertUrl(url string) ([]byte, error) {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return nil, Error{createInvalidValueMessage(url, "ConvertUrl", "html-to-pdf", "The supported protocols are http:// and https://.", "convert_url"), 470}
+        return nil, NewError(createInvalidValueMessage(url, "ConvertUrl", "html-to-pdf", "Supported protocols are http:// and https://.", "convert_url"), 470)
     }
     
     client.fields["url"] = url
@@ -382,12 +425,12 @@ func (client *HtmlToPdfClient) ConvertUrl(url string) ([]byte, error) {
 
 // Convert a web page and write the result to an output stream.
 //
-// url - The address of the web page to convert. The supported protocols are http:// and https://.
+// url - The address of the web page to convert. Supported protocols are http:// and https://.
 // outStream - The output stream that will contain the conversion output.
 func (client *HtmlToPdfClient) ConvertUrlToStream(url string, outStream io.Writer) error {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return Error{createInvalidValueMessage(url, "ConvertUrlToStream::url", "html-to-pdf", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
+        return NewError(createInvalidValueMessage(url, "ConvertUrlToStream::url", "html-to-pdf", "Supported protocols are http:// and https://.", "convert_url_to_stream"), 470)
     }
     
     client.fields["url"] = url
@@ -397,11 +440,11 @@ func (client *HtmlToPdfClient) ConvertUrlToStream(url string, outStream io.Write
 
 // Convert a web page and write the result to a local file.
 //
-// url - The address of the web page to convert. The supported protocols are http:// and https://.
+// url - The address of the web page to convert. Supported protocols are http:// and https://.
 // filePath - The output file path. The string must not be empty.
 func (client *HtmlToPdfClient) ConvertUrlToFile(url string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "html-to-pdf", "The string must not be empty.", "convert_url_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "html-to-pdf", "The string must not be empty.", "convert_url_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -422,7 +465,7 @@ func (client *HtmlToPdfClient) ConvertUrlToFile(url string, filePath string) err
 // file - The path to a local file to convert. The file can be either a single file or an archive (.tar.gz, .tar.bz2, or .zip). If the HTML document refers to local external assets (images, style sheets, javascript), zip the document together with the assets. The file must exist and not be empty. The file name must have a valid extension.
 func (client *HtmlToPdfClient) ConvertFile(file string) ([]byte, error) {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return nil, Error{createInvalidValueMessage(file, "ConvertFile", "html-to-pdf", "The file must exist and not be empty.", "convert_file"), 470}
+        return nil, NewError(createInvalidValueMessage(file, "ConvertFile", "html-to-pdf", "The file must exist and not be empty.", "convert_file"), 470)
     }
     
     client.files["file"] = file
@@ -435,7 +478,7 @@ func (client *HtmlToPdfClient) ConvertFile(file string) ([]byte, error) {
 // outStream - The output stream that will contain the conversion output.
 func (client *HtmlToPdfClient) ConvertFileToStream(file string, outStream io.Writer) error {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return Error{createInvalidValueMessage(file, "ConvertFileToStream::file", "html-to-pdf", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
+        return NewError(createInvalidValueMessage(file, "ConvertFileToStream::file", "html-to-pdf", "The file must exist and not be empty.", "convert_file_to_stream"), 470)
     }
     
     client.files["file"] = file
@@ -449,7 +492,7 @@ func (client *HtmlToPdfClient) ConvertFileToStream(file string, outStream io.Wri
 // filePath - The output file path. The string must not be empty.
 func (client *HtmlToPdfClient) ConvertFileToFile(file string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "html-to-pdf", "The string must not be empty.", "convert_file_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "html-to-pdf", "The string must not be empty.", "convert_file_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -470,7 +513,7 @@ func (client *HtmlToPdfClient) ConvertFileToFile(file string, filePath string) e
 // text - The string content to convert. The string must not be empty.
 func (client *HtmlToPdfClient) ConvertString(text string) ([]byte, error) {
     if len(text) == 0 {
-        return nil, Error{createInvalidValueMessage(text, "ConvertString", "html-to-pdf", "The string must not be empty.", "convert_string"), 470}
+        return nil, NewError(createInvalidValueMessage(text, "ConvertString", "html-to-pdf", "The string must not be empty.", "convert_string"), 470)
     }
     
     client.fields["text"] = text
@@ -483,7 +526,7 @@ func (client *HtmlToPdfClient) ConvertString(text string) ([]byte, error) {
 // outStream - The output stream that will contain the conversion output.
 func (client *HtmlToPdfClient) ConvertStringToStream(text string, outStream io.Writer) error {
     if len(text) == 0 {
-        return Error{createInvalidValueMessage(text, "ConvertStringToStream::text", "html-to-pdf", "The string must not be empty.", "convert_string_to_stream"), 470}
+        return NewError(createInvalidValueMessage(text, "ConvertStringToStream::text", "html-to-pdf", "The string must not be empty.", "convert_string_to_stream"), 470)
     }
     
     client.fields["text"] = text
@@ -497,7 +540,7 @@ func (client *HtmlToPdfClient) ConvertStringToStream(text string, outStream io.W
 // filePath - The output file path. The string must not be empty.
 func (client *HtmlToPdfClient) ConvertStringToFile(text string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertStringToFile::file_path", "html-to-pdf", "The string must not be empty.", "convert_string_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertStringToFile::file_path", "html-to-pdf", "The string must not be empty.", "convert_string_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -547,7 +590,7 @@ func (client *HtmlToPdfClient) ConvertStreamToStream(inStream io.Reader, outStre
 // filePath - The output file path. The string must not be empty.
 func (client *HtmlToPdfClient) ConvertStreamToFile(inStream io.Reader, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "html-to-pdf", "The string must not be empty.", "convert_stream_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "html-to-pdf", "The string must not be empty.", "convert_stream_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -581,7 +624,7 @@ func (client *HtmlToPdfClient) SetPageSize(size string) *HtmlToPdfClient {
 
 // Set the output page width. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF.
 //
-// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// width - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *HtmlToPdfClient) SetPageWidth(width string) *HtmlToPdfClient {
     client.fields["page_width"] = width
     return client
@@ -589,7 +632,7 @@ func (client *HtmlToPdfClient) SetPageWidth(width string) *HtmlToPdfClient {
 
 // Set the output page height. Use -1 for a single page PDF. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF.
 //
-// height - The value must be -1 or specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// height - The value must be -1 or specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *HtmlToPdfClient) SetPageHeight(height string) *HtmlToPdfClient {
     client.fields["page_height"] = height
     return client
@@ -597,8 +640,8 @@ func (client *HtmlToPdfClient) SetPageHeight(height string) *HtmlToPdfClient {
 
 // Set the output page dimensions.
 //
-// width - Set the output page width. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// height - Set the output page height. Use -1 for a single page PDF. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF. The value must be -1 or specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// width - Set the output page width. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// height - Set the output page height. Use -1 for a single page PDF. The safe maximum is 200in otherwise some PDF viewers may be unable to open the PDF. The value must be -1 or specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *HtmlToPdfClient) SetPageDimensions(width string, height string) *HtmlToPdfClient {
     client.SetPageWidth(width)
     client.SetPageHeight(height)
@@ -615,7 +658,7 @@ func (client *HtmlToPdfClient) SetOrientation(orientation string) *HtmlToPdfClie
 
 // Set the output page top margin.
 //
-// top - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// top - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *HtmlToPdfClient) SetMarginTop(top string) *HtmlToPdfClient {
     client.fields["margin_top"] = top
     return client
@@ -623,7 +666,7 @@ func (client *HtmlToPdfClient) SetMarginTop(top string) *HtmlToPdfClient {
 
 // Set the output page right margin.
 //
-// right - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// right - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *HtmlToPdfClient) SetMarginRight(right string) *HtmlToPdfClient {
     client.fields["margin_right"] = right
     return client
@@ -631,7 +674,7 @@ func (client *HtmlToPdfClient) SetMarginRight(right string) *HtmlToPdfClient {
 
 // Set the output page bottom margin.
 //
-// bottom - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// bottom - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *HtmlToPdfClient) SetMarginBottom(bottom string) *HtmlToPdfClient {
     client.fields["margin_bottom"] = bottom
     return client
@@ -639,7 +682,7 @@ func (client *HtmlToPdfClient) SetMarginBottom(bottom string) *HtmlToPdfClient {
 
 // Set the output page left margin.
 //
-// left - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// left - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *HtmlToPdfClient) SetMarginLeft(left string) *HtmlToPdfClient {
     client.fields["margin_left"] = left
     return client
@@ -655,10 +698,10 @@ func (client *HtmlToPdfClient) SetNoMargins(value bool) *HtmlToPdfClient {
 
 // Set the output page margins.
 //
-// top - Set the output page top margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// right - Set the output page right margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// bottom - Set the output page bottom margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// left - Set the output page left margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// top - Set the output page top margin. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// right - Set the output page right margin. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// bottom - Set the output page bottom margin. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// left - Set the output page left margin. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *HtmlToPdfClient) SetPageMargins(top string, right string, bottom string, left string) *HtmlToPdfClient {
     client.SetMarginTop(top)
     client.SetMarginRight(right)
@@ -669,7 +712,7 @@ func (client *HtmlToPdfClient) SetPageMargins(top string, right string, bottom s
 
 // Set the page range to print.
 //
-// pages - A comma separated list of page numbers or ranges. Special strings may be used, such as `odd`, `even` and `last`.
+// pages - A comma separated list of page numbers or ranges. Special strings may be used, such as 'odd', 'even' and 'last'.
 func (client *HtmlToPdfClient) SetPrintPageRange(pages string) *HtmlToPdfClient {
     client.fields["print_page_range"] = pages
     return client
@@ -677,7 +720,7 @@ func (client *HtmlToPdfClient) SetPrintPageRange(pages string) *HtmlToPdfClient 
 
 // Set the viewport width for formatting the HTML content when generating a PDF. By specifying a viewport width, you can control how the content is rendered, ensuring it mimics the appearance on various devices or matches specific design requirements.
 //
-// width - The width of the viewport. The value must be "balanced", "small", "medium", "large", "extra-large", or a number in the range 96-65000px.
+// width - The width of the viewport. The value must be 'balanced', 'small', 'medium', 'large', 'extra-large', or a number in the range 96-65000px.
 func (client *HtmlToPdfClient) SetContentViewportWidth(width string) *HtmlToPdfClient {
     client.fields["content_viewport_width"] = width
     return client
@@ -685,7 +728,7 @@ func (client *HtmlToPdfClient) SetContentViewportWidth(width string) *HtmlToPdfC
 
 // Set the viewport height for formatting the HTML content when generating a PDF. By specifying a viewport height, you can enforce loading of lazy-loaded images and also affect vertical positioning of absolutely positioned elements within the content.
 //
-// height - The viewport height. The value must be "auto", "large", or a number.
+// height - The viewport height. The value must be 'auto', 'large', or a number.
 func (client *HtmlToPdfClient) SetContentViewportHeight(height string) *HtmlToPdfClient {
     client.fields["content_viewport_height"] = height
     return client
@@ -709,7 +752,7 @@ func (client *HtmlToPdfClient) SetRemoveBlankPages(pages string) *HtmlToPdfClien
 
 // Load an HTML code from the specified URL and use it as the page header. The following classes can be used in the HTML. The content of the respective elements will be expanded as follows: pdfcrowd-page-count - the total page count of printed pages pdfcrowd-page-number - the current page number pdfcrowd-source-url - the source URL of the converted document pdfcrowd-source-title - the title of the converted document The following attributes can be used: data-pdfcrowd-number-format - specifies the type of the used numerals. Allowed values: arabic - Arabic numerals, they are used by default roman - Roman numerals eastern-arabic - Eastern Arabic numerals bengali - Bengali numerals devanagari - Devanagari numerals thai - Thai numerals east-asia - Chinese, Vietnamese, Japanese and Korean numerals chinese-formal - Chinese formal numerals Please contact us if you need another type of numerals. Example: <span class='pdfcrowd-page-number' data-pdfcrowd-number-format='roman'></span> data-pdfcrowd-placement - specifies where to place the source URL. Allowed values: The URL is inserted to the content Example: <span class='pdfcrowd-source-url'></span> will produce <span>http://example.com</span> href - the URL is set to the href attribute Example: <a class='pdfcrowd-source-url' data-pdfcrowd-placement='href'>Link to source</a> will produce <a href='http://example.com'>Link to source</a> href-and-content - the URL is set to the href attribute and to the content Example: <a class='pdfcrowd-source-url' data-pdfcrowd-placement='href-and-content'></a> will produce <a href='http://example.com'>http://example.com</a>
 //
-// url - The supported protocols are http:// and https://.
+// url - Supported protocols are http:// and https://.
 func (client *HtmlToPdfClient) SetHeaderUrl(url string) *HtmlToPdfClient {
     client.fields["header_url"] = url
     return client
@@ -725,7 +768,7 @@ func (client *HtmlToPdfClient) SetHeaderHtml(html string) *HtmlToPdfClient {
 
 // Set the header height.
 //
-// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// height - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *HtmlToPdfClient) SetHeaderHeight(height string) *HtmlToPdfClient {
     client.fields["header_height"] = height
     return client
@@ -741,7 +784,7 @@ func (client *HtmlToPdfClient) SetZipHeaderFilename(filename string) *HtmlToPdfC
 
 // Load an HTML code from the specified URL and use it as the page footer. The following classes can be used in the HTML. The content of the respective elements will be expanded as follows: pdfcrowd-page-count - the total page count of printed pages pdfcrowd-page-number - the current page number pdfcrowd-source-url - the source URL of the converted document pdfcrowd-source-title - the title of the converted document The following attributes can be used: data-pdfcrowd-number-format - specifies the type of the used numerals. Allowed values: arabic - Arabic numerals, they are used by default roman - Roman numerals eastern-arabic - Eastern Arabic numerals bengali - Bengali numerals devanagari - Devanagari numerals thai - Thai numerals east-asia - Chinese, Vietnamese, Japanese and Korean numerals chinese-formal - Chinese formal numerals Please contact us if you need another type of numerals. Example: <span class='pdfcrowd-page-number' data-pdfcrowd-number-format='roman'></span> data-pdfcrowd-placement - specifies where to place the source URL. Allowed values: The URL is inserted to the content Example: <span class='pdfcrowd-source-url'></span> will produce <span>http://example.com</span> href - the URL is set to the href attribute Example: <a class='pdfcrowd-source-url' data-pdfcrowd-placement='href'>Link to source</a> will produce <a href='http://example.com'>Link to source</a> href-and-content - the URL is set to the href attribute and to the content Example: <a class='pdfcrowd-source-url' data-pdfcrowd-placement='href-and-content'></a> will produce <a href='http://example.com'>http://example.com</a>
 //
-// url - The supported protocols are http:// and https://.
+// url - Supported protocols are http:// and https://.
 func (client *HtmlToPdfClient) SetFooterUrl(url string) *HtmlToPdfClient {
     client.fields["footer_url"] = url
     return client
@@ -757,7 +800,7 @@ func (client *HtmlToPdfClient) SetFooterHtml(html string) *HtmlToPdfClient {
 
 // Set the footer height.
 //
-// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// height - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *HtmlToPdfClient) SetFooterHeight(height string) *HtmlToPdfClient {
     client.fields["footer_height"] = height
     return client
@@ -797,7 +840,7 @@ func (client *HtmlToPdfClient) SetExcludeFooterOnPages(pages string) *HtmlToPdfC
 
 // Set the scaling factor (zoom) for the header and footer.
 //
-// factor - The percentage value. The value must be in the range 10-500.
+// factor - The percentage value. The accepted range is 10-500.
 func (client *HtmlToPdfClient) SetHeaderFooterScaleFactor(factor int) *HtmlToPdfClient {
     client.fields["header_footer_scale_factor"] = strconv.Itoa(factor)
     return client
@@ -821,7 +864,7 @@ func (client *HtmlToPdfClient) SetPageWatermark(watermark string) *HtmlToPdfClie
 
 // Load a file from the specified URL and apply the file as a watermark to each page of the output PDF. A watermark can be either a PDF or an image. If a multi-page file (PDF or TIFF) is used, the first page is used as the watermark.
 //
-// url - The supported protocols are http:// and https://.
+// url - Supported protocols are http:// and https://.
 func (client *HtmlToPdfClient) SetPageWatermarkUrl(url string) *HtmlToPdfClient {
     client.fields["page_watermark_url"] = url
     return client
@@ -837,7 +880,7 @@ func (client *HtmlToPdfClient) SetMultipageWatermark(watermark string) *HtmlToPd
 
 // Load a file from the specified URL and apply each page of the file as a watermark to the corresponding page of the output PDF. A watermark can be either a PDF or an image.
 //
-// url - The supported protocols are http:// and https://.
+// url - Supported protocols are http:// and https://.
 func (client *HtmlToPdfClient) SetMultipageWatermarkUrl(url string) *HtmlToPdfClient {
     client.fields["multipage_watermark_url"] = url
     return client
@@ -853,7 +896,7 @@ func (client *HtmlToPdfClient) SetPageBackground(background string) *HtmlToPdfCl
 
 // Load a file from the specified URL and apply the file as a background to each page of the output PDF. A background can be either a PDF or an image. If a multi-page file (PDF or TIFF) is used, the first page is used as the background.
 //
-// url - The supported protocols are http:// and https://.
+// url - Supported protocols are http:// and https://.
 func (client *HtmlToPdfClient) SetPageBackgroundUrl(url string) *HtmlToPdfClient {
     client.fields["page_background_url"] = url
     return client
@@ -869,7 +912,7 @@ func (client *HtmlToPdfClient) SetMultipageBackground(background string) *HtmlTo
 
 // Load a file from the specified URL and apply each page of the file as a background to the corresponding page of the output PDF. A background can be either a PDF or an image.
 //
-// url - The supported protocols are http:// and https://.
+// url - Supported protocols are http:// and https://.
 func (client *HtmlToPdfClient) SetMultipageBackgroundUrl(url string) *HtmlToPdfClient {
     client.fields["multipage_background_url"] = url
     return client
@@ -1067,7 +1110,7 @@ func (client *HtmlToPdfClient) SetCustomHttpHeader(header string) *HtmlToPdfClie
 
 // Wait the specified number of milliseconds to finish all JavaScript after the document is loaded. Your API license defines the maximum wait time by "Max Delay" parameter.
 //
-// delay - The number of milliseconds to wait. Must be a positive integer number or 0.
+// delay - The number of milliseconds to wait. Must be a positive integer or 0.
 func (client *HtmlToPdfClient) SetJavascriptDelay(delay int) *HtmlToPdfClient {
     client.fields["javascript_delay"] = strconv.Itoa(delay)
     return client
@@ -1115,7 +1158,7 @@ func (client *HtmlToPdfClient) SetReadabilityEnhancements(enhancements string) *
 
 // Set the viewport width in pixels. The viewport is the user's visible area of the page.
 //
-// width - The value must be in the range 96-65000.
+// width - The accepted range is 96-65000.
 func (client *HtmlToPdfClient) SetViewportWidth(width int) *HtmlToPdfClient {
     client.fields["viewport_width"] = strconv.Itoa(width)
     return client
@@ -1123,7 +1166,7 @@ func (client *HtmlToPdfClient) SetViewportWidth(width int) *HtmlToPdfClient {
 
 // Set the viewport height in pixels. The viewport is the user's visible area of the page. If the input HTML uses lazily loaded images, try using a large value that covers the entire height of the HTML, e.g. 100000.
 //
-// height - Must be a positive integer number.
+// height - Must be a positive integer.
 func (client *HtmlToPdfClient) SetViewportHeight(height int) *HtmlToPdfClient {
     client.fields["viewport_height"] = strconv.Itoa(height)
     return client
@@ -1131,8 +1174,8 @@ func (client *HtmlToPdfClient) SetViewportHeight(height int) *HtmlToPdfClient {
 
 // Set the viewport size. The viewport is the user's visible area of the page.
 //
-// width - Set the viewport width in pixels. The viewport is the user's visible area of the page. The value must be in the range 96-65000.
-// height - Set the viewport height in pixels. The viewport is the user's visible area of the page. If the input HTML uses lazily loaded images, try using a large value that covers the entire height of the HTML, e.g. 100000. Must be a positive integer number.
+// width - Set the viewport width in pixels. The viewport is the user's visible area of the page. The accepted range is 96-65000.
+// height - Set the viewport height in pixels. The viewport is the user's visible area of the page. If the input HTML uses lazily loaded images, try using a large value that covers the entire height of the HTML, e.g. 100000. Must be a positive integer.
 func (client *HtmlToPdfClient) SetViewport(width int, height int) *HtmlToPdfClient {
     client.SetViewportWidth(width)
     client.SetViewportHeight(height)
@@ -1157,7 +1200,7 @@ func (client *HtmlToPdfClient) SetSmartScalingMode(mode string) *HtmlToPdfClient
 
 // Set the scaling factor (zoom) for the main page area.
 //
-// factor - The percentage value. The value must be in the range 10-500.
+// factor - The percentage value. The accepted range is 10-500.
 func (client *HtmlToPdfClient) SetScaleFactor(factor int) *HtmlToPdfClient {
     client.fields["scale_factor"] = strconv.Itoa(factor)
     return client
@@ -1165,7 +1208,7 @@ func (client *HtmlToPdfClient) SetScaleFactor(factor int) *HtmlToPdfClient {
 
 // Set the quality of embedded JPEG images. A lower quality results in a smaller PDF file but can lead to compression artifacts.
 //
-// quality - The percentage value. The value must be in the range 1-100.
+// quality - The percentage value. The accepted range is 1-100.
 func (client *HtmlToPdfClient) SetJpegQuality(quality int) *HtmlToPdfClient {
     client.fields["jpeg_quality"] = strconv.Itoa(quality)
     return client
@@ -1181,7 +1224,7 @@ func (client *HtmlToPdfClient) SetConvertImagesToJpeg(images string) *HtmlToPdfC
 
 // Set the DPI of images in PDF. A lower DPI may result in a smaller PDF file. If the specified DPI is higher than the actual image DPI, the original image DPI is retained (no upscaling is performed). Use 0 to leave the images unaltered.
 //
-// dpi - The DPI value. Must be a positive integer number or 0.
+// dpi - The DPI value. Must be a positive integer or 0.
 func (client *HtmlToPdfClient) SetImageDpi(dpi int) *HtmlToPdfClient {
     client.fields["image_dpi"] = strconv.Itoa(dpi)
     return client
@@ -1317,7 +1360,7 @@ func (client *HtmlToPdfClient) SetInitialZoomType(zoomType string) *HtmlToPdfCli
 
 // Display the specified page when the document is opened.
 //
-// page - Must be a positive integer number.
+// page - Must be a positive integer.
 func (client *HtmlToPdfClient) SetInitialPage(page int) *HtmlToPdfClient {
     client.fields["initial_page"] = strconv.Itoa(page)
     return client
@@ -1325,7 +1368,7 @@ func (client *HtmlToPdfClient) SetInitialPage(page int) *HtmlToPdfClient {
 
 // Specify the initial page zoom in percents when the document is opened.
 //
-// zoom - Must be a positive integer number.
+// zoom - Must be a positive integer.
 func (client *HtmlToPdfClient) SetInitialZoom(zoom int) *HtmlToPdfClient {
     client.fields["initial_zoom"] = strconv.Itoa(zoom)
     return client
@@ -1544,7 +1587,7 @@ func (client *HtmlToPdfClient) SetClientCertificatePassword(password string) *Ht
 
 // Set the internal DPI resolution used for positioning of PDF contents. It can help in situations when there are small inaccuracies in the PDF. It is recommended to use values that are a multiple of 72, such as 288 or 360.
 //
-// dpi - The DPI value. The value must be in the range of 72-600.
+// dpi - The DPI value. The accepted range is 72-600.
 func (client *HtmlToPdfClient) SetLayoutDpi(dpi int) *HtmlToPdfClient {
     client.fields["layout_dpi"] = strconv.Itoa(dpi)
     return client
@@ -1552,7 +1595,7 @@ func (client *HtmlToPdfClient) SetLayoutDpi(dpi int) *HtmlToPdfClient {
 
 // Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area.
 //
-// x - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
+// x - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'. It may contain a negative value.
 func (client *HtmlToPdfClient) SetContentAreaX(x string) *HtmlToPdfClient {
     client.fields["content_area_x"] = x
     return client
@@ -1560,7 +1603,7 @@ func (client *HtmlToPdfClient) SetContentAreaX(x string) *HtmlToPdfClient {
 
 // Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area.
 //
-// y - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
+// y - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'. It may contain a negative value.
 func (client *HtmlToPdfClient) SetContentAreaY(y string) *HtmlToPdfClient {
     client.fields["content_area_y"] = y
     return client
@@ -1568,7 +1611,7 @@ func (client *HtmlToPdfClient) SetContentAreaY(y string) *HtmlToPdfClient {
 
 // Set the width of the content area. It should be at least 1 inch.
 //
-// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// width - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *HtmlToPdfClient) SetContentAreaWidth(width string) *HtmlToPdfClient {
     client.fields["content_area_width"] = width
     return client
@@ -1576,7 +1619,7 @@ func (client *HtmlToPdfClient) SetContentAreaWidth(width string) *HtmlToPdfClien
 
 // Set the height of the content area. It should be at least 1 inch.
 //
-// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// height - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *HtmlToPdfClient) SetContentAreaHeight(height string) *HtmlToPdfClient {
     client.fields["content_area_height"] = height
     return client
@@ -1584,10 +1627,10 @@ func (client *HtmlToPdfClient) SetContentAreaHeight(height string) *HtmlToPdfCli
 
 // Set the content area position and size. The content area enables to specify a web page area to be converted.
 //
-// x - Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
-// y - Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt". It may contain a negative value.
-// width - Set the width of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// height - Set the height of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// x - Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'. It may contain a negative value.
+// y - Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'. It may contain a negative value.
+// width - Set the width of the content area. It should be at least 1 inch. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// height - Set the height of the content area. It should be at least 1 inch. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *HtmlToPdfClient) SetContentArea(x string, y string, width string, height string) *HtmlToPdfClient {
     client.SetContentAreaX(x)
     client.SetContentAreaY(y)
@@ -1647,13 +1690,13 @@ func (client *HtmlToPdfClient) SetHeaderFooterCssAnnotation(value bool) *HtmlToP
 
 // Set the maximum time to load the page and its resources. After this time, all requests will be considered successful. This can be useful to ensure that the conversion does not timeout. Use this method if there is no other way to fix page loading.
 //
-// maxTime - The number of seconds to wait. The value must be in the range 10-30.
+// maxTime - The number of seconds to wait. The accepted range is 10-30.
 func (client *HtmlToPdfClient) SetMaxLoadingTime(maxTime int) *HtmlToPdfClient {
     client.fields["max_loading_time"] = strconv.Itoa(maxTime)
     return client
 }
 
-// Allows to configure conversion via JSON. The configuration defines various page settings for individual PDF pages or ranges of pages. It provides flexibility in designing each page of the PDF, giving control over each page's size, header, footer etc. If a page or parameter is not explicitly specified, the system will use the default settings for that page or attribute. If a JSON configuration is provided, the settings in the JSON will take precedence over the global options. The structure of the JSON must be: pageSetup: An array of objects where each object defines the configuration for a specific page or range of pages. The following properties can be set for each page object: pages: A comma-separated list of page numbers or ranges. Special strings may be used, such as `odd`, `even` and `last`. For example: 1-: from page 1 to the end of the document 2: only the 2nd page 2,4,6: pages 2, 4, and 6 2-5: pages 2 through 5 odd,2: the 2nd page and all odd pages pageSize: The page size (optional). Possible values: A0, A1, A2, A3, A4, A5, A6, Letter. pageWidth: The width of the page (optional). pageHeight: The height of the page (optional). marginLeft: Left margin (optional). marginRight: Right margin (optional). marginTop: Top margin (optional). marginBottom: Bottom margin (optional). displayHeader: Header appearance (optional). Possible values: none: completely excluded space: only the content is excluded, the space is used content: the content is printed (default) displayFooter: Footer appearance (optional). Possible values: none: completely excluded space: only the content is excluded, the space is used content: the content is printed (default) headerHeight: Height of the header (optional). footerHeight: Height of the footer (optional). orientation: Page orientation, such as "portrait" or "landscape" (optional). backgroundColor: Page background color in RRGGBB or RRGGBBAA hexadecimal format (optional). Dimensions may be empty, 0 or specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// Allows to configure conversion via JSON. The configuration defines various page settings for individual PDF pages or ranges of pages. It provides flexibility in designing each page of the PDF, giving control over each page's size, header, footer etc. If a page or parameter is not explicitly specified, the system will use the default settings for that page or attribute. If a JSON configuration is provided, the settings in the JSON will take precedence over the global options. The structure of the JSON must be: pageSetup: An array of objects where each object defines the configuration for a specific page or range of pages. The following properties can be set for each page object: pages: A comma-separated list of page numbers or ranges. Special strings may be used, such as `odd`, `even` and `last`. For example: 1-: from page 1 to the end of the document 2: only the 2nd page 2,4,6: pages 2, 4, and 6 2-5: pages 2 through 5 odd,2: the 2nd page and all odd pages pageSize: The page size (optional). Possible values: A0, A1, A2, A3, A4, A5, A6, Letter. pageWidth: The width of the page (optional). pageHeight: The height of the page (optional). marginLeft: Left margin (optional). marginRight: Right margin (optional). marginTop: Top margin (optional). marginBottom: Bottom margin (optional). displayHeader: Header appearance (optional). Possible values: none: completely excluded space: only the content is excluded, the space is used content: the content is printed (default) displayFooter: Footer appearance (optional). Possible values: none: completely excluded space: only the content is excluded, the space is used content: the content is printed (default) headerHeight: Height of the header (optional). footerHeight: Height of the footer (optional). orientation: Page orientation, such as "portrait" or "landscape" (optional). backgroundColor: Page background color in RRGGBB or RRGGBBAA hexadecimal format (optional). Dimensions may be empty, 0 or specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 //
 // jsonString - The JSON string.
 func (client *HtmlToPdfClient) SetConversionConfig(jsonString string) *HtmlToPdfClient {
@@ -1767,11 +1810,11 @@ func (client *HtmlToImageClient) SetOutputFormat(outputFormat string) *HtmlToIma
 
 // Convert a web page.
 //
-// url - The address of the web page to convert. The supported protocols are http:// and https://.
+// url - The address of the web page to convert. Supported protocols are http:// and https://.
 func (client *HtmlToImageClient) ConvertUrl(url string) ([]byte, error) {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return nil, Error{createInvalidValueMessage(url, "ConvertUrl", "html-to-image", "The supported protocols are http:// and https://.", "convert_url"), 470}
+        return nil, NewError(createInvalidValueMessage(url, "ConvertUrl", "html-to-image", "Supported protocols are http:// and https://.", "convert_url"), 470)
     }
     
     client.fields["url"] = url
@@ -1780,12 +1823,12 @@ func (client *HtmlToImageClient) ConvertUrl(url string) ([]byte, error) {
 
 // Convert a web page and write the result to an output stream.
 //
-// url - The address of the web page to convert. The supported protocols are http:// and https://.
+// url - The address of the web page to convert. Supported protocols are http:// and https://.
 // outStream - The output stream that will contain the conversion output.
 func (client *HtmlToImageClient) ConvertUrlToStream(url string, outStream io.Writer) error {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return Error{createInvalidValueMessage(url, "ConvertUrlToStream::url", "html-to-image", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
+        return NewError(createInvalidValueMessage(url, "ConvertUrlToStream::url", "html-to-image", "Supported protocols are http:// and https://.", "convert_url_to_stream"), 470)
     }
     
     client.fields["url"] = url
@@ -1795,11 +1838,11 @@ func (client *HtmlToImageClient) ConvertUrlToStream(url string, outStream io.Wri
 
 // Convert a web page and write the result to a local file.
 //
-// url - The address of the web page to convert. The supported protocols are http:// and https://.
+// url - The address of the web page to convert. Supported protocols are http:// and https://.
 // filePath - The output file path. The string must not be empty.
 func (client *HtmlToImageClient) ConvertUrlToFile(url string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "html-to-image", "The string must not be empty.", "convert_url_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "html-to-image", "The string must not be empty.", "convert_url_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -1820,7 +1863,7 @@ func (client *HtmlToImageClient) ConvertUrlToFile(url string, filePath string) e
 // file - The path to a local file to convert. The file can be either a single file or an archive (.tar.gz, .tar.bz2, or .zip). If the HTML document refers to local external assets (images, style sheets, javascript), zip the document together with the assets. The file must exist and not be empty. The file name must have a valid extension.
 func (client *HtmlToImageClient) ConvertFile(file string) ([]byte, error) {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return nil, Error{createInvalidValueMessage(file, "ConvertFile", "html-to-image", "The file must exist and not be empty.", "convert_file"), 470}
+        return nil, NewError(createInvalidValueMessage(file, "ConvertFile", "html-to-image", "The file must exist and not be empty.", "convert_file"), 470)
     }
     
     client.files["file"] = file
@@ -1833,7 +1876,7 @@ func (client *HtmlToImageClient) ConvertFile(file string) ([]byte, error) {
 // outStream - The output stream that will contain the conversion output.
 func (client *HtmlToImageClient) ConvertFileToStream(file string, outStream io.Writer) error {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return Error{createInvalidValueMessage(file, "ConvertFileToStream::file", "html-to-image", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
+        return NewError(createInvalidValueMessage(file, "ConvertFileToStream::file", "html-to-image", "The file must exist and not be empty.", "convert_file_to_stream"), 470)
     }
     
     client.files["file"] = file
@@ -1847,7 +1890,7 @@ func (client *HtmlToImageClient) ConvertFileToStream(file string, outStream io.W
 // filePath - The output file path. The string must not be empty.
 func (client *HtmlToImageClient) ConvertFileToFile(file string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "html-to-image", "The string must not be empty.", "convert_file_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "html-to-image", "The string must not be empty.", "convert_file_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -1868,7 +1911,7 @@ func (client *HtmlToImageClient) ConvertFileToFile(file string, filePath string)
 // text - The string content to convert. The string must not be empty.
 func (client *HtmlToImageClient) ConvertString(text string) ([]byte, error) {
     if len(text) == 0 {
-        return nil, Error{createInvalidValueMessage(text, "ConvertString", "html-to-image", "The string must not be empty.", "convert_string"), 470}
+        return nil, NewError(createInvalidValueMessage(text, "ConvertString", "html-to-image", "The string must not be empty.", "convert_string"), 470)
     }
     
     client.fields["text"] = text
@@ -1881,7 +1924,7 @@ func (client *HtmlToImageClient) ConvertString(text string) ([]byte, error) {
 // outStream - The output stream that will contain the conversion output.
 func (client *HtmlToImageClient) ConvertStringToStream(text string, outStream io.Writer) error {
     if len(text) == 0 {
-        return Error{createInvalidValueMessage(text, "ConvertStringToStream::text", "html-to-image", "The string must not be empty.", "convert_string_to_stream"), 470}
+        return NewError(createInvalidValueMessage(text, "ConvertStringToStream::text", "html-to-image", "The string must not be empty.", "convert_string_to_stream"), 470)
     }
     
     client.fields["text"] = text
@@ -1895,7 +1938,7 @@ func (client *HtmlToImageClient) ConvertStringToStream(text string, outStream io
 // filePath - The output file path. The string must not be empty.
 func (client *HtmlToImageClient) ConvertStringToFile(text string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertStringToFile::file_path", "html-to-image", "The string must not be empty.", "convert_string_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertStringToFile::file_path", "html-to-image", "The string must not be empty.", "convert_string_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -1945,7 +1988,7 @@ func (client *HtmlToImageClient) ConvertStreamToStream(inStream io.Reader, outSt
 // filePath - The output file path. The string must not be empty.
 func (client *HtmlToImageClient) ConvertStreamToFile(inStream io.Reader, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "html-to-image", "The string must not be empty.", "convert_stream_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "html-to-image", "The string must not be empty.", "convert_stream_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -1971,7 +2014,7 @@ func (client *HtmlToImageClient) SetZipMainFilename(filename string) *HtmlToImag
 
 // Set the output image width in pixels.
 //
-// width - The value must be in the range 96-65000.
+// width - The accepted range is 96-65000.
 func (client *HtmlToImageClient) SetScreenshotWidth(width int) *HtmlToImageClient {
     client.fields["screenshot_width"] = strconv.Itoa(width)
     return client
@@ -1979,7 +2022,7 @@ func (client *HtmlToImageClient) SetScreenshotWidth(width int) *HtmlToImageClien
 
 // Set the output image height in pixels. If it is not specified, actual document height is used.
 //
-// height - Must be a positive integer number.
+// height - Must be a positive integer.
 func (client *HtmlToImageClient) SetScreenshotHeight(height int) *HtmlToImageClient {
     client.fields["screenshot_height"] = strconv.Itoa(height)
     return client
@@ -1987,7 +2030,7 @@ func (client *HtmlToImageClient) SetScreenshotHeight(height int) *HtmlToImageCli
 
 // Set the scaling factor (zoom) for the output image.
 //
-// factor - The percentage value. Must be a positive integer number.
+// factor - The percentage value. Must be a positive integer.
 func (client *HtmlToImageClient) SetScaleFactor(factor int) *HtmlToImageClient {
     client.fields["scale_factor"] = strconv.Itoa(factor)
     return client
@@ -2177,7 +2220,7 @@ func (client *HtmlToImageClient) SetCustomHttpHeader(header string) *HtmlToImage
 
 // Wait the specified number of milliseconds to finish all JavaScript after the document is loaded. Your API license defines the maximum wait time by "Max Delay" parameter.
 //
-// delay - The number of milliseconds to wait. Must be a positive integer number or 0.
+// delay - The number of milliseconds to wait. Must be a positive integer or 0.
 func (client *HtmlToImageClient) SetJavascriptDelay(delay int) *HtmlToImageClient {
     client.fields["javascript_delay"] = strconv.Itoa(delay)
     return client
@@ -2370,7 +2413,7 @@ func (client *HtmlToImageClient) SetClientCertificatePassword(password string) *
 
 // Set the maximum time to load the page and its resources. After this time, all requests will be considered successful. This can be useful to ensure that the conversion does not timeout. Use this method if there is no other way to fix page loading.
 //
-// maxTime - The number of seconds to wait. The value must be in the range 10-30.
+// maxTime - The number of seconds to wait. The accepted range is 10-30.
 func (client *HtmlToImageClient) SetMaxLoadingTime(maxTime int) *HtmlToImageClient {
     client.fields["max_loading_time"] = strconv.Itoa(maxTime)
     return client
@@ -2466,11 +2509,11 @@ func NewImageToImageClient(userName string, apiKey string) ImageToImageClient {
 
 // Convert an image.
 //
-// url - The address of the image to convert. The supported protocols are http:// and https://.
+// url - The address of the image to convert. Supported protocols are http:// and https://.
 func (client *ImageToImageClient) ConvertUrl(url string) ([]byte, error) {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return nil, Error{createInvalidValueMessage(url, "ConvertUrl", "image-to-image", "The supported protocols are http:// and https://.", "convert_url"), 470}
+        return nil, NewError(createInvalidValueMessage(url, "ConvertUrl", "image-to-image", "Supported protocols are http:// and https://.", "convert_url"), 470)
     }
     
     client.fields["url"] = url
@@ -2479,12 +2522,12 @@ func (client *ImageToImageClient) ConvertUrl(url string) ([]byte, error) {
 
 // Convert an image and write the result to an output stream.
 //
-// url - The address of the image to convert. The supported protocols are http:// and https://.
+// url - The address of the image to convert. Supported protocols are http:// and https://.
 // outStream - The output stream that will contain the conversion output.
 func (client *ImageToImageClient) ConvertUrlToStream(url string, outStream io.Writer) error {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return Error{createInvalidValueMessage(url, "ConvertUrlToStream::url", "image-to-image", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
+        return NewError(createInvalidValueMessage(url, "ConvertUrlToStream::url", "image-to-image", "Supported protocols are http:// and https://.", "convert_url_to_stream"), 470)
     }
     
     client.fields["url"] = url
@@ -2494,11 +2537,11 @@ func (client *ImageToImageClient) ConvertUrlToStream(url string, outStream io.Wr
 
 // Convert an image and write the result to a local file.
 //
-// url - The address of the image to convert. The supported protocols are http:// and https://.
+// url - The address of the image to convert. Supported protocols are http:// and https://.
 // filePath - The output file path. The string must not be empty.
 func (client *ImageToImageClient) ConvertUrlToFile(url string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "image-to-image", "The string must not be empty.", "convert_url_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "image-to-image", "The string must not be empty.", "convert_url_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -2519,7 +2562,7 @@ func (client *ImageToImageClient) ConvertUrlToFile(url string, filePath string) 
 // file - The path to a local file to convert. The file must exist and not be empty.
 func (client *ImageToImageClient) ConvertFile(file string) ([]byte, error) {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return nil, Error{createInvalidValueMessage(file, "ConvertFile", "image-to-image", "The file must exist and not be empty.", "convert_file"), 470}
+        return nil, NewError(createInvalidValueMessage(file, "ConvertFile", "image-to-image", "The file must exist and not be empty.", "convert_file"), 470)
     }
     
     client.files["file"] = file
@@ -2532,7 +2575,7 @@ func (client *ImageToImageClient) ConvertFile(file string) ([]byte, error) {
 // outStream - The output stream that will contain the conversion output.
 func (client *ImageToImageClient) ConvertFileToStream(file string, outStream io.Writer) error {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return Error{createInvalidValueMessage(file, "ConvertFileToStream::file", "image-to-image", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
+        return NewError(createInvalidValueMessage(file, "ConvertFileToStream::file", "image-to-image", "The file must exist and not be empty.", "convert_file_to_stream"), 470)
     }
     
     client.files["file"] = file
@@ -2546,7 +2589,7 @@ func (client *ImageToImageClient) ConvertFileToStream(file string, outStream io.
 // filePath - The output file path. The string must not be empty.
 func (client *ImageToImageClient) ConvertFileToFile(file string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "image-to-image", "The string must not be empty.", "convert_file_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "image-to-image", "The string must not be empty.", "convert_file_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -2586,7 +2629,7 @@ func (client *ImageToImageClient) ConvertRawDataToStream(data []byte, outStream 
 // filePath - The output file path. The string must not be empty.
 func (client *ImageToImageClient) ConvertRawDataToFile(data []byte, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "image-to-image", "The string must not be empty.", "convert_raw_data_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "image-to-image", "The string must not be empty.", "convert_raw_data_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -2636,7 +2679,7 @@ func (client *ImageToImageClient) ConvertStreamToStream(inStream io.Reader, outS
 // filePath - The output file path. The string must not be empty.
 func (client *ImageToImageClient) ConvertStreamToFile(inStream io.Reader, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "image-to-image", "The string must not be empty.", "convert_stream_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "image-to-image", "The string must not be empty.", "convert_stream_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -2678,7 +2721,7 @@ func (client *ImageToImageClient) SetRotate(rotate string) *ImageToImageClient {
 
 // Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area.
 //
-// x - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// x - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToImageClient) SetCropAreaX(x string) *ImageToImageClient {
     client.fields["crop_area_x"] = x
     return client
@@ -2686,7 +2729,7 @@ func (client *ImageToImageClient) SetCropAreaX(x string) *ImageToImageClient {
 
 // Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area.
 //
-// y - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// y - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToImageClient) SetCropAreaY(y string) *ImageToImageClient {
     client.fields["crop_area_y"] = y
     return client
@@ -2694,7 +2737,7 @@ func (client *ImageToImageClient) SetCropAreaY(y string) *ImageToImageClient {
 
 // Set the width of the content area. It should be at least 1 inch.
 //
-// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// width - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToImageClient) SetCropAreaWidth(width string) *ImageToImageClient {
     client.fields["crop_area_width"] = width
     return client
@@ -2702,7 +2745,7 @@ func (client *ImageToImageClient) SetCropAreaWidth(width string) *ImageToImageCl
 
 // Set the height of the content area. It should be at least 1 inch.
 //
-// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// height - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToImageClient) SetCropAreaHeight(height string) *ImageToImageClient {
     client.fields["crop_area_height"] = height
     return client
@@ -2710,10 +2753,10 @@ func (client *ImageToImageClient) SetCropAreaHeight(height string) *ImageToImage
 
 // Set the content area position and size. The content area enables to specify the part to be converted.
 //
-// x - Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// y - Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// width - Set the width of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// height - Set the height of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// x - Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// y - Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// width - Set the width of the content area. It should be at least 1 inch. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// height - Set the height of the content area. It should be at least 1 inch. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToImageClient) SetCropArea(x string, y string, width string, height string) *ImageToImageClient {
     client.SetCropAreaX(x)
     client.SetCropAreaY(y)
@@ -2740,7 +2783,7 @@ func (client *ImageToImageClient) SetCanvasSize(size string) *ImageToImageClient
 
 // Set the output canvas width.
 //
-// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// width - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToImageClient) SetCanvasWidth(width string) *ImageToImageClient {
     client.fields["canvas_width"] = width
     return client
@@ -2748,7 +2791,7 @@ func (client *ImageToImageClient) SetCanvasWidth(width string) *ImageToImageClie
 
 // Set the output canvas height.
 //
-// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// height - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToImageClient) SetCanvasHeight(height string) *ImageToImageClient {
     client.fields["canvas_height"] = height
     return client
@@ -2756,8 +2799,8 @@ func (client *ImageToImageClient) SetCanvasHeight(height string) *ImageToImageCl
 
 // Set the output canvas dimensions. If no canvas size is specified, margins are applied as a border around the image.
 //
-// width - Set the output canvas width. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// height - Set the output canvas height. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// width - Set the output canvas width. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// height - Set the output canvas height. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToImageClient) SetCanvasDimensions(width string, height string) *ImageToImageClient {
     client.SetCanvasWidth(width)
     client.SetCanvasHeight(height)
@@ -2790,7 +2833,7 @@ func (client *ImageToImageClient) SetPrintCanvasMode(mode string) *ImageToImageC
 
 // Set the output canvas top margin.
 //
-// top - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// top - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToImageClient) SetMarginTop(top string) *ImageToImageClient {
     client.fields["margin_top"] = top
     return client
@@ -2798,7 +2841,7 @@ func (client *ImageToImageClient) SetMarginTop(top string) *ImageToImageClient {
 
 // Set the output canvas right margin.
 //
-// right - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// right - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToImageClient) SetMarginRight(right string) *ImageToImageClient {
     client.fields["margin_right"] = right
     return client
@@ -2806,7 +2849,7 @@ func (client *ImageToImageClient) SetMarginRight(right string) *ImageToImageClie
 
 // Set the output canvas bottom margin.
 //
-// bottom - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// bottom - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToImageClient) SetMarginBottom(bottom string) *ImageToImageClient {
     client.fields["margin_bottom"] = bottom
     return client
@@ -2814,7 +2857,7 @@ func (client *ImageToImageClient) SetMarginBottom(bottom string) *ImageToImageCl
 
 // Set the output canvas left margin.
 //
-// left - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// left - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToImageClient) SetMarginLeft(left string) *ImageToImageClient {
     client.fields["margin_left"] = left
     return client
@@ -2822,10 +2865,10 @@ func (client *ImageToImageClient) SetMarginLeft(left string) *ImageToImageClient
 
 // Set the output canvas margins.
 //
-// top - Set the output canvas top margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// right - Set the output canvas right margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// bottom - Set the output canvas bottom margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// left - Set the output canvas left margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// top - Set the output canvas top margin. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// right - Set the output canvas right margin. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// bottom - Set the output canvas bottom margin. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// left - Set the output canvas left margin. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToImageClient) SetMargins(top string, right string, bottom string, left string) *ImageToImageClient {
     client.SetMarginTop(top)
     client.SetMarginRight(right)
@@ -3015,7 +3058,7 @@ func (client *PdfToPdfClient) ConvertToStream(outStream io.Writer) error {
 // filePath - The output file path. The string must not be empty.
 func (client *PdfToPdfClient) ConvertToFile(filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertToFile", "pdf-to-pdf", "The string must not be empty.", "convert_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertToFile", "pdf-to-pdf", "The string must not be empty.", "convert_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -3071,7 +3114,7 @@ func (client *PdfToPdfClient) SetPageWatermark(watermark string) *PdfToPdfClient
 
 // Load a file from the specified URL and apply the file as a watermark to each page of the output PDF. A watermark can be either a PDF or an image. If a multi-page file (PDF or TIFF) is used, the first page is used as the watermark.
 //
-// url - The supported protocols are http:// and https://.
+// url - Supported protocols are http:// and https://.
 func (client *PdfToPdfClient) SetPageWatermarkUrl(url string) *PdfToPdfClient {
     client.fields["page_watermark_url"] = url
     return client
@@ -3087,7 +3130,7 @@ func (client *PdfToPdfClient) SetMultipageWatermark(watermark string) *PdfToPdfC
 
 // Load a file from the specified URL and apply each page of the file as a watermark to the corresponding page of the output PDF. A watermark can be either a PDF or an image.
 //
-// url - The supported protocols are http:// and https://.
+// url - Supported protocols are http:// and https://.
 func (client *PdfToPdfClient) SetMultipageWatermarkUrl(url string) *PdfToPdfClient {
     client.fields["multipage_watermark_url"] = url
     return client
@@ -3103,7 +3146,7 @@ func (client *PdfToPdfClient) SetPageBackground(background string) *PdfToPdfClie
 
 // Load a file from the specified URL and apply the file as a background to each page of the output PDF. A background can be either a PDF or an image. If a multi-page file (PDF or TIFF) is used, the first page is used as the background.
 //
-// url - The supported protocols are http:// and https://.
+// url - Supported protocols are http:// and https://.
 func (client *PdfToPdfClient) SetPageBackgroundUrl(url string) *PdfToPdfClient {
     client.fields["page_background_url"] = url
     return client
@@ -3119,7 +3162,7 @@ func (client *PdfToPdfClient) SetMultipageBackground(background string) *PdfToPd
 
 // Load a file from the specified URL and apply each page of the file as a background to the corresponding page of the output PDF. A background can be either a PDF or an image.
 //
-// url - The supported protocols are http:// and https://.
+// url - Supported protocols are http:// and https://.
 func (client *PdfToPdfClient) SetMultipageBackgroundUrl(url string) *PdfToPdfClient {
     client.fields["multipage_background_url"] = url
     return client
@@ -3215,7 +3258,7 @@ func (client *PdfToPdfClient) SetKeywords(keywords string) *PdfToPdfClient {
 
 // Use metadata (title, subject, author and keywords) from the n-th input PDF.
 //
-// index - Set the index of the input PDF file from which to use the metadata. 0 means no metadata. Must be a positive integer number or 0.
+// index - Set the index of the input PDF file from which to use the metadata. 0 means no metadata. Must be a positive integer or 0.
 func (client *PdfToPdfClient) SetUseMetadataFrom(index int) *PdfToPdfClient {
     client.fields["use_metadata_from"] = strconv.Itoa(index)
     return client
@@ -3247,7 +3290,7 @@ func (client *PdfToPdfClient) SetInitialZoomType(zoomType string) *PdfToPdfClien
 
 // Display the specified page when the document is opened.
 //
-// page - Must be a positive integer number.
+// page - Must be a positive integer.
 func (client *PdfToPdfClient) SetInitialPage(page int) *PdfToPdfClient {
     client.fields["initial_page"] = strconv.Itoa(page)
     return client
@@ -3255,7 +3298,7 @@ func (client *PdfToPdfClient) SetInitialPage(page int) *PdfToPdfClient {
 
 // Specify the initial page zoom in percents when the document is opened.
 //
-// zoom - Must be a positive integer number.
+// zoom - Must be a positive integer.
 func (client *PdfToPdfClient) SetInitialZoom(zoom int) *PdfToPdfClient {
     client.fields["initial_zoom"] = strconv.Itoa(zoom)
     return client
@@ -3447,11 +3490,11 @@ func NewImageToPdfClient(userName string, apiKey string) ImageToPdfClient {
 
 // Convert an image.
 //
-// url - The address of the image to convert. The supported protocols are http:// and https://.
+// url - The address of the image to convert. Supported protocols are http:// and https://.
 func (client *ImageToPdfClient) ConvertUrl(url string) ([]byte, error) {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return nil, Error{createInvalidValueMessage(url, "ConvertUrl", "image-to-pdf", "The supported protocols are http:// and https://.", "convert_url"), 470}
+        return nil, NewError(createInvalidValueMessage(url, "ConvertUrl", "image-to-pdf", "Supported protocols are http:// and https://.", "convert_url"), 470)
     }
     
     client.fields["url"] = url
@@ -3460,12 +3503,12 @@ func (client *ImageToPdfClient) ConvertUrl(url string) ([]byte, error) {
 
 // Convert an image and write the result to an output stream.
 //
-// url - The address of the image to convert. The supported protocols are http:// and https://.
+// url - The address of the image to convert. Supported protocols are http:// and https://.
 // outStream - The output stream that will contain the conversion output.
 func (client *ImageToPdfClient) ConvertUrlToStream(url string, outStream io.Writer) error {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return Error{createInvalidValueMessage(url, "ConvertUrlToStream::url", "image-to-pdf", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
+        return NewError(createInvalidValueMessage(url, "ConvertUrlToStream::url", "image-to-pdf", "Supported protocols are http:// and https://.", "convert_url_to_stream"), 470)
     }
     
     client.fields["url"] = url
@@ -3475,11 +3518,11 @@ func (client *ImageToPdfClient) ConvertUrlToStream(url string, outStream io.Writ
 
 // Convert an image and write the result to a local file.
 //
-// url - The address of the image to convert. The supported protocols are http:// and https://.
+// url - The address of the image to convert. Supported protocols are http:// and https://.
 // filePath - The output file path. The string must not be empty.
 func (client *ImageToPdfClient) ConvertUrlToFile(url string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "image-to-pdf", "The string must not be empty.", "convert_url_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "image-to-pdf", "The string must not be empty.", "convert_url_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -3500,7 +3543,7 @@ func (client *ImageToPdfClient) ConvertUrlToFile(url string, filePath string) er
 // file - The path to a local file to convert. The file must exist and not be empty.
 func (client *ImageToPdfClient) ConvertFile(file string) ([]byte, error) {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return nil, Error{createInvalidValueMessage(file, "ConvertFile", "image-to-pdf", "The file must exist and not be empty.", "convert_file"), 470}
+        return nil, NewError(createInvalidValueMessage(file, "ConvertFile", "image-to-pdf", "The file must exist and not be empty.", "convert_file"), 470)
     }
     
     client.files["file"] = file
@@ -3513,7 +3556,7 @@ func (client *ImageToPdfClient) ConvertFile(file string) ([]byte, error) {
 // outStream - The output stream that will contain the conversion output.
 func (client *ImageToPdfClient) ConvertFileToStream(file string, outStream io.Writer) error {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return Error{createInvalidValueMessage(file, "ConvertFileToStream::file", "image-to-pdf", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
+        return NewError(createInvalidValueMessage(file, "ConvertFileToStream::file", "image-to-pdf", "The file must exist and not be empty.", "convert_file_to_stream"), 470)
     }
     
     client.files["file"] = file
@@ -3527,7 +3570,7 @@ func (client *ImageToPdfClient) ConvertFileToStream(file string, outStream io.Wr
 // filePath - The output file path. The string must not be empty.
 func (client *ImageToPdfClient) ConvertFileToFile(file string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "image-to-pdf", "The string must not be empty.", "convert_file_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "image-to-pdf", "The string must not be empty.", "convert_file_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -3567,7 +3610,7 @@ func (client *ImageToPdfClient) ConvertRawDataToStream(data []byte, outStream io
 // filePath - The output file path. The string must not be empty.
 func (client *ImageToPdfClient) ConvertRawDataToFile(data []byte, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "image-to-pdf", "The string must not be empty.", "convert_raw_data_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "image-to-pdf", "The string must not be empty.", "convert_raw_data_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -3617,7 +3660,7 @@ func (client *ImageToPdfClient) ConvertStreamToStream(inStream io.Reader, outStr
 // filePath - The output file path. The string must not be empty.
 func (client *ImageToPdfClient) ConvertStreamToFile(inStream io.Reader, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "image-to-pdf", "The string must not be empty.", "convert_stream_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "image-to-pdf", "The string must not be empty.", "convert_stream_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -3651,7 +3694,7 @@ func (client *ImageToPdfClient) SetRotate(rotate string) *ImageToPdfClient {
 
 // Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area.
 //
-// x - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// x - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToPdfClient) SetCropAreaX(x string) *ImageToPdfClient {
     client.fields["crop_area_x"] = x
     return client
@@ -3659,7 +3702,7 @@ func (client *ImageToPdfClient) SetCropAreaX(x string) *ImageToPdfClient {
 
 // Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area.
 //
-// y - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// y - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToPdfClient) SetCropAreaY(y string) *ImageToPdfClient {
     client.fields["crop_area_y"] = y
     return client
@@ -3667,7 +3710,7 @@ func (client *ImageToPdfClient) SetCropAreaY(y string) *ImageToPdfClient {
 
 // Set the width of the content area. It should be at least 1 inch.
 //
-// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// width - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToPdfClient) SetCropAreaWidth(width string) *ImageToPdfClient {
     client.fields["crop_area_width"] = width
     return client
@@ -3675,7 +3718,7 @@ func (client *ImageToPdfClient) SetCropAreaWidth(width string) *ImageToPdfClient
 
 // Set the height of the content area. It should be at least 1 inch.
 //
-// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// height - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToPdfClient) SetCropAreaHeight(height string) *ImageToPdfClient {
     client.fields["crop_area_height"] = height
     return client
@@ -3683,10 +3726,10 @@ func (client *ImageToPdfClient) SetCropAreaHeight(height string) *ImageToPdfClie
 
 // Set the content area position and size. The content area enables to specify the part to be converted.
 //
-// x - Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// y - Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// width - Set the width of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// height - Set the height of the content area. It should be at least 1 inch. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// x - Set the top left X coordinate of the content area. It is relative to the top left X coordinate of the print area. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// y - Set the top left Y coordinate of the content area. It is relative to the top left Y coordinate of the print area. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// width - Set the width of the content area. It should be at least 1 inch. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// height - Set the height of the content area. It should be at least 1 inch. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToPdfClient) SetCropArea(x string, y string, width string, height string) *ImageToPdfClient {
     client.SetCropAreaX(x)
     client.SetCropAreaY(y)
@@ -3713,7 +3756,7 @@ func (client *ImageToPdfClient) SetPageSize(size string) *ImageToPdfClient {
 
 // Set the output page width.
 //
-// width - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// width - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToPdfClient) SetPageWidth(width string) *ImageToPdfClient {
     client.fields["page_width"] = width
     return client
@@ -3721,7 +3764,7 @@ func (client *ImageToPdfClient) SetPageWidth(width string) *ImageToPdfClient {
 
 // Set the output page height.
 //
-// height - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// height - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToPdfClient) SetPageHeight(height string) *ImageToPdfClient {
     client.fields["page_height"] = height
     return client
@@ -3729,8 +3772,8 @@ func (client *ImageToPdfClient) SetPageHeight(height string) *ImageToPdfClient {
 
 // Set the output page dimensions. If no page size is specified, margins are applied as a border around the image.
 //
-// width - Set the output page width. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// height - Set the output page height. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// width - Set the output page width. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// height - Set the output page height. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToPdfClient) SetPageDimensions(width string, height string) *ImageToPdfClient {
     client.SetPageWidth(width)
     client.SetPageHeight(height)
@@ -3763,7 +3806,7 @@ func (client *ImageToPdfClient) SetPrintPageMode(mode string) *ImageToPdfClient 
 
 // Set the output page top margin.
 //
-// top - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// top - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToPdfClient) SetMarginTop(top string) *ImageToPdfClient {
     client.fields["margin_top"] = top
     return client
@@ -3771,7 +3814,7 @@ func (client *ImageToPdfClient) SetMarginTop(top string) *ImageToPdfClient {
 
 // Set the output page right margin.
 //
-// right - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// right - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToPdfClient) SetMarginRight(right string) *ImageToPdfClient {
     client.fields["margin_right"] = right
     return client
@@ -3779,7 +3822,7 @@ func (client *ImageToPdfClient) SetMarginRight(right string) *ImageToPdfClient {
 
 // Set the output page bottom margin.
 //
-// bottom - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// bottom - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToPdfClient) SetMarginBottom(bottom string) *ImageToPdfClient {
     client.fields["margin_bottom"] = bottom
     return client
@@ -3787,7 +3830,7 @@ func (client *ImageToPdfClient) SetMarginBottom(bottom string) *ImageToPdfClient
 
 // Set the output page left margin.
 //
-// left - The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// left - The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToPdfClient) SetMarginLeft(left string) *ImageToPdfClient {
     client.fields["margin_left"] = left
     return client
@@ -3795,10 +3838,10 @@ func (client *ImageToPdfClient) SetMarginLeft(left string) *ImageToPdfClient {
 
 // Set the output page margins.
 //
-// top - Set the output page top margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// right - Set the output page right margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// bottom - Set the output page bottom margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
-// left - Set the output page left margin. The value must be specified in inches "in", millimeters "mm", centimeters "cm", pixels "px", or points "pt".
+// top - Set the output page top margin. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// right - Set the output page right margin. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// bottom - Set the output page bottom margin. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
+// left - Set the output page left margin. The value must be specified in inches 'in', millimeters 'mm', centimeters 'cm', pixels 'px', or points 'pt'.
 func (client *ImageToPdfClient) SetPageMargins(top string, right string, bottom string, left string) *ImageToPdfClient {
     client.SetMarginTop(top)
     client.SetMarginRight(right)
@@ -3833,7 +3876,7 @@ func (client *ImageToPdfClient) SetPageWatermark(watermark string) *ImageToPdfCl
 
 // Load a file from the specified URL and apply the file as a watermark to each page of the output PDF. A watermark can be either a PDF or an image. If a multi-page file (PDF or TIFF) is used, the first page is used as the watermark.
 //
-// url - The supported protocols are http:// and https://.
+// url - Supported protocols are http:// and https://.
 func (client *ImageToPdfClient) SetPageWatermarkUrl(url string) *ImageToPdfClient {
     client.fields["page_watermark_url"] = url
     return client
@@ -3849,7 +3892,7 @@ func (client *ImageToPdfClient) SetMultipageWatermark(watermark string) *ImageTo
 
 // Load a file from the specified URL and apply each page of the file as a watermark to the corresponding page of the output PDF. A watermark can be either a PDF or an image.
 //
-// url - The supported protocols are http:// and https://.
+// url - Supported protocols are http:// and https://.
 func (client *ImageToPdfClient) SetMultipageWatermarkUrl(url string) *ImageToPdfClient {
     client.fields["multipage_watermark_url"] = url
     return client
@@ -3865,7 +3908,7 @@ func (client *ImageToPdfClient) SetPageBackground(background string) *ImageToPdf
 
 // Load a file from the specified URL and apply the file as a background to each page of the output PDF. A background can be either a PDF or an image. If a multi-page file (PDF or TIFF) is used, the first page is used as the background.
 //
-// url - The supported protocols are http:// and https://.
+// url - Supported protocols are http:// and https://.
 func (client *ImageToPdfClient) SetPageBackgroundUrl(url string) *ImageToPdfClient {
     client.fields["page_background_url"] = url
     return client
@@ -3881,7 +3924,7 @@ func (client *ImageToPdfClient) SetMultipageBackground(background string) *Image
 
 // Load a file from the specified URL and apply each page of the file as a background to the corresponding page of the output PDF. A background can be either a PDF or an image.
 //
-// url - The supported protocols are http:// and https://.
+// url - Supported protocols are http:// and https://.
 func (client *ImageToPdfClient) SetMultipageBackgroundUrl(url string) *ImageToPdfClient {
     client.fields["multipage_background_url"] = url
     return client
@@ -4001,7 +4044,7 @@ func (client *ImageToPdfClient) SetInitialZoomType(zoomType string) *ImageToPdfC
 
 // Display the specified page when the document is opened.
 //
-// page - Must be a positive integer number.
+// page - Must be a positive integer.
 func (client *ImageToPdfClient) SetInitialPage(page int) *ImageToPdfClient {
     client.fields["initial_page"] = strconv.Itoa(page)
     return client
@@ -4009,7 +4052,7 @@ func (client *ImageToPdfClient) SetInitialPage(page int) *ImageToPdfClient {
 
 // Specify the initial page zoom in percents when the document is opened.
 //
-// zoom - Must be a positive integer number.
+// zoom - Must be a positive integer.
 func (client *ImageToPdfClient) SetInitialZoom(zoom int) *ImageToPdfClient {
     client.fields["initial_zoom"] = strconv.Itoa(zoom)
     return client
@@ -4204,11 +4247,11 @@ func NewPdfToHtmlClient(userName string, apiKey string) PdfToHtmlClient {
 
 // Convert a PDF.
 //
-// url - The address of the PDF to convert. The supported protocols are http:// and https://.
+// url - The address of the PDF to convert. Supported protocols are http:// and https://.
 func (client *PdfToHtmlClient) ConvertUrl(url string) ([]byte, error) {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return nil, Error{createInvalidValueMessage(url, "ConvertUrl", "pdf-to-html", "The supported protocols are http:// and https://.", "convert_url"), 470}
+        return nil, NewError(createInvalidValueMessage(url, "ConvertUrl", "pdf-to-html", "Supported protocols are http:// and https://.", "convert_url"), 470)
     }
     
     client.fields["url"] = url
@@ -4217,12 +4260,12 @@ func (client *PdfToHtmlClient) ConvertUrl(url string) ([]byte, error) {
 
 // Convert a PDF and write the result to an output stream.
 //
-// url - The address of the PDF to convert. The supported protocols are http:// and https://.
+// url - The address of the PDF to convert. Supported protocols are http:// and https://.
 // outStream - The output stream that will contain the conversion output.
 func (client *PdfToHtmlClient) ConvertUrlToStream(url string, outStream io.Writer) error {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return Error{createInvalidValueMessage(url, "ConvertUrlToStream::url", "pdf-to-html", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
+        return NewError(createInvalidValueMessage(url, "ConvertUrlToStream::url", "pdf-to-html", "Supported protocols are http:// and https://.", "convert_url_to_stream"), 470)
     }
     
     client.fields["url"] = url
@@ -4232,15 +4275,15 @@ func (client *PdfToHtmlClient) ConvertUrlToStream(url string, outStream io.Write
 
 // Convert a PDF and write the result to a local file.
 //
-// url - The address of the PDF to convert. The supported protocols are http:// and https://.
+// url - The address of the PDF to convert. Supported protocols are http:// and https://.
 // filePath - The output file path. The string must not be empty. The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.
 func (client *PdfToHtmlClient) ConvertUrlToFile(url string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "pdf-to-html", "The string must not be empty.", "convert_url_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "pdf-to-html", "The string must not be empty.", "convert_url_to_file"), 470)
     }
     
     if !client.isOutputTypeValid(filePath) {
-        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "pdf-to-html", "The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.", "convert_url_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "pdf-to-html", "The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.", "convert_url_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -4261,7 +4304,7 @@ func (client *PdfToHtmlClient) ConvertUrlToFile(url string, filePath string) err
 // file - The path to a local file to convert. The file must exist and not be empty.
 func (client *PdfToHtmlClient) ConvertFile(file string) ([]byte, error) {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return nil, Error{createInvalidValueMessage(file, "ConvertFile", "pdf-to-html", "The file must exist and not be empty.", "convert_file"), 470}
+        return nil, NewError(createInvalidValueMessage(file, "ConvertFile", "pdf-to-html", "The file must exist and not be empty.", "convert_file"), 470)
     }
     
     client.files["file"] = file
@@ -4274,7 +4317,7 @@ func (client *PdfToHtmlClient) ConvertFile(file string) ([]byte, error) {
 // outStream - The output stream that will contain the conversion output.
 func (client *PdfToHtmlClient) ConvertFileToStream(file string, outStream io.Writer) error {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return Error{createInvalidValueMessage(file, "ConvertFileToStream::file", "pdf-to-html", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
+        return NewError(createInvalidValueMessage(file, "ConvertFileToStream::file", "pdf-to-html", "The file must exist and not be empty.", "convert_file_to_stream"), 470)
     }
     
     client.files["file"] = file
@@ -4288,11 +4331,11 @@ func (client *PdfToHtmlClient) ConvertFileToStream(file string, outStream io.Wri
 // filePath - The output file path. The string must not be empty. The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.
 func (client *PdfToHtmlClient) ConvertFileToFile(file string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "pdf-to-html", "The string must not be empty.", "convert_file_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "pdf-to-html", "The string must not be empty.", "convert_file_to_file"), 470)
     }
     
     if !client.isOutputTypeValid(filePath) {
-        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "pdf-to-html", "The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.", "convert_file_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "pdf-to-html", "The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.", "convert_file_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -4332,11 +4375,11 @@ func (client *PdfToHtmlClient) ConvertRawDataToStream(data []byte, outStream io.
 // filePath - The output file path. The string must not be empty. The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.
 func (client *PdfToHtmlClient) ConvertRawDataToFile(data []byte, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "pdf-to-html", "The string must not be empty.", "convert_raw_data_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "pdf-to-html", "The string must not be empty.", "convert_raw_data_to_file"), 470)
     }
     
     if !client.isOutputTypeValid(filePath) {
-        return Error{createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "pdf-to-html", "The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.", "convert_raw_data_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "pdf-to-html", "The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.", "convert_raw_data_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -4386,11 +4429,11 @@ func (client *PdfToHtmlClient) ConvertStreamToStream(inStream io.Reader, outStre
 // filePath - The output file path. The string must not be empty. The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.
 func (client *PdfToHtmlClient) ConvertStreamToFile(inStream io.Reader, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "pdf-to-html", "The string must not be empty.", "convert_stream_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "pdf-to-html", "The string must not be empty.", "convert_stream_to_file"), 470)
     }
     
     if !client.isOutputTypeValid(filePath) {
-        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "pdf-to-html", "The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.", "convert_stream_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "pdf-to-html", "The converter generates an HTML or ZIP file. If ZIP file is generated, the file path must have a ZIP or zip extension.", "convert_stream_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -4416,7 +4459,7 @@ func (client *PdfToHtmlClient) SetPdfPassword(password string) *PdfToHtmlClient 
 
 // Set the scaling factor (zoom) for the main page area.
 //
-// factor - The percentage value. Must be a positive integer number.
+// factor - The percentage value. Must be a positive integer.
 func (client *PdfToHtmlClient) SetScaleFactor(factor int) *PdfToHtmlClient {
     client.fields["scale_factor"] = strconv.Itoa(factor)
     return client
@@ -4697,11 +4740,11 @@ func NewPdfToTextClient(userName string, apiKey string) PdfToTextClient {
 
 // Convert a PDF.
 //
-// url - The address of the PDF to convert. The supported protocols are http:// and https://.
+// url - The address of the PDF to convert. Supported protocols are http:// and https://.
 func (client *PdfToTextClient) ConvertUrl(url string) ([]byte, error) {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return nil, Error{createInvalidValueMessage(url, "ConvertUrl", "pdf-to-text", "The supported protocols are http:// and https://.", "convert_url"), 470}
+        return nil, NewError(createInvalidValueMessage(url, "ConvertUrl", "pdf-to-text", "Supported protocols are http:// and https://.", "convert_url"), 470)
     }
     
     client.fields["url"] = url
@@ -4710,12 +4753,12 @@ func (client *PdfToTextClient) ConvertUrl(url string) ([]byte, error) {
 
 // Convert a PDF and write the result to an output stream.
 //
-// url - The address of the PDF to convert. The supported protocols are http:// and https://.
+// url - The address of the PDF to convert. Supported protocols are http:// and https://.
 // outStream - The output stream that will contain the conversion output.
 func (client *PdfToTextClient) ConvertUrlToStream(url string, outStream io.Writer) error {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return Error{createInvalidValueMessage(url, "ConvertUrlToStream::url", "pdf-to-text", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
+        return NewError(createInvalidValueMessage(url, "ConvertUrlToStream::url", "pdf-to-text", "Supported protocols are http:// and https://.", "convert_url_to_stream"), 470)
     }
     
     client.fields["url"] = url
@@ -4725,11 +4768,11 @@ func (client *PdfToTextClient) ConvertUrlToStream(url string, outStream io.Write
 
 // Convert a PDF and write the result to a local file.
 //
-// url - The address of the PDF to convert. The supported protocols are http:// and https://.
+// url - The address of the PDF to convert. Supported protocols are http:// and https://.
 // filePath - The output file path. The string must not be empty.
 func (client *PdfToTextClient) ConvertUrlToFile(url string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "pdf-to-text", "The string must not be empty.", "convert_url_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "pdf-to-text", "The string must not be empty.", "convert_url_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -4750,7 +4793,7 @@ func (client *PdfToTextClient) ConvertUrlToFile(url string, filePath string) err
 // file - The path to a local file to convert. The file must exist and not be empty.
 func (client *PdfToTextClient) ConvertFile(file string) ([]byte, error) {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return nil, Error{createInvalidValueMessage(file, "ConvertFile", "pdf-to-text", "The file must exist and not be empty.", "convert_file"), 470}
+        return nil, NewError(createInvalidValueMessage(file, "ConvertFile", "pdf-to-text", "The file must exist and not be empty.", "convert_file"), 470)
     }
     
     client.files["file"] = file
@@ -4763,7 +4806,7 @@ func (client *PdfToTextClient) ConvertFile(file string) ([]byte, error) {
 // outStream - The output stream that will contain the conversion output.
 func (client *PdfToTextClient) ConvertFileToStream(file string, outStream io.Writer) error {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return Error{createInvalidValueMessage(file, "ConvertFileToStream::file", "pdf-to-text", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
+        return NewError(createInvalidValueMessage(file, "ConvertFileToStream::file", "pdf-to-text", "The file must exist and not be empty.", "convert_file_to_stream"), 470)
     }
     
     client.files["file"] = file
@@ -4777,7 +4820,7 @@ func (client *PdfToTextClient) ConvertFileToStream(file string, outStream io.Wri
 // filePath - The output file path. The string must not be empty.
 func (client *PdfToTextClient) ConvertFileToFile(file string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "pdf-to-text", "The string must not be empty.", "convert_file_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "pdf-to-text", "The string must not be empty.", "convert_file_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -4817,7 +4860,7 @@ func (client *PdfToTextClient) ConvertRawDataToStream(data []byte, outStream io.
 // filePath - The output file path. The string must not be empty.
 func (client *PdfToTextClient) ConvertRawDataToFile(data []byte, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "pdf-to-text", "The string must not be empty.", "convert_raw_data_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "pdf-to-text", "The string must not be empty.", "convert_raw_data_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -4867,7 +4910,7 @@ func (client *PdfToTextClient) ConvertStreamToStream(inStream io.Reader, outStre
 // filePath - The output file path. The string must not be empty.
 func (client *PdfToTextClient) ConvertStreamToFile(inStream io.Reader, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "pdf-to-text", "The string must not be empty.", "convert_stream_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "pdf-to-text", "The string must not be empty.", "convert_stream_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -4965,7 +5008,7 @@ func (client *PdfToTextClient) SetRemoveEmptyLines(value bool) *PdfToTextClient 
 
 // Set the top left X coordinate of the crop area in points.
 //
-// x - Must be a positive integer number or 0.
+// x - Must be a positive integer or 0.
 func (client *PdfToTextClient) SetCropAreaX(x int) *PdfToTextClient {
     client.fields["crop_area_x"] = strconv.Itoa(x)
     return client
@@ -4973,7 +5016,7 @@ func (client *PdfToTextClient) SetCropAreaX(x int) *PdfToTextClient {
 
 // Set the top left Y coordinate of the crop area in points.
 //
-// y - Must be a positive integer number or 0.
+// y - Must be a positive integer or 0.
 func (client *PdfToTextClient) SetCropAreaY(y int) *PdfToTextClient {
     client.fields["crop_area_y"] = strconv.Itoa(y)
     return client
@@ -4981,7 +5024,7 @@ func (client *PdfToTextClient) SetCropAreaY(y int) *PdfToTextClient {
 
 // Set the width of the crop area in points.
 //
-// width - Must be a positive integer number or 0.
+// width - Must be a positive integer or 0.
 func (client *PdfToTextClient) SetCropAreaWidth(width int) *PdfToTextClient {
     client.fields["crop_area_width"] = strconv.Itoa(width)
     return client
@@ -4989,7 +5032,7 @@ func (client *PdfToTextClient) SetCropAreaWidth(width int) *PdfToTextClient {
 
 // Set the height of the crop area in points.
 //
-// height - Must be a positive integer number or 0.
+// height - Must be a positive integer or 0.
 func (client *PdfToTextClient) SetCropAreaHeight(height int) *PdfToTextClient {
     client.fields["crop_area_height"] = strconv.Itoa(height)
     return client
@@ -4997,10 +5040,10 @@ func (client *PdfToTextClient) SetCropAreaHeight(height int) *PdfToTextClient {
 
 // Set the crop area. It allows to extract just a part of a PDF page.
 //
-// x - Set the top left X coordinate of the crop area in points. Must be a positive integer number or 0.
-// y - Set the top left Y coordinate of the crop area in points. Must be a positive integer number or 0.
-// width - Set the width of the crop area in points. Must be a positive integer number or 0.
-// height - Set the height of the crop area in points. Must be a positive integer number or 0.
+// x - Set the top left X coordinate of the crop area in points. Must be a positive integer or 0.
+// y - Set the top left Y coordinate of the crop area in points. Must be a positive integer or 0.
+// width - Set the width of the crop area in points. Must be a positive integer or 0.
+// height - Set the height of the crop area in points. Must be a positive integer or 0.
 func (client *PdfToTextClient) SetCropArea(x int, y int, width int, height int) *PdfToTextClient {
     client.SetCropAreaX(x)
     client.SetCropAreaY(y)
@@ -5147,11 +5190,11 @@ func NewPdfToImageClient(userName string, apiKey string) PdfToImageClient {
 
 // Convert an image.
 //
-// url - The address of the image to convert. The supported protocols are http:// and https://.
+// url - The address of the image to convert. Supported protocols are http:// and https://.
 func (client *PdfToImageClient) ConvertUrl(url string) ([]byte, error) {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return nil, Error{createInvalidValueMessage(url, "ConvertUrl", "pdf-to-image", "The supported protocols are http:// and https://.", "convert_url"), 470}
+        return nil, NewError(createInvalidValueMessage(url, "ConvertUrl", "pdf-to-image", "Supported protocols are http:// and https://.", "convert_url"), 470)
     }
     
     client.fields["url"] = url
@@ -5160,12 +5203,12 @@ func (client *PdfToImageClient) ConvertUrl(url string) ([]byte, error) {
 
 // Convert an image and write the result to an output stream.
 //
-// url - The address of the image to convert. The supported protocols are http:// and https://.
+// url - The address of the image to convert. Supported protocols are http:// and https://.
 // outStream - The output stream that will contain the conversion output.
 func (client *PdfToImageClient) ConvertUrlToStream(url string, outStream io.Writer) error {
     re, _ := regexp.Compile("(?i)^https?://.*$")
     if !re.MatchString(url) {
-        return Error{createInvalidValueMessage(url, "ConvertUrlToStream::url", "pdf-to-image", "The supported protocols are http:// and https://.", "convert_url_to_stream"), 470}
+        return NewError(createInvalidValueMessage(url, "ConvertUrlToStream::url", "pdf-to-image", "Supported protocols are http:// and https://.", "convert_url_to_stream"), 470)
     }
     
     client.fields["url"] = url
@@ -5175,11 +5218,11 @@ func (client *PdfToImageClient) ConvertUrlToStream(url string, outStream io.Writ
 
 // Convert an image and write the result to a local file.
 //
-// url - The address of the image to convert. The supported protocols are http:// and https://.
+// url - The address of the image to convert. Supported protocols are http:// and https://.
 // filePath - The output file path. The string must not be empty.
 func (client *PdfToImageClient) ConvertUrlToFile(url string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "pdf-to-image", "The string must not be empty.", "convert_url_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertUrlToFile::file_path", "pdf-to-image", "The string must not be empty.", "convert_url_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -5200,7 +5243,7 @@ func (client *PdfToImageClient) ConvertUrlToFile(url string, filePath string) er
 // file - The path to a local file to convert. The file must exist and not be empty.
 func (client *PdfToImageClient) ConvertFile(file string) ([]byte, error) {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return nil, Error{createInvalidValueMessage(file, "ConvertFile", "pdf-to-image", "The file must exist and not be empty.", "convert_file"), 470}
+        return nil, NewError(createInvalidValueMessage(file, "ConvertFile", "pdf-to-image", "The file must exist and not be empty.", "convert_file"), 470)
     }
     
     client.files["file"] = file
@@ -5213,7 +5256,7 @@ func (client *PdfToImageClient) ConvertFile(file string) ([]byte, error) {
 // outStream - The output stream that will contain the conversion output.
 func (client *PdfToImageClient) ConvertFileToStream(file string, outStream io.Writer) error {
     if stat, err := os.Stat(file); err != nil || stat.Size() == 0 {
-        return Error{createInvalidValueMessage(file, "ConvertFileToStream::file", "pdf-to-image", "The file must exist and not be empty.", "convert_file_to_stream"), 470}
+        return NewError(createInvalidValueMessage(file, "ConvertFileToStream::file", "pdf-to-image", "The file must exist and not be empty.", "convert_file_to_stream"), 470)
     }
     
     client.files["file"] = file
@@ -5227,7 +5270,7 @@ func (client *PdfToImageClient) ConvertFileToStream(file string, outStream io.Wr
 // filePath - The output file path. The string must not be empty.
 func (client *PdfToImageClient) ConvertFileToFile(file string, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "pdf-to-image", "The string must not be empty.", "convert_file_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertFileToFile::file_path", "pdf-to-image", "The string must not be empty.", "convert_file_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -5267,7 +5310,7 @@ func (client *PdfToImageClient) ConvertRawDataToStream(data []byte, outStream io
 // filePath - The output file path. The string must not be empty.
 func (client *PdfToImageClient) ConvertRawDataToFile(data []byte, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "pdf-to-image", "The string must not be empty.", "convert_raw_data_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertRawDataToFile::file_path", "pdf-to-image", "The string must not be empty.", "convert_raw_data_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -5317,7 +5360,7 @@ func (client *PdfToImageClient) ConvertStreamToStream(inStream io.Reader, outStr
 // filePath - The output file path. The string must not be empty.
 func (client *PdfToImageClient) ConvertStreamToFile(inStream io.Reader, filePath string) error {
     if len(filePath) == 0 {
-        return Error{createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "pdf-to-image", "The string must not be empty.", "convert_stream_to_file"), 470}
+        return NewError(createInvalidValueMessage(filePath, "ConvertStreamToFile::file_path", "pdf-to-image", "The string must not be empty.", "convert_stream_to_file"), 470)
     }
     
     outputFile, err := os.Create(filePath)
@@ -5388,7 +5431,7 @@ func (client *PdfToImageClient) SetUseCropbox(value bool) *PdfToImageClient {
 
 // Set the top left X coordinate of the crop area in points.
 //
-// x - Must be a positive integer number or 0.
+// x - Must be a positive integer or 0.
 func (client *PdfToImageClient) SetCropAreaX(x int) *PdfToImageClient {
     client.fields["crop_area_x"] = strconv.Itoa(x)
     return client
@@ -5396,7 +5439,7 @@ func (client *PdfToImageClient) SetCropAreaX(x int) *PdfToImageClient {
 
 // Set the top left Y coordinate of the crop area in points.
 //
-// y - Must be a positive integer number or 0.
+// y - Must be a positive integer or 0.
 func (client *PdfToImageClient) SetCropAreaY(y int) *PdfToImageClient {
     client.fields["crop_area_y"] = strconv.Itoa(y)
     return client
@@ -5404,7 +5447,7 @@ func (client *PdfToImageClient) SetCropAreaY(y int) *PdfToImageClient {
 
 // Set the width of the crop area in points.
 //
-// width - Must be a positive integer number or 0.
+// width - Must be a positive integer or 0.
 func (client *PdfToImageClient) SetCropAreaWidth(width int) *PdfToImageClient {
     client.fields["crop_area_width"] = strconv.Itoa(width)
     return client
@@ -5412,7 +5455,7 @@ func (client *PdfToImageClient) SetCropAreaWidth(width int) *PdfToImageClient {
 
 // Set the height of the crop area in points.
 //
-// height - Must be a positive integer number or 0.
+// height - Must be a positive integer or 0.
 func (client *PdfToImageClient) SetCropAreaHeight(height int) *PdfToImageClient {
     client.fields["crop_area_height"] = strconv.Itoa(height)
     return client
@@ -5420,10 +5463,10 @@ func (client *PdfToImageClient) SetCropAreaHeight(height int) *PdfToImageClient 
 
 // Set the crop area. It allows to extract just a part of a PDF page.
 //
-// x - Set the top left X coordinate of the crop area in points. Must be a positive integer number or 0.
-// y - Set the top left Y coordinate of the crop area in points. Must be a positive integer number or 0.
-// width - Set the width of the crop area in points. Must be a positive integer number or 0.
-// height - Set the height of the crop area in points. Must be a positive integer number or 0.
+// x - Set the top left X coordinate of the crop area in points. Must be a positive integer or 0.
+// y - Set the top left Y coordinate of the crop area in points. Must be a positive integer or 0.
+// width - Set the width of the crop area in points. Must be a positive integer or 0.
+// height - Set the height of the crop area in points. Must be a positive integer or 0.
 func (client *PdfToImageClient) SetCropArea(x int, y int, width int, height int) *PdfToImageClient {
     client.SetCropAreaX(x)
     client.SetCropAreaY(y)
