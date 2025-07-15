@@ -1,6 +1,6 @@
-# Pdfcrowd API - Go client library
+# PDFCrowd API - Go client library
 
-The Pdfcrowd API lets you easily convert between HTML, PDF and various image
+The PDFCrowd API lets you easily convert between HTML, PDF and various image
 formats in your Go applications.
 
 To use the API, you need an account on

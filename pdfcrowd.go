@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "6.5.0"
+const CLIENT_VERSION = "6.5.2"
 
 type Error struct {
     message string
@@ -134,7 +134,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/6.5.0 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/6.5.2 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "24.04"
     return helper
@@ -397,9 +397,9 @@ type HtmlToPdfClient struct {
     fileId int
 }
 
-// Constructor for the Pdfcrowd API client.
+// Constructor for the PDFCrowd API client.
 //
-// userName - Your username at Pdfcrowd.
+// userName - Your username at PDFCrowd.
 // apiKey - Your API key.
 func NewHtmlToPdfClient(userName string, apiKey string) HtmlToPdfClient {
     helper := newConnectionHelper(userName, apiKey)
@@ -1028,7 +1028,7 @@ func (client *HtmlToPdfClient) SetHttpAuth(userName string, password string) *Ht
     return client
 }
 
-// Set cookies that are sent in Pdfcrowd HTTP requests.
+// Set HTTP cookies to be included in all requests made by the converter.
 //
 // cookies - The cookie string.
 func (client *HtmlToPdfClient) SetCookies(cookies string) *HtmlToPdfClient {
@@ -1060,7 +1060,7 @@ func (client *HtmlToPdfClient) SetFailOnAnyUrlError(failOnError bool) *HtmlToPdf
     return client
 }
 
-// Do not send the X-Pdfcrowd HTTP header in Pdfcrowd HTTP requests.
+// Do not send the X-Pdfcrowd HTTP header in PDFCrowd HTTP requests.
 //
 // value - Set to true to disable sending X-Pdfcrowd HTTP header.
 func (client *HtmlToPdfClient) SetNoXpdfcrowdHeader(value bool) *HtmlToPdfClient {
@@ -1100,7 +1100,7 @@ func (client *HtmlToPdfClient) SetOnLoadJavascript(javascript string) *HtmlToPdf
     return client
 }
 
-// Set a custom HTTP header that is sent in Pdfcrowd HTTP requests.
+// Set a custom HTTP header to be included in all requests made by the converter.
 //
 // header - A string containing the header name and value separated by a colon.
 func (client *HtmlToPdfClient) SetCustomHttpHeader(header string) *HtmlToPdfClient {
@@ -1108,7 +1108,7 @@ func (client *HtmlToPdfClient) SetCustomHttpHeader(header string) *HtmlToPdfClie
     return client
 }
 
-// Wait the specified number of milliseconds to finish all JavaScript after the document is loaded. Your API license defines the maximum wait time by "Max Delay" parameter.
+// Wait the specified number of milliseconds to finish all JavaScript after the document is loaded. Your license defines the maximum wait time by "Max Delay" parameter.
 //
 // delay - The number of milliseconds to wait. Must be a positive integer or 0.
 func (client *HtmlToPdfClient) SetJavascriptDelay(delay int) *HtmlToPdfClient {
@@ -1132,7 +1132,7 @@ func (client *HtmlToPdfClient) SetElementToConvertMode(mode string) *HtmlToPdfCl
     return client
 }
 
-// Wait for the specified element in a source document. The element is specified by one or more CSS selectors. The element is searched for in the main document and all iframes. If the element is not found, the conversion fails. Your API license defines the maximum wait time by "Max Delay" parameter.
+// Wait for the specified element in a source document. The element is specified by one or more CSS selectors. The element is searched for in the main document and all iframes. If the element is not found, the conversion fails. Your license defines the maximum wait time by "Max Delay" parameter.
 //
 // selectors - One or more CSS selectors separated by commas. The string must not be empty.
 func (client *HtmlToPdfClient) SetWaitForElement(selectors string) *HtmlToPdfClient {
@@ -1553,7 +1553,7 @@ func (client *HtmlToPdfClient) SetTag(tag string) *HtmlToPdfClient {
     return client
 }
 
-// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+// A proxy server used by the conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
 // proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
 func (client *HtmlToPdfClient) SetHttpProxy(proxy string) *HtmlToPdfClient {
@@ -1561,7 +1561,7 @@ func (client *HtmlToPdfClient) SetHttpProxy(proxy string) *HtmlToPdfClient {
     return client
 }
 
-// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+// A proxy server used by the conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
 // proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
 func (client *HtmlToPdfClient) SetHttpsProxy(proxy string) *HtmlToPdfClient {
@@ -1569,7 +1569,7 @@ func (client *HtmlToPdfClient) SetHttpsProxy(proxy string) *HtmlToPdfClient {
     return client
 }
 
-// A client certificate to authenticate Pdfcrowd converter on your web server. The certificate is used for two-way SSL/TLS authentication and adds extra security.
+// A client certificate to authenticate the converter on your web server. The certificate is used for two-way SSL/TLS authentication and adds extra security.
 //
 // certificate - The file must be in PKCS12 format. The file must exist and not be empty.
 func (client *HtmlToPdfClient) SetClientCertificate(certificate string) *HtmlToPdfClient {
@@ -1734,7 +1734,7 @@ func (client *HtmlToPdfClient) SetConverterVersion(version string) *HtmlToPdfCli
     return client
 }
 
-// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Specify whether to use HTTP or HTTPS when connecting to the PDFCrowd API.
 // Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
 // value - Set to true to use HTTP.
@@ -1787,9 +1787,9 @@ type HtmlToImageClient struct {
     fileId int
 }
 
-// Constructor for the Pdfcrowd API client.
+// Constructor for the PDFCrowd API client.
 //
-// userName - Your username at Pdfcrowd.
+// userName - Your username at PDFCrowd.
 // apiKey - Your API key.
 func NewHtmlToImageClient(userName string, apiKey string) HtmlToImageClient {
     helper := newConnectionHelper(userName, apiKey)
@@ -2146,7 +2146,7 @@ func (client *HtmlToImageClient) SetHttpAuth(userName string, password string) *
     return client
 }
 
-// Set cookies that are sent in Pdfcrowd HTTP requests.
+// Set HTTP cookies to be included in all requests made by the converter.
 //
 // cookies - The cookie string.
 func (client *HtmlToImageClient) SetCookies(cookies string) *HtmlToImageClient {
@@ -2178,7 +2178,7 @@ func (client *HtmlToImageClient) SetFailOnAnyUrlError(failOnError bool) *HtmlToI
     return client
 }
 
-// Do not send the X-Pdfcrowd HTTP header in Pdfcrowd HTTP requests.
+// Do not send the X-Pdfcrowd HTTP header in PDFCrowd HTTP requests.
 //
 // value - Set to true to disable sending X-Pdfcrowd HTTP header.
 func (client *HtmlToImageClient) SetNoXpdfcrowdHeader(value bool) *HtmlToImageClient {
@@ -2210,7 +2210,7 @@ func (client *HtmlToImageClient) SetOnLoadJavascript(javascript string) *HtmlToI
     return client
 }
 
-// Set a custom HTTP header that is sent in Pdfcrowd HTTP requests.
+// Set a custom HTTP header to be included in all requests made by the converter.
 //
 // header - A string containing the header name and value separated by a colon.
 func (client *HtmlToImageClient) SetCustomHttpHeader(header string) *HtmlToImageClient {
@@ -2218,7 +2218,7 @@ func (client *HtmlToImageClient) SetCustomHttpHeader(header string) *HtmlToImage
     return client
 }
 
-// Wait the specified number of milliseconds to finish all JavaScript after the document is loaded. Your API license defines the maximum wait time by "Max Delay" parameter.
+// Wait the specified number of milliseconds to finish all JavaScript after the document is loaded. Your license defines the maximum wait time by "Max Delay" parameter.
 //
 // delay - The number of milliseconds to wait. Must be a positive integer or 0.
 func (client *HtmlToImageClient) SetJavascriptDelay(delay int) *HtmlToImageClient {
@@ -2242,7 +2242,7 @@ func (client *HtmlToImageClient) SetElementToConvertMode(mode string) *HtmlToIma
     return client
 }
 
-// Wait for the specified element in a source document. The element is specified by one or more CSS selectors. The element is searched for in the main document and all iframes. If the element is not found, the conversion fails. Your API license defines the maximum wait time by "Max Delay" parameter.
+// Wait for the specified element in a source document. The element is specified by one or more CSS selectors. The element is searched for in the main document and all iframes. If the element is not found, the conversion fails. Your license defines the maximum wait time by "Max Delay" parameter.
 //
 // selectors - One or more CSS selectors separated by commas. The string must not be empty.
 func (client *HtmlToImageClient) SetWaitForElement(selectors string) *HtmlToImageClient {
@@ -2379,7 +2379,7 @@ func (client *HtmlToImageClient) SetTag(tag string) *HtmlToImageClient {
     return client
 }
 
-// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+// A proxy server used by the conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
 // proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
 func (client *HtmlToImageClient) SetHttpProxy(proxy string) *HtmlToImageClient {
@@ -2387,7 +2387,7 @@ func (client *HtmlToImageClient) SetHttpProxy(proxy string) *HtmlToImageClient {
     return client
 }
 
-// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+// A proxy server used by the conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
 // proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
 func (client *HtmlToImageClient) SetHttpsProxy(proxy string) *HtmlToImageClient {
@@ -2395,7 +2395,7 @@ func (client *HtmlToImageClient) SetHttpsProxy(proxy string) *HtmlToImageClient 
     return client
 }
 
-// A client certificate to authenticate Pdfcrowd converter on your web server. The certificate is used for two-way SSL/TLS authentication and adds extra security.
+// A client certificate to authenticate the converter on your web server. The certificate is used for two-way SSL/TLS authentication and adds extra security.
 //
 // certificate - The file must be in PKCS12 format. The file must exist and not be empty.
 func (client *HtmlToImageClient) SetClientCertificate(certificate string) *HtmlToImageClient {
@@ -2441,7 +2441,7 @@ func (client *HtmlToImageClient) SetConverterVersion(version string) *HtmlToImag
     return client
 }
 
-// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Specify whether to use HTTP or HTTPS when connecting to the PDFCrowd API.
 // Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
 // value - Set to true to use HTTP.
@@ -2494,9 +2494,9 @@ type ImageToImageClient struct {
     fileId int
 }
 
-// Constructor for the Pdfcrowd API client.
+// Constructor for the PDFCrowd API client.
 //
-// userName - Your username at Pdfcrowd.
+// userName - Your username at PDFCrowd.
 // apiKey - Your API key.
 func NewImageToImageClient(userName string, apiKey string) ImageToImageClient {
     helper := newConnectionHelper(userName, apiKey)
@@ -2942,7 +2942,7 @@ func (client *ImageToImageClient) SetTag(tag string) *ImageToImageClient {
     return client
 }
 
-// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+// A proxy server used by the conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
 // proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
 func (client *ImageToImageClient) SetHttpProxy(proxy string) *ImageToImageClient {
@@ -2950,7 +2950,7 @@ func (client *ImageToImageClient) SetHttpProxy(proxy string) *ImageToImageClient
     return client
 }
 
-// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+// A proxy server used by the conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
 // proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
 func (client *ImageToImageClient) SetHttpsProxy(proxy string) *ImageToImageClient {
@@ -2966,7 +2966,7 @@ func (client *ImageToImageClient) SetConverterVersion(version string) *ImageToIm
     return client
 }
 
-// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Specify whether to use HTTP or HTTPS when connecting to the PDFCrowd API.
 // Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
 // value - Set to true to use HTTP.
@@ -3019,9 +3019,9 @@ type PdfToPdfClient struct {
     fileId int
 }
 
-// Constructor for the Pdfcrowd API client.
+// Constructor for the PDFCrowd API client.
 //
-// userName - Your username at Pdfcrowd.
+// userName - Your username at PDFCrowd.
 // apiKey - Your API key.
 func NewPdfToPdfClient(userName string, apiKey string) PdfToPdfClient {
     helper := newConnectionHelper(userName, apiKey)
@@ -3079,7 +3079,7 @@ func (client *PdfToPdfClient) AddPdfFile(filePath string) *PdfToPdfClient {
     return client
 }
 
-// Add in-memory raw PDF data to the list of the input PDFs.Typical usage is for adding PDF created by another Pdfcrowd converter. Example in PHP: $clientPdf2Pdf->addPdfRawData($clientHtml2Pdf->convertUrl('http://www.example.com'));
+// Add in-memory raw PDF data to the list of the input PDFs.Typical usage is for adding PDF created by another PDFCrowd converter. Example in PHP: $clientPdf2Pdf->addPdfRawData($clientHtml2Pdf->convertUrl('http://www.example.com'));
 //
 // data - The raw PDF data. The input data must be PDF content.
 func (client *PdfToPdfClient) AddPdfRawData(data []byte) *PdfToPdfClient {
@@ -3422,7 +3422,7 @@ func (client *PdfToPdfClient) SetConverterVersion(version string) *PdfToPdfClien
     return client
 }
 
-// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Specify whether to use HTTP or HTTPS when connecting to the PDFCrowd API.
 // Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
 // value - Set to true to use HTTP.
@@ -3475,9 +3475,9 @@ type ImageToPdfClient struct {
     fileId int
 }
 
-// Constructor for the Pdfcrowd API client.
+// Constructor for the PDFCrowd API client.
 //
-// userName - Your username at Pdfcrowd.
+// userName - Your username at PDFCrowd.
 // apiKey - Your API key.
 func NewImageToPdfClient(userName string, apiKey string) ImageToPdfClient {
     helper := newConnectionHelper(userName, apiKey)
@@ -4155,7 +4155,7 @@ func (client *ImageToPdfClient) SetTag(tag string) *ImageToPdfClient {
     return client
 }
 
-// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+// A proxy server used by the conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
 // proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
 func (client *ImageToPdfClient) SetHttpProxy(proxy string) *ImageToPdfClient {
@@ -4163,7 +4163,7 @@ func (client *ImageToPdfClient) SetHttpProxy(proxy string) *ImageToPdfClient {
     return client
 }
 
-// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+// A proxy server used by the conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
 // proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
 func (client *ImageToPdfClient) SetHttpsProxy(proxy string) *ImageToPdfClient {
@@ -4179,7 +4179,7 @@ func (client *ImageToPdfClient) SetConverterVersion(version string) *ImageToPdfC
     return client
 }
 
-// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Specify whether to use HTTP or HTTPS when connecting to the PDFCrowd API.
 // Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
 // value - Set to true to use HTTP.
@@ -4232,9 +4232,9 @@ type PdfToHtmlClient struct {
     fileId int
 }
 
-// Constructor for the Pdfcrowd API client.
+// Constructor for the PDFCrowd API client.
 //
-// userName - Your username at Pdfcrowd.
+// userName - Your username at PDFCrowd.
 // apiKey - Your API key.
 func NewPdfToHtmlClient(userName string, apiKey string) PdfToHtmlClient {
     helper := newConnectionHelper(userName, apiKey)
@@ -4644,7 +4644,7 @@ func (client *PdfToHtmlClient) SetTag(tag string) *PdfToHtmlClient {
     return client
 }
 
-// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+// A proxy server used by the conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
 // proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
 func (client *PdfToHtmlClient) SetHttpProxy(proxy string) *PdfToHtmlClient {
@@ -4652,7 +4652,7 @@ func (client *PdfToHtmlClient) SetHttpProxy(proxy string) *PdfToHtmlClient {
     return client
 }
 
-// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+// A proxy server used by the conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
 // proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
 func (client *PdfToHtmlClient) SetHttpsProxy(proxy string) *PdfToHtmlClient {
@@ -4668,7 +4668,7 @@ func (client *PdfToHtmlClient) SetConverterVersion(version string) *PdfToHtmlCli
     return client
 }
 
-// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Specify whether to use HTTP or HTTPS when connecting to the PDFCrowd API.
 // Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
 // value - Set to true to use HTTP.
@@ -4725,9 +4725,9 @@ type PdfToTextClient struct {
     fileId int
 }
 
-// Constructor for the Pdfcrowd API client.
+// Constructor for the PDFCrowd API client.
 //
-// userName - Your username at Pdfcrowd.
+// userName - Your username at PDFCrowd.
 // apiKey - Your API key.
 func NewPdfToTextClient(userName string, apiKey string) PdfToTextClient {
     helper := newConnectionHelper(userName, apiKey)
@@ -5106,7 +5106,7 @@ func (client *PdfToTextClient) SetTag(tag string) *PdfToTextClient {
     return client
 }
 
-// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+// A proxy server used by the conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
 // proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
 func (client *PdfToTextClient) SetHttpProxy(proxy string) *PdfToTextClient {
@@ -5114,7 +5114,7 @@ func (client *PdfToTextClient) SetHttpProxy(proxy string) *PdfToTextClient {
     return client
 }
 
-// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+// A proxy server used by the conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
 // proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
 func (client *PdfToTextClient) SetHttpsProxy(proxy string) *PdfToTextClient {
@@ -5122,7 +5122,7 @@ func (client *PdfToTextClient) SetHttpsProxy(proxy string) *PdfToTextClient {
     return client
 }
 
-// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Specify whether to use HTTP or HTTPS when connecting to the PDFCrowd API.
 // Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
 // value - Set to true to use HTTP.
@@ -5175,9 +5175,9 @@ type PdfToImageClient struct {
     fileId int
 }
 
-// Constructor for the Pdfcrowd API client.
+// Constructor for the PDFCrowd API client.
 //
-// userName - Your username at Pdfcrowd.
+// userName - Your username at PDFCrowd.
 // apiKey - Your API key.
 func NewPdfToImageClient(userName string, apiKey string) PdfToImageClient {
     helper := newConnectionHelper(userName, apiKey)
@@ -5537,7 +5537,7 @@ func (client *PdfToImageClient) SetTag(tag string) *PdfToImageClient {
     return client
 }
 
-// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+// A proxy server used by the conversion process for accessing the source URLs with HTTP scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
 // proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
 func (client *PdfToImageClient) SetHttpProxy(proxy string) *PdfToImageClient {
@@ -5545,7 +5545,7 @@ func (client *PdfToImageClient) SetHttpProxy(proxy string) *PdfToImageClient {
     return client
 }
 
-// A proxy server used by Pdfcrowd conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
+// A proxy server used by the conversion process for accessing the source URLs with HTTPS scheme. It can help to circumvent regional restrictions or provide limited access to your intranet.
 //
 // proxy - The value must have format DOMAIN_OR_IP_ADDRESS:PORT.
 func (client *PdfToImageClient) SetHttpsProxy(proxy string) *PdfToImageClient {
@@ -5553,7 +5553,7 @@ func (client *PdfToImageClient) SetHttpsProxy(proxy string) *PdfToImageClient {
     return client
 }
 
-// Specifies if the client communicates over HTTP or HTTPS with Pdfcrowd API.
+// Specify whether to use HTTP or HTTPS when connecting to the PDFCrowd API.
 // Warning: Using HTTP is insecure as data sent over HTTP is not encrypted. Enable this option only if you know what you are doing.
 //
 // value - Set to true to use HTTP.
