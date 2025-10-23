@@ -39,7 +39,7 @@ import (
     "regexp"
 )
 
-const CLIENT_VERSION = "6.5.2"
+const CLIENT_VERSION = "6.5.3"
 
 type Error struct {
     message string
@@ -134,7 +134,7 @@ func newConnectionHelper(userName, apiKey string) connectionHelper {
     helper := connectionHelper{userName: userName, apiKey: apiKey}
     helper.resetResponseData()
     helper.setUseHttp(false)
-    helper.setUserAgent("pdfcrowd_go_client/6.5.2 (https://pdfcrowd.com)")
+    helper.setUserAgent("pdfcrowd_go_client/6.5.3 (https://pdfcrowd.com)")
     helper.retryCount = 1
     helper.converterVersion = "24.04"
     return helper
